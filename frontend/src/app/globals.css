@@ -1,3 +1,5 @@
+@layer reset, mui;
+
 :root {
   --background: var(--morrow-palette-background-default, #f7f7f3);
   --foreground: var(--morrow-palette-text-primary, #1f211e);
@@ -27,7 +29,7 @@ html {
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -41,10 +43,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@layer reset {
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
 }
 
 a {

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AccountCircle,
   Close,
   FavoriteBorder,
   Search,
@@ -12,17 +13,72 @@ import {
   InputAdornment,
   InputBase,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "../../app/page.module.css";
+
+const navSections = [
+  { id: "new-arrivals", label: "New in" },
+  { id: "categories", label: "Shop" },
+  { id: "story", label: "Our story" },
+] as const;
+
+type SectionId = (typeof navSections)[number]["id"];
 
 type SiteHeaderProps = {
   cartCount: number;
   query: string;
   onQueryChange: (query: string) => void;
+  activeSection?: SectionId | null;
 };
 
-export function SiteHeader({ cartCount, query, onQueryChange }: SiteHeaderProps) {
+export function SiteHeader({
+  cartCount,
+  query,
+  onQueryChange,
+  activeSection,
+}: SiteHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [scrollSection, setScrollSection] =
+    useState<SectionId>("new-arrivals");
+  const headerRef = useRef<HTMLElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const updateActiveSection = () => {
+      const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 68;
+      const threshold = headerHeight + 24;
+      let nextSection: SectionId = "new-arrivals";
+
+      for (const { id } of navSections) {
+        const section = document.getElementById(id);
+
+        if (section && section.getBoundingClientRect().top <= threshold) {
+          nextSection = id;
+        }
+      }
+
+      setScrollSection((currentSection) =>
+        currentSection === nextSection ? currentSection : nextSection,
+      );
+    };
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus({ preventScroll: true });
+    }
+  }, [searchOpen]);
+
+  const selectedSection = activeSection === undefined ? scrollSection : activeSection;
 
   const closeSearch = () => {
     onQueryChange("");
@@ -31,20 +87,35 @@ export function SiteHeader({ cartCount, query, onQueryChange }: SiteHeaderProps)
 
   return (
     <>
-      <header className={styles.header}>
+      <header ref={headerRef} className={styles.header}>
         <a className={styles.logo} href="#top" aria-label="Morrow 홈으로 이동">
           MORROW<span>.</span>
         </a>
 
         <nav className={styles.nav} aria-label="주요 메뉴">
-          <a className={styles.activeNav} href="#new-arrivals">
-            New in
-          </a>
-          <a href="#categories">Shop</a>
-          <a href="#story">Our story</a>
+          {navSections.map(({ id, label }) => (
+            <a
+              className={selectedSection === id ? styles.activeNav : undefined}
+              href={`#${id}`}
+              aria-current={selectedSection === id ? "location" : undefined}
+              key={id}
+            >
+              {label}
+            </a>
+          ))}
         </nav>
 
         <div className={styles.headerActions}>
+          <IconButton
+            className={styles.iconButton}
+            component="a"
+            href="/login"
+            type="button"
+            disableRipple
+            aria-label="로그인"
+          >
+            <AccountCircle />
+          </IconButton>
           <IconButton
             className={styles.iconButton}
             type="button"
@@ -64,6 +135,8 @@ export function SiteHeader({ cartCount, query, onQueryChange }: SiteHeaderProps)
           </IconButton>
           <IconButton
             className={styles.cartButton}
+            component="a"
+            href="/cart"
             type="button"
             disableRipple
             aria-label={`장바구니, ${cartCount}개 상품`}
@@ -92,39 +165,41 @@ export function SiteHeader({ cartCount, query, onQueryChange }: SiteHeaderProps)
             </Badge>
           </IconButton>
         </div>
+        {searchOpen && (
+          <div className={styles.searchRow}>
+            <InputBase
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+              placeholder="찾고 싶은 물건을 검색해보세요"
+              className={styles.searchInput}
+              inputRef={searchInputRef}
+              inputProps={{ "aria-label": "상품 검색" }}
+              startAdornment={
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              }
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    type="button"
+                    size="small"
+                    disableRipple
+                    onClick={closeSearch}
+                    aria-label="검색 닫기"
+                    sx={{
+                      padding: 0,
+                      color: "var(--morrow-palette-text-secondary)",
+                    }}
+                  >
+                    <Close />
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          </div>
+        )}
       </header>
-
-      {searchOpen && (
-        <div className={styles.searchRow}>
-          <InputBase
-            autoFocus
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="찾고 싶은 물건을 검색해보세요"
-            className={styles.searchInput}
-            inputProps={{ "aria-label": "상품 검색" }}
-            startAdornment={
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            }
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  type="button"
-                  size="small"
-                  disableRipple
-                  onClick={closeSearch}
-                  aria-label="검색 닫기"
-                  sx={{ padding: 0, color: "var(--morrow-palette-text-secondary)" }}
-                >
-                  <Close />
-                </IconButton>
-              </InputAdornment>
-            }
-          />
-        </div>
-      )}
     </>
   );
 }

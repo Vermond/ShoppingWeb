@@ -10,6 +10,7 @@ import {
 import { Button, IconButton } from "@mui/material";
 import { useState } from "react";
 import type { ProductCategory, ProductFilter } from "../data/products";
+import { useCart } from "../components/shop/CartProvider";
 import { ProductSection } from "../components/shop/ProductSection";
 import { SiteHeader } from "../components/shop/SiteHeader";
 import styles from "./page.module.css";
@@ -29,11 +30,7 @@ export default function Home() {
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const [activeFilter, setActiveFilter] = useState<ProductFilter>("전체");
   const [query, setQuery] = useState("");
-  const [cartCount, setCartCount] = useState(0);
-
-  const addToCart = () => {
-    setCartCount((count) => count + 1);
-  };
+  const { totalItems, addItem } = useCart();
 
   return (
     <div className={styles.page}>
@@ -54,7 +51,7 @@ export default function Home() {
       )}
 
       <SiteHeader
-        cartCount={cartCount}
+        cartCount={totalItems}
         query={query}
         onQueryChange={setQuery}
       />
@@ -190,7 +187,7 @@ export default function Home() {
           activeFilter={activeFilter}
           query={query}
           onFilterChange={setActiveFilter}
-          onAddToCart={addToCart}
+          onAddToCart={addItem}
         />
 
         <section className={styles.storySection} id="story">

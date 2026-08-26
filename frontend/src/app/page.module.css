@@ -5,7 +5,6 @@
   --paper: var(--morrow-palette-background-default, #f7f7f3);
   --accent: var(--morrow-palette-secondary-main, #df6d45);
   min-height: 100vh;
-  overflow: hidden;
   background: var(--paper);
   color: var(--ink);
 }
@@ -45,6 +44,9 @@
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   height: 84px;
   align-items: center;
@@ -130,6 +132,11 @@
 }
 
 .searchRow {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 12px;

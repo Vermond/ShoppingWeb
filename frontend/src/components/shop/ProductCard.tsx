@@ -27,7 +27,7 @@ function formatPrice(price: number) {
   return `${price.toLocaleString("ko-KR")}원`;
 }
 
-function ProductArt({ product, index }: { product: Product; index: number }) {
+export function ProductArt({ product, index }: { product: Product; index: number }) {
   return (
     <div
       className={`${styles.productArt} ${styles[product.art]}`}
