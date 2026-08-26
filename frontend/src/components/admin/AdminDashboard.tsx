@@ -5,39 +5,26 @@ import {
   AssessmentOutlined,
   ChevronRight,
   Close,
-  DashboardOutlined,
   DownloadOutlined,
   Inventory2Outlined,
-  Menu,
-  NotificationsNoneOutlined,
   PeopleAltOutlined,
   Search,
-  SettingsOutlined,
   ShoppingBagOutlined,
   TrendingDown,
   TrendingUp,
 } from "@mui/icons-material";
 import {
   Alert,
-  AppBar,
   Avatar,
-  Badge,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
-  Divider,
-  Drawer,
   FormControl,
-  IconButton,
   InputAdornment,
   InputLabel,
   LinearProgress,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   MenuItem,
   Paper,
   Select,
@@ -50,32 +37,16 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Tooltip,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
+import { AdminShell, adminTextSizes } from "./AdminShell";
 import type {
   AdminDashboardData,
   AdminMetric,
   AdminOrderStatus,
 } from "../../data/admin";
-
-const drawerWidth = 240;
-
-const navItems: Array<{ label: string; icon: ReactNode; count?: string }> = [
-  { label: "대시보드", icon: <DashboardOutlined /> },
-  { label: "주문 관리", icon: <ShoppingBagOutlined />, count: "12" },
-  { label: "상품 관리", icon: <Inventory2Outlined /> },
-  { label: "고객 관리", icon: <PeopleAltOutlined /> },
-  { label: "리포트", icon: <AssessmentOutlined /> },
-] as const;
-
-const secondaryNavItems = [
-  { label: "설정", icon: <SettingsOutlined /> },
-] as const;
 
 const orderStatuses: Array<"전체" | AdminOrderStatus> = [
   "전체",
@@ -90,15 +61,6 @@ const currencyFormatter = new Intl.NumberFormat("ko-KR", {
   currency: "KRW",
   maximumFractionDigits: 0,
 });
-
-const adminTextSizes = {
-  cardHeading: 16,
-  eyebrow: 11,
-  label: 12,
-  body: 13,
-  meta: 11,
-  control: 12,
-} as const;
 
 const metricIcons: Record<AdminMetric["icon"], typeof TrendingUp> = {
   sales: TrendingUp,
@@ -120,161 +82,6 @@ const statusStyles: Record<
 type AdminDashboardProps = {
   initialData: AdminDashboardData;
 };
-
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100%",
-        flexDirection: "column",
-        bgcolor: "primary.main",
-        color: "primary.contrastText",
-      }}
-    >
-      <Box sx={{ px: 3, py: 4 }}>
-        <Typography
-          sx={{
-            fontSize: 19,
-            fontWeight: 800,
-            letterSpacing: "-.09em",
-          }}
-        >
-          MORROW<span style={{ color: "#df6d45" }}>.</span>
-        </Typography>
-          <Typography
-            sx={{
-              mt: 0.75,
-              color: "rgba(247, 247, 243, .55)",
-              fontSize: adminTextSizes.meta,
-            letterSpacing: ".12em",
-            textTransform: "uppercase",
-          }}
-        >
-          Studio admin
-        </Typography>
-      </Box>
-
-      <Divider sx={{ borderColor: "rgba(247, 247, 243, .12)" }} />
-
-      <List sx={{ px: 1.5, py: 2 }}>
-        {navItems.map((item, index) => (
-          <ListItemButton
-            key={item.label}
-            onClick={onNavigate}
-            selected={index === 0}
-            sx={{
-              minHeight: 46,
-              borderRadius: 0,
-              color: "rgba(247, 247, 243, .68)",
-              "& .MuiListItemIcon-root": {
-                minWidth: 38,
-                color: "inherit",
-              },
-              "& .MuiSvgIcon-root": { fontSize: 20 },
-              "&.Mui-selected": {
-                bgcolor: "rgba(247, 247, 243, .12)",
-                color: "primary.contrastText",
-              },
-              "&.Mui-selected:hover": {
-                bgcolor: "rgba(247, 247, 243, .16)",
-              },
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              slotProps={{ primary: { sx: { fontSize: adminTextSizes.label } } }}
-            />
-            {item.count && (
-              <Typography
-                sx={{
-                  minWidth: 22,
-                  px: 0.75,
-                  py: 0.25,
-                  borderRadius: 3,
-                  bgcolor: "secondary.main",
-                  color: "secondary.contrastText",
-                  fontSize: adminTextSizes.meta,
-                  textAlign: "center",
-                }}
-              >
-                {item.count}
-              </Typography>
-            )}
-          </ListItemButton>
-        ))}
-      </List>
-
-      <Divider sx={{ mx: 2, borderColor: "rgba(247, 247, 243, .12)" }} />
-
-      <List sx={{ px: 1.5, py: 2 }}>
-        {secondaryNavItems.map((item) => (
-          <ListItemButton
-            key={item.label}
-            onClick={onNavigate}
-            sx={{
-              minHeight: 46,
-              borderRadius: 0,
-              color: "rgba(247, 247, 243, .68)",
-              "& .MuiListItemIcon-root": {
-                minWidth: 38,
-                color: "inherit",
-              },
-              "& .MuiSvgIcon-root": { fontSize: 20 },
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              slotProps={{ primary: { sx: { fontSize: adminTextSizes.label } } }}
-            />
-          </ListItemButton>
-        ))}
-      </List>
-
-      <Box sx={{ mt: "auto", p: 2.5 }}>
-        <Paper
-          sx={{
-            p: 2,
-            border: "1px solid rgba(247, 247, 243, .14)",
-            borderRadius: 0,
-            bgcolor: "rgba(247, 247, 243, .06)",
-            color: "primary.contrastText",
-          }}
-          elevation={0}
-        >
-          <Typography sx={{ fontSize: adminTextSizes.label, fontWeight: 500 }}>
-            오늘의 운영 노트
-          </Typography>
-          <Typography
-            sx={{
-              mt: 1,
-              color: "rgba(247, 247, 243, .58)",
-              fontSize: adminTextSizes.meta,
-              lineHeight: 1.6,
-            }}
-          >
-            재고가 10개 미만인 상품이 1개 있어요.
-          </Typography>
-          <Button
-            endIcon={<ChevronRight sx={{ fontSize: 15 }} />}
-            onClick={onNavigate}
-            sx={{
-              mt: 1.5,
-              minHeight: 0,
-              p: 0,
-              color: "secondary.main",
-              fontSize: adminTextSizes.meta,
-            }}
-          >
-            재고 확인하기
-          </Button>
-        </Paper>
-      </Box>
-    </Box>
-  );
-}
 
 function MetricCard({ metric }: { metric: AdminMetric }) {
   const MetricIcon = metricIcons[metric.icon];
@@ -731,9 +538,6 @@ function InventorySummary({
 }
 
 export function AdminDashboard({ initialData }: AdminDashboardProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"전체" | AdminOrderStatus>("전체");
   const [notice, setNotice] = useState<string | null>(null);
@@ -757,78 +561,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f1f2ed" }}>
-      <Drawer
-        variant={isMobile ? "temporary" : "permanent"}
-        open={isMobile ? mobileOpen : true}
-        onClose={() => setMobileOpen(false)}
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: drawerWidth,
-            boxSizing: "border-box",
-            border: 0,
-            borderRight: "1px solid rgba(247, 247, 243, .12)",
-          },
-        }}
-      >
-        <Sidebar onNavigate={() => setMobileOpen(false)} />
-      </Drawer>
-
-      <Box component="main" sx={{ minWidth: 0, flex: 1 }}>
-        <AppBar
-          position="sticky"
-          color="transparent"
-          elevation={0}
-          sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default" }}
-        >
-          <Toolbar sx={{ minHeight: { xs: 64, md: 76 }, px: { xs: 2, md: 4, lg: 6 } }}>
-            {isMobile && (
-              <IconButton onClick={() => setMobileOpen(true)} edge="start" sx={{ mr: 1 }}>
-                <Menu />
-              </IconButton>
-            )}
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <Typography color="text.secondary" sx={{ fontSize: adminTextSizes.meta }}>
-                Morrow Studio
-              </Typography>
-              <ChevronRight sx={{ color: "text.secondary", fontSize: 14 }} />
-              <Typography sx={{ fontSize: adminTextSizes.label, fontWeight: 500 }}>대시보드</Typography>
-            </Stack>
-            <Box sx={{ flex: 1 }} />
-            <Stack
-              direction="row"
-              spacing={{ xs: 1, md: 1.5 }}
-              useFlexGap
-              sx={{ alignItems: "center" }}
-            >
-              <Tooltip title="알림">
-                <IconButton
-                  aria-label="알림"
-                  sx={{ width: 40, height: 40 }}
-                >
-                  <Badge badgeContent={3} color="secondary" overlap="circular">
-                    <NotificationsNoneOutlined />
-                  </Badge>
-                </IconButton>
-              </Tooltip>
-              <Avatar
-                sx={{
-                  width: 34,
-                  height: 34,
-                  bgcolor: "#d8e1d6",
-                  color: "#426348",
-                  fontSize: 11,
-                }}
-              >
-                MS
-              </Avatar>
-            </Stack>
-          </Toolbar>
-        </AppBar>
-
-        <Box sx={{ maxWidth: 1600, mx: "auto", p: { xs: 2, sm: 3, md: 5, lg: 7 } }}>
+    <AdminShell activePath="/admin" pageLabel="대시보드">
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
@@ -920,8 +653,6 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
             />
             <InventorySummary inventory={initialData.inventory} />
           </Box>
-        </Box>
-      </Box>
 
       <Snackbar
         open={Boolean(notice)}
@@ -933,6 +664,6 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
           {notice}
         </Alert>
       </Snackbar>
-    </Box>
+    </AdminShell>
   );
 }

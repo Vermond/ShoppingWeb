@@ -13,6 +13,7 @@ import {
   InputAdornment,
   InputBase,
 } from "@mui/material";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import styles from "../../app/page.module.css";
 
@@ -37,6 +38,7 @@ export function SiteHeader({
   onQueryChange,
   activeSection,
 }: SiteHeaderProps) {
+  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrollSection, setScrollSection] =
     useState<SectionId>("new-arrivals");
@@ -79,6 +81,7 @@ export function SiteHeader({
   }, [searchOpen]);
 
   const selectedSection = activeSection === undefined ? scrollSection : activeSection;
+  const isHome = pathname === "/";
 
   const closeSearch = () => {
     onQueryChange("");
@@ -88,7 +91,11 @@ export function SiteHeader({
   return (
     <>
       <header ref={headerRef} className={styles.header}>
-        <a className={styles.logo} href="#top" aria-label="Morrow 홈으로 이동">
+        <a
+          className={styles.logo}
+          href={isHome ? "#top" : "/"}
+          aria-label="Morrow 홈으로 이동"
+        >
           MORROW<span>.</span>
         </a>
 
@@ -96,7 +103,7 @@ export function SiteHeader({
           {navSections.map(({ id, label }) => (
             <a
               className={selectedSection === id ? styles.activeNav : undefined}
-              href={`#${id}`}
+              href={isHome ? `#${id}` : `/#${id}`}
               aria-current={selectedSection === id ? "location" : undefined}
               key={id}
             >
@@ -127,6 +134,8 @@ export function SiteHeader({
           </IconButton>
           <IconButton
             className={styles.iconButton}
+            component="a"
+            href="/wishlist"
             type="button"
             disableRipple
             aria-label="마음에 든 상품"

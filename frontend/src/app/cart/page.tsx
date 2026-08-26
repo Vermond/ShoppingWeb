@@ -164,6 +164,8 @@ export default function CartPage() {
               </div>
               <Button
                 className={styles.checkoutButton}
+                component="a"
+                href="/checkout"
                 variant="contained"
                 disableRipple
                 fullWidth

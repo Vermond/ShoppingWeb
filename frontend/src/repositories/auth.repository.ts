@@ -28,6 +28,12 @@ export type LoginResponse = {
   message: string;
 };
 
+export type SignupRequest = {
+  name: string;
+  email: string;
+  password: string;
+};
+
 export async function requestLogin(
   payload: LoginRequest,
 ): Promise<LoginResponse> {
@@ -43,6 +49,40 @@ export async function requestLogin(
 
   if (!response.ok) {
     throw new Error(result.error ?? "로그인 요청을 처리하지 못했어요.");
+  }
+
+  return result;
+}
+
+export async function requestSignup(payload: SignupRequest) {
+  const response = await fetch("/api/auth/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const result = (await response.json()) as { message?: string; error?: string };
+
+  if (!response.ok) {
+    throw new Error(result.error ?? "회원가입을 처리하지 못했어요.");
+  }
+
+  return result;
+}
+
+export async function requestPasswordReset(email: string) {
+  const response = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+  const result = (await response.json()) as { message?: string; error?: string };
+
+  if (!response.ok) {
+    throw new Error(result.error ?? "재설정 요청을 처리하지 못했어요.");
   }
 
   return result;

@@ -102,6 +102,18 @@
   background: var(--ink);
 }
 
+.authLinks {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  margin-top: 20px;
+}
+
+.authLinks a {
+  color: var(--muted);
+  font-size: 10px;
+}
+
 .divider {
   display: flex;
   align-items: center;

@@ -7,10 +7,18 @@ import {
   products,
   type ProductFilter,
 } from "../../data/products";
+import { useWishlist } from "./WishlistProvider";
 import styles from "../../app/page.module.css";
 import { ProductCard } from "./ProductCard";
 
 const filters: ProductFilter[] = ["전체", "리빙", "패션", "액세서리", "뷰티"];
+type SortOrder = "recommended" | "priceAsc" | "priceDesc";
+
+const sortLabels: Record<SortOrder, string> = {
+  recommended: "추천순",
+  priceAsc: "낮은 가격순",
+  priceDesc: "높은 가격순",
+};
 
 type ProductSectionProps = {
   activeFilter: ProductFilter;
@@ -25,33 +33,47 @@ export function ProductSection({
   onFilterChange,
   onAddToCart,
 }: ProductSectionProps) {
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [addedProduct, setAddedProduct] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("recommended");
+  const { isFavorite, toggleFavorite } = useWishlist();
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return products.filter((product) => {
-      const matchesCategory = activeFilter === "전체" || product.category === activeFilter;
+    const filteredProducts = products.filter((product) => {
+      const matchesCategory =
+        activeFilter === "전체" || product.category === activeFilter;
       const matchesQuery =
         !normalizedQuery ||
-        `${product.name} ${product.description}`.toLowerCase().includes(normalizedQuery);
+        `${product.name} ${product.description}`
+          .toLowerCase()
+          .includes(normalizedQuery);
 
       return matchesCategory && matchesQuery;
     });
-  }, [activeFilter, query]);
 
-  const toggleFavorite = (productId: string) => {
-    setFavorites((current) => {
-      const next = new Set(current);
+    if (sortOrder === "priceAsc") {
+      return filteredProducts.sort((a, b) => a.price - b.price);
+    }
 
-      if (next.has(productId)) {
-        next.delete(productId);
-      } else {
-        next.add(productId);
+    if (sortOrder === "priceDesc") {
+      return filteredProducts.sort((a, b) => b.price - a.price);
+    }
+
+    return filteredProducts;
+  }, [activeFilter, query, sortOrder]);
+
+  const cycleSortOrder = () => {
+    setSortOrder((current) => {
+      if (current === "recommended") {
+        return "priceAsc";
       }
 
-      return next;
+      if (current === "priceAsc") {
+        return "priceDesc";
+      }
+
+      return "recommended";
     });
   };
 
@@ -69,8 +91,13 @@ export function ProductSection({
           <h2>새로 들어온 것들</h2>
         </div>
 
-        <button className={styles.sortButton} type="button">
-          추천순 <KeyboardArrowDown />
+        <button
+          className={styles.sortButton}
+          type="button"
+          onClick={cycleSortOrder}
+          aria-label={`정렬 기준: ${sortLabels[sortOrder]}`}
+        >
+          {sortLabels[sortOrder]} <KeyboardArrowDown />
         </button>
       </div>
 
@@ -121,7 +148,7 @@ export function ProductSection({
               key={product.id}
               product={product}
               index={products.indexOf(product)}
-              isFavorite={favorites.has(product.id)}
+              isFavorite={isFavorite(product.id)}
               isAdded={addedProduct === product.id}
               onToggleFavorite={toggleFavorite}
               onAddToCart={addToCart}

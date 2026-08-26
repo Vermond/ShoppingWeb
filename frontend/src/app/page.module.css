@@ -736,6 +736,11 @@
   position: relative;
 }
 
+.productCardLink {
+  display: block;
+  color: inherit;
+}
+
 .productArt {
   position: relative;
   display: flex;
@@ -1322,6 +1327,15 @@
   margin-top: 11px;
   color: #777970;
   font-size: 9px;
+}
+
+.newsletterFeedback {
+  display: block;
+  margin-top: 13px;
+  color: #c4d4bd;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .footer {

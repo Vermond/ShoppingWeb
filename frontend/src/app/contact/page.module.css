@@ -1,0 +1,143 @@
+.contactPage {
+  --ink: var(--morrow-palette-text-primary, #1f211e);
+  --muted: var(--morrow-palette-text-secondary, #787a72);
+  --line: var(--morrow-palette-divider, #dedfd9);
+  --paper: var(--morrow-palette-background-default, #f7f7f3);
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.contactMain {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 45px 5.5vw 120px;
+}
+
+.backButton {
+  min-width: auto;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.backButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contactHero {
+  padding: 65px 0 58px;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  margin-bottom: 17px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.contactHero h1 {
+  margin-bottom: 28px;
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 88px);
+  font-weight: 400;
+  letter-spacing: -.08em;
+  line-height: .88;
+}
+
+.contactHero h1 em {
+  color: var(--morrow-palette-secondary-main, #df6d45);
+  font-style: italic;
+}
+
+.contactHero > p:last-child,
+.contactCopy > p:last-child {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.contactLayout {
+  display: grid;
+  grid-template-columns: minmax(240px, .8fr) minmax(340px, 1.2fr);
+  gap: 10vw;
+  padding: 58px 0 0;
+}
+
+.contactCopy h2 {
+  margin-bottom: 24px;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 4vw, 56px);
+  font-weight: 400;
+  letter-spacing: -.07em;
+  line-height: .95;
+}
+
+.contactForm {
+  display: grid;
+  gap: 27px;
+}
+
+.contactForm :global(.MuiInputLabel-root) {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.contactForm :global(.MuiInput-root) {
+  font-size: 14px;
+}
+
+.submitButton {
+  min-height: 48px;
+  margin-top: 8px;
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 11px;
+}
+
+.submitButton:hover {
+  background: var(--ink);
+}
+
+.feedback {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.success {
+  color: #557252;
+}
+
+.error {
+  color: #b2513d;
+}
+
+.mockNote {
+  margin-top: 42px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .contactMain {
+    padding: 34px 18px 84px;
+  }
+
+  .contactHero {
+    padding: 56px 0 42px;
+  }
+
+  .contactLayout {
+    grid-template-columns: 1fr;
+    gap: 44px;
+    padding-top: 42px;
+  }
+}

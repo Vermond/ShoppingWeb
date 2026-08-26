@@ -11,6 +11,7 @@ import {
   Chip,
   IconButton,
 } from "@mui/material";
+import Link from "next/link";
 import type { Product } from "../../data/products";
 import styles from "../../app/page.module.css";
 
@@ -27,10 +28,18 @@ function formatPrice(price: number) {
   return `${price.toLocaleString("ko-KR")}원`;
 }
 
-export function ProductArt({ product, index }: { product: Product; index: number }) {
+export function ProductArt({
+  product,
+  index,
+  className,
+}: {
+  product: Product;
+  index: number;
+  className?: string;
+}) {
   return (
     <div
-      className={`${styles.productArt} ${styles[product.art]}`}
+      className={`${styles.productArt} ${styles[product.art]} ${className ?? ""}`}
       style={{ backgroundColor: product.color }}
     >
       <span className={styles.artLabel}>{product.category}</span>
@@ -55,7 +64,13 @@ export function ProductCard({
   return (
     <article className={styles.productCard}>
       <div className={styles.productImageWrap}>
-        <ProductArt product={product} index={index} />
+        <Link
+          className={styles.productCardLink}
+          href={`/products/${product.id}`}
+          aria-label={`${product.name} 상세 보기`}
+        >
+          <ProductArt product={product} index={index} />
+        </Link>
 
         {product.tag && (
           <Chip

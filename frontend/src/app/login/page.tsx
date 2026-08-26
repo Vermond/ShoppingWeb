@@ -144,6 +144,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <div className={styles.authLinks}>
+            <Link href="/signup">회원가입</Link>
+            <Link href="/forgot-password">비밀번호 찾기</Link>
+          </div>
+
           <div className={styles.divider}>
             <span>또는</span>
           </div>
