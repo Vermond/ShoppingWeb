@@ -79,14 +79,16 @@ export function ProductSection({
         value={activeFilter}
         onChange={(_, value: ProductFilter) => onFilterChange(value)}
         aria-label="상품 카테고리 필터"
+        variant="scrollable"
+        scrollButtons={false}
         sx={{
           minHeight: 0,
-          "& .MuiTabs-flexContainer": {
-            gap: { xs: "17px", sm: "26px" },
+          "& .MuiTabs-list": {
+            columnGap: { xs: "28px", sm: "42px" },
           },
           "& .MuiTabs-indicator": {
-            height: "1px",
-            backgroundColor: "var(--ink)",
+            height: "2px",
+            backgroundColor: "var(--morrow-palette-text-primary)",
           },
         }}
       >
@@ -97,12 +99,15 @@ export function ProductSection({
             label={filter}
             disableRipple
             sx={{
-              minHeight: 0,
-              padding: "0 0 13px",
-              color: "#969890",
-              fontSize: "11px",
+              minHeight: { xs: 44, sm: 48 },
+              padding: { xs: "6px 8px 14px", sm: "7px 10px 15px" },
+              color: "var(--morrow-palette-text-secondary)",
+              fontSize: { xs: "13px", sm: "14px" },
+              fontWeight: 500,
+              letterSpacing: "-.02em",
+              lineHeight: 1.4,
               "&.Mui-selected": {
-                color: "var(--ink)",
+                color: "var(--morrow-palette-text-primary)",
               },
             }}
           />
