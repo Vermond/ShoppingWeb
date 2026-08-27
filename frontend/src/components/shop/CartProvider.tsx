@@ -58,7 +58,11 @@ function normalizeCart(
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
-  const { products, isLoading: isCatalogLoading } = useCatalog();
+  const {
+    products,
+    isLoading: isCatalogLoading,
+    errorMessage: catalogError,
+  } = useCatalog();
   const productIds = useMemo(
     () => new Set(products.map((product) => product.id)),
     [products],
@@ -82,20 +86,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const availableItems = useMemo(
-    () => normalizeCart(items, productIds),
-    [items, productIds],
+    () =>
+      normalizeCart(
+        items,
+        !isCatalogLoading && !catalogError ? productIds : undefined,
+      ),
+    [catalogError, isCatalogLoading, items, productIds],
   );
 
   useEffect(() => {
-    if (!isHydrated || isCatalogLoading) {
+    if (!isHydrated || isCatalogLoading || catalogError) {
       return;
     }
 
-    window.localStorage.setItem(
-      cartStorageKey,
-      JSON.stringify(availableItems),
-    );
-  }, [availableItems, isCatalogLoading, isHydrated]);
+    try {
+      window.localStorage.setItem(
+        cartStorageKey,
+        JSON.stringify(availableItems),
+      );
+    } catch {
+      // 저장소를 사용할 수 없는 환경에서도 장바구니 상태는 유지합니다.
+    }
+  }, [availableItems, catalogError, isCatalogLoading, isHydrated]);
 
   const value = useMemo<CartContextValue>(() => {
     const totalItems = availableItems.reduce(

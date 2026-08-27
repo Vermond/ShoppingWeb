@@ -35,7 +35,11 @@ function normalizeWishlist(value: unknown, productIds?: ReadonlySet<string>) {
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
-  const { products, isLoading: isCatalogLoading } = useCatalog();
+  const {
+    products,
+    isLoading: isCatalogLoading,
+    errorMessage: catalogError,
+  } = useCatalog();
   const productIds = useMemo(
     () => new Set(products.map((product) => product.id)),
     [products],
@@ -61,18 +65,28 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const availableFavoriteIds = useMemo(
-    () => normalizeWishlist(favoriteIds, productIds),
-    [favoriteIds, productIds],
+    () =>
+      normalizeWishlist(
+        favoriteIds,
+        !isCatalogLoading && !catalogError ? productIds : undefined,
+      ),
+    [catalogError, favoriteIds, isCatalogLoading, productIds],
   );
 
   useEffect(() => {
-    if (isHydrated && !isCatalogLoading) {
+    if (!isHydrated || isCatalogLoading || catalogError) {
+      return;
+    }
+
+    try {
       window.localStorage.setItem(
         wishlistStorageKey,
         JSON.stringify(availableFavoriteIds),
       );
+    } catch {
+      // 저장소를 사용할 수 없는 환경에서도 찜 상태는 유지합니다.
     }
-  }, [availableFavoriteIds, isCatalogLoading, isHydrated]);
+  }, [availableFavoriteIds, catalogError, isCatalogLoading, isHydrated]);
 
   const value = useMemo<WishlistContextValue>(
     () => ({
