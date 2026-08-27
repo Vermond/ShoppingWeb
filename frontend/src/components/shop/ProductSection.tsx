@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowForward, KeyboardArrowDown } from "@mui/icons-material";
-import { Tab, Tabs } from "@mui/material";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ProductFilter } from "../../types/catalog";
@@ -9,6 +8,7 @@ import { useWishlist } from "./WishlistProvider";
 import styles from "../../app/page.module.css";
 import { useCatalog } from "./CatalogProvider";
 import { ProductCard } from "./ProductCard";
+import { ProductFilterTabs } from "./ProductFilterTabs";
 import {
   filterAndSortProducts,
   sortLabels,
@@ -91,45 +91,12 @@ export function ProductSection({
         </button>
       </div>
 
-      <Tabs
+      <ProductFilterTabs
         className={styles.filterRow}
+        filters={filters}
         value={activeFilter}
-        onChange={(_, value: ProductFilter) => onFilterChange(value)}
-        aria-label="상품 카테고리 필터"
-        variant="scrollable"
-        scrollButtons={false}
-        sx={{
-          minHeight: 0,
-          "& .MuiTabs-list": {
-            columnGap: { xs: "28px", sm: "42px" },
-          },
-          "& .MuiTabs-indicator": {
-            height: "2px",
-            backgroundColor: "var(--morrow-palette-text-primary)",
-          },
-        }}
-      >
-        {filters.map((filter) => (
-          <Tab
-            key={filter}
-            value={filter}
-            label={filter}
-            disableRipple
-            sx={{
-              minHeight: { xs: 44, sm: 48 },
-              padding: { xs: "6px 8px 14px", sm: "7px 10px 15px" },
-              color: "var(--morrow-palette-text-secondary)",
-              fontSize: { xs: "13px", sm: "14px" },
-              fontWeight: 500,
-              letterSpacing: "-.02em",
-              lineHeight: 1.4,
-              "&.Mui-selected": {
-                color: "var(--morrow-palette-text-primary)",
-              },
-            }}
-          />
-        ))}
-      </Tabs>
+        onChange={onFilterChange}
+      />
 
       {visibleProducts.length > 0 ? (
         <div className={styles.productGrid}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { KeyboardArrowDown } from "@mui/icons-material";
-import { Tab, Tabs } from "@mui/material";
+import { ProductFilterTabs } from "../../components/shop/ProductFilterTabs";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
@@ -94,42 +94,12 @@ function ShopContent() {
 
         <section className={styles.catalog} aria-label="상품 목록">
           <div className={styles.catalogToolbar}>
-            <Tabs
+            <ProductFilterTabs
+              filters={filters}
               value={activeFilter}
-              onChange={(_, value: ProductFilter) => setSelectedFilter(value)}
-              aria-label="상품 카테고리 필터"
-              variant="scrollable"
-              scrollButtons={false}
-              sx={{
-                minHeight: 0,
-                "& .MuiTabs-list": {
-                  columnGap: { xs: "22px", sm: "32px" },
-                },
-                "& .MuiTabs-indicator": {
-                  height: "2px",
-                  backgroundColor: "var(--morrow-palette-text-primary)",
-                },
-              }}
-            >
-              {filters.map((filter) => (
-                <Tab
-                  key={filter}
-                  value={filter}
-                  label={filter}
-                  disableRipple
-                  sx={{
-                    minHeight: { xs: 44, sm: 48 },
-                    padding: { xs: "6px 4px 14px", sm: "7px 6px 15px" },
-                    color: "var(--morrow-palette-text-secondary)",
-                    fontSize: { xs: "13px", sm: "14px" },
-                    fontWeight: 500,
-                    "&.Mui-selected": {
-                      color: "var(--morrow-palette-text-primary)",
-                    },
-                  }}
-                />
-              ))}
-            </Tabs>
+              compact
+              onChange={setSelectedFilter}
+            />
             <button
               className={styles.sortButton}
               type="button"
