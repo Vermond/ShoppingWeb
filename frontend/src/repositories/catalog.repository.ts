@@ -116,7 +116,7 @@ function toProduct(
     typeof record.description === "string" ? record.description.trim() : "";
   const price = Number(record.price);
 
-  if (!id || !name || !description || !Number.isFinite(price)) {
+  if (!id || !name || !Number.isFinite(price)) {
     return null;
   }
 
