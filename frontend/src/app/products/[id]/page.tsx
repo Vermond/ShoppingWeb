@@ -10,10 +10,10 @@ import { Button, IconButton } from "@mui/material";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "../../../components/shop/CartProvider";
+import { useCatalog } from "../../../components/shop/CatalogProvider";
 import { ProductArt } from "../../../components/shop/ProductCard";
 import { SiteHeader } from "../../../components/shop/SiteHeader";
 import { useWishlist } from "../../../components/shop/WishlistProvider";
-import { products } from "../../../data/products";
 import styles from "./page.module.css";
 
 function formatPrice(price: number) {
@@ -25,9 +25,26 @@ export default function ProductDetailPage() {
   const [query, setQuery] = useState("");
   const [isAdded, setIsAdded] = useState(false);
   const { totalItems, addItem } = useCart();
+  const { products, isLoading } = useCatalog();
   const { isFavorite, toggleFavorite } = useWishlist();
   const productId = Array.isArray(params.id) ? params.id[0] : params.id;
   const product = products.find(({ id }) => id === productId);
+
+  if (!product && isLoading) {
+    return (
+      <div className={styles.detailPage}>
+        <SiteHeader
+          activeSection={null}
+          cartCount={totalItems}
+          query={query}
+          onQueryChange={setQuery}
+        />
+        <main className={styles.notFound}>
+          상품 정보를 불러오는 중이에요.
+        </main>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

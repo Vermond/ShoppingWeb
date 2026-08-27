@@ -1,8 +1,25 @@
 import type { NextConfig } from "next";
 
+const backendApiBaseUrl = process.env.BACKEND_API_BASE_URL?.replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  async rewrites() {
+    if (!backendApiBaseUrl) {
+      return [];
+    }
+
+    return [
+      {
+        source: "/api/products",
+        destination: `${backendApiBaseUrl}/api/products`,
+      },
+      {
+        source: "/api/categories",
+        destination: `${backendApiBaseUrl}/api/categories`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

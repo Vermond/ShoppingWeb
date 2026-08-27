@@ -9,9 +9,9 @@ import {
 import { Button, IconButton } from "@mui/material";
 import { useState } from "react";
 import { useCart } from "../../components/shop/CartProvider";
+import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductArt } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
-import { products } from "../../data/products";
 import styles from "./page.module.css";
 
 const freeShippingThreshold = 30000;
@@ -24,6 +24,7 @@ function formatPrice(price: number) {
 export default function CartPage() {
   const [query, setQuery] = useState("");
   const { items, totalItems, subtotal, updateQuantity, removeItem } = useCart();
+  const { products } = useCatalog();
   const shipping = subtotal === 0 || subtotal >= freeShippingThreshold ? 0 : shippingFee;
   const total = subtotal + shipping;
 

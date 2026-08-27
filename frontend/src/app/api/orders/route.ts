@@ -37,7 +37,14 @@ function isCheckoutRequest(value: unknown): value is CheckoutRequest {
       typeof customer.phone === "string" &&
       typeof customer.address === "string" &&
       Array.isArray(request.items) &&
-      request.items.length > 0,
+      request.items.length > 0 &&
+      request.items.every(
+        (item) =>
+          item &&
+          typeof item.productId === "string" &&
+          Number.isInteger(item.quantity) &&
+          item.quantity > 0,
+      ),
   );
 }
 
@@ -67,7 +74,12 @@ export async function POST(request: Request) {
   const itemCount = body.items.reduce((total, item) => total + item.quantity, 0);
   const total = body.items.reduce((sum, item) => {
     const product = products.find(({ id }) => id === item.productId);
-    return sum + (product?.price ?? 0) * item.quantity;
+    const price =
+      typeof item.price === "number" && Number.isFinite(item.price)
+        ? item.price
+        : product?.price ?? 0;
+
+    return sum + price * item.quantity;
   }, 0);
   const order = {
     id: `MORROW-${Date.now().toString().slice(-8)}`,

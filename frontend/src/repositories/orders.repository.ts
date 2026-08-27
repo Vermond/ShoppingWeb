@@ -1,6 +1,8 @@
 export type CheckoutItem = {
   productId: string;
   quantity: number;
+  // The mock route uses this until the real server calculates prices.
+  price?: number;
 };
 
 export type CheckoutRequest = {

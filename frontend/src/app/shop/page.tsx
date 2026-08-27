@@ -5,13 +5,13 @@ import { Tab, Tabs } from "@mui/material";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useCart } from "../../components/shop/CartProvider";
+import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductCard } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { useWishlist } from "../../components/shop/WishlistProvider";
-import { products, type ProductFilter } from "../../data/products";
+import type { ProductFilter } from "../../data/products";
 import styles from "./page.module.css";
 
-const filters: ProductFilter[] = ["전체", "리빙", "패션", "액세서리", "뷰티"];
 type SortOrder = "recommended" | "priceAsc" | "priceDesc";
 
 const sortLabels: Record<SortOrder, string> = {
@@ -25,7 +25,12 @@ export default function ShopPage() {
   const [activeFilter, setActiveFilter] = useState<ProductFilter>("전체");
   const [sortOrder, setSortOrder] = useState<SortOrder>("recommended");
   const { totalItems, addItem } = useCart();
+  const { products, categories } = useCatalog();
   const { isFavorite, toggleFavorite } = useWishlist();
+  const filters = useMemo<ProductFilter[]>(
+    () => ["전체", ...categories.map((category) => category.name)],
+    [categories],
+  );
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -50,7 +55,7 @@ export default function ShopPage() {
     }
 
     return filteredProducts;
-  }, [activeFilter, query, sortOrder]);
+  }, [activeFilter, products, query, sortOrder]);
 
   const cycleSortOrder = () => {
     setSortOrder((current) => {

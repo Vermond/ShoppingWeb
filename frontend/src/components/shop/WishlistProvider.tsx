@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { products } from "../../data/products";
+import { useCatalog } from "./CatalogProvider";
 
 type WishlistContextValue = {
   favoriteIds: string[];
@@ -18,23 +18,28 @@ type WishlistContextValue = {
 };
 
 const wishlistStorageKey = "morrow-wishlist";
-const productIds = new Set(products.map((product) => product.id));
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
-function normalizeWishlist(value: unknown) {
+function normalizeWishlist(value: unknown, productIds?: ReadonlySet<string>) {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value.filter(
     (productId): productId is string =>
-      typeof productId === "string" && productIds.has(productId),
+      typeof productId === "string" &&
+      (!productIds || productIds.has(productId)),
   );
 }
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const { products, isLoading: isCatalogLoading } = useCatalog();
+  const productIds = useMemo(
+    () => new Set(products.map((product) => product.id)),
+    [products],
+  );
 
   useEffect(() => {
     const loadWishlist = () => {
@@ -55,29 +60,40 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(loadId);
   }, []);
 
+  const availableFavoriteIds = useMemo(
+    () => normalizeWishlist(favoriteIds, productIds),
+    [favoriteIds, productIds],
+  );
+
   useEffect(() => {
-    if (isHydrated) {
+    if (isHydrated && !isCatalogLoading) {
       window.localStorage.setItem(
         wishlistStorageKey,
-        JSON.stringify(favoriteIds),
+        JSON.stringify(availableFavoriteIds),
       );
     }
-  }, [favoriteIds, isHydrated]);
+  }, [availableFavoriteIds, isCatalogLoading, isHydrated]);
 
   const value = useMemo<WishlistContextValue>(
     () => ({
-      favoriteIds,
-      isFavorite: (productId) => favoriteIds.includes(productId),
+      favoriteIds: availableFavoriteIds,
+      isFavorite: (productId) => availableFavoriteIds.includes(productId),
       toggleFavorite: (productId) => {
-        setFavoriteIds((currentIds) =>
-          currentIds.includes(productId)
-            ? currentIds.filter((id) => id !== productId)
-            : [...currentIds, productId],
-        );
+        if (!productIds.has(productId)) {
+          return;
+        }
+
+        setFavoriteIds((currentIds) => {
+          const normalizedIds = normalizeWishlist(currentIds, productIds);
+
+          return normalizedIds.includes(productId)
+            ? normalizedIds.filter((id) => id !== productId)
+            : [...normalizedIds, productId];
+        });
       },
       clearWishlist: () => setFavoriteIds([]),
     }),
-    [favoriteIds],
+    [availableFavoriteIds, productIds],
   );
 
   return (

@@ -1,4 +1,4 @@
-export type ProductCategory = "리빙" | "패션" | "액세서리" | "뷰티";
+export type ProductCategory = string;
 export type ProductFilter = "전체" | ProductCategory;
 
 export type Product = {

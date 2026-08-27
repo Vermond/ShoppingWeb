@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { products } from "../../data/products";
+import { useCatalog } from "./CatalogProvider";
 
 export type CartItem = {
   productId: string;
@@ -26,11 +26,12 @@ type CartContextValue = {
 };
 
 const cartStorageKey = "morrow-cart";
-const productIds = new Set(products.map((product) => product.id));
-
 const CartContext = createContext<CartContextValue | null>(null);
 
-function normalizeCart(value: unknown): CartItem[] {
+function normalizeCart(
+  value: unknown,
+  productIds?: ReadonlySet<string>,
+): CartItem[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -43,7 +44,7 @@ function normalizeCart(value: unknown): CartItem[] {
       "quantity" in item &&
       typeof item.productId === "string" &&
       typeof item.quantity === "number" &&
-      productIds.has(item.productId) &&
+      (!productIds || productIds.has(item.productId)) &&
       Number.isInteger(item.quantity) &&
       item.quantity > 0
     ) {
@@ -57,6 +58,11 @@ function normalizeCart(value: unknown): CartItem[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const { products, isLoading: isCatalogLoading } = useCatalog();
+  const productIds = useMemo(
+    () => new Set(products.map((product) => product.id)),
+    [products],
+  );
 
   useEffect(() => {
     const loadCart = () => {
@@ -75,40 +81,57 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(loadId);
   }, []);
 
+  const availableItems = useMemo(
+    () => normalizeCart(items, productIds),
+    [items, productIds],
+  );
+
   useEffect(() => {
-    if (!isHydrated) {
+    if (!isHydrated || isCatalogLoading) {
       return;
     }
 
-    window.localStorage.setItem(cartStorageKey, JSON.stringify(items));
-  }, [isHydrated, items]);
+    window.localStorage.setItem(
+      cartStorageKey,
+      JSON.stringify(availableItems),
+    );
+  }, [availableItems, isCatalogLoading, isHydrated]);
 
   const value = useMemo<CartContextValue>(() => {
-    const totalItems = items.reduce((total, item) => total + item.quantity, 0);
-    const subtotal = items.reduce((total, item) => {
+    const totalItems = availableItems.reduce(
+      (total, item) => total + item.quantity,
+      0,
+    );
+    const subtotal = availableItems.reduce((total, item) => {
       const product = products.find(({ id }) => id === item.productId);
       return total + (product?.price ?? 0) * item.quantity;
     }, 0);
 
     return {
-      items,
+      items: availableItems,
       totalItems,
       subtotal,
       addItem: (productId) => {
         setItems((currentItems) => {
-          const existingItem = currentItems.find(
+          const normalizedItems = normalizeCart(currentItems, productIds);
+
+          if (!productIds.has(productId)) {
+            return currentItems;
+          }
+
+          const existingItem = normalizedItems.find(
             (item) => item.productId === productId,
           );
 
           if (existingItem) {
-            return currentItems.map((item) =>
+            return normalizedItems.map((item) =>
               item.productId === productId
                 ? { ...item, quantity: item.quantity + 1 }
                 : item,
             );
           }
 
-          return [...currentItems, { productId, quantity: 1 }];
+          return [...normalizedItems, { productId, quantity: 1 }];
         });
       },
       updateQuantity: (productId, quantity) => {
@@ -129,7 +152,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       clearCart: () => setItems([]),
     };
-  }, [items]);
+  }, [availableItems, productIds, products]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

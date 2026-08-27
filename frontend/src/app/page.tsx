@@ -9,23 +9,13 @@ import {
 } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
 import { useState, type FormEvent } from "react";
-import type { ProductCategory, ProductFilter } from "../data/products";
 import { useCart } from "../components/shop/CartProvider";
+import { useCatalog } from "../components/shop/CatalogProvider";
 import { ProductSection } from "../components/shop/ProductSection";
 import { SiteHeader } from "../components/shop/SiteHeader";
+import type { ProductFilter } from "../data/products";
 import { requestNewsletterSignup } from "../repositories/newsletter.repository";
 import styles from "./page.module.css";
-
-const categories: Array<{
-  label: ProductCategory;
-  count: string;
-  tone: string;
-}> = [
-  { label: "리빙", count: "12 items", tone: "sand" },
-  { label: "패션", count: "08 items", tone: "sage" },
-  { label: "액세서리", count: "16 items", tone: "clay" },
-  { label: "뷰티", count: "09 items", tone: "mist" },
-];
 
 export default function Home() {
   const [showAnnouncement, setShowAnnouncement] = useState(true);
@@ -35,6 +25,7 @@ export default function Home() {
   const [newsletterFeedback, setNewsletterFeedback] = useState("");
   const [isNewsletterSubmitting, setIsNewsletterSubmitting] = useState(false);
   const { totalItems, addItem } = useCart();
+  const { categories } = useCatalog();
 
   const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -184,8 +175,8 @@ export default function Home() {
               <a
                 href="#new-arrivals"
                 className={`${styles.categoryCard} ${styles[category.tone]}`}
-                key={category.label}
-                onClick={() => setActiveFilter(category.label)}
+                key={category.id}
+                onClick={() => setActiveFilter(category.name)}
               >
                 <span className={styles.categoryIndex}>0{index + 1}</span>
                 <div className={styles.categoryArt} aria-hidden="true">
@@ -195,8 +186,8 @@ export default function Home() {
                 </div>
                 <div className={styles.categoryMeta}>
                   <div>
-                    <h3>{category.label}</h3>
-                    <span>{category.count}</span>
+                    <h3>{category.name}</h3>
+                    <span>{String(category.count).padStart(2, "0")} items</span>
                   </div>
                   <ArrowUpward />
                 </div>

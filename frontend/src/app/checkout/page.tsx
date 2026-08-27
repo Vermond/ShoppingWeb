@@ -5,8 +5,8 @@ import { Button, TextField } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useCart } from "../../components/shop/CartProvider";
+import { useCatalog } from "../../components/shop/CatalogProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
-import { products } from "../../data/products";
 import { createOrder, type CheckoutRequest } from "../../repositories/orders.repository";
 import styles from "./page.module.css";
 
@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const { items, totalItems, subtotal, clearCart } = useCart();
+  const { products } = useCatalog();
   const shipping = subtotal === 0 || subtotal >= 30000 ? 0 : 3000;
   const total = subtotal + shipping;
 
@@ -46,7 +47,10 @@ export default function CheckoutPage() {
       const result = await createOrder({
         customer,
         paymentMethod,
-        items,
+        items: items.map((item) => ({
+          ...item,
+          price: products.find(({ id }) => id === item.productId)?.price ?? 0,
+        })),
       });
       clearCart();
       router.push(`/order/complete?orderId=${encodeURIComponent(result.id)}`);

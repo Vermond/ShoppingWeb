@@ -5,6 +5,7 @@ import { CssVarsProvider } from "@mui/material/styles";
 import type { ReactNode } from "react";
 import { theme } from "../theme";
 import { CartProvider } from "./shop/CartProvider";
+import { CatalogProvider } from "./shop/CatalogProvider";
 import { WishlistProvider } from "./shop/WishlistProvider";
 
 type ThemeRegistryProps = {
@@ -15,9 +16,11 @@ export function ThemeRegistry({ children }: ThemeRegistryProps) {
   return (
     <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <CssVarsProvider theme={theme} defaultMode="light">
-        <CartProvider>
-          <WishlistProvider>{children}</WishlistProvider>
-        </CartProvider>
+        <CatalogProvider>
+          <CartProvider>
+            <WishlistProvider>{children}</WishlistProvider>
+          </CartProvider>
+        </CatalogProvider>
       </CssVarsProvider>
     </AppRouterCacheProvider>
   );

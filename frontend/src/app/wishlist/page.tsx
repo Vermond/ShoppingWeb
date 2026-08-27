@@ -5,15 +5,16 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "../../components/shop/CartProvider";
+import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductCard } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { useWishlist } from "../../components/shop/WishlistProvider";
-import { products } from "../../data/products";
 import styles from "../shop/page.module.css";
 
 export default function WishlistPage() {
   const [query, setQuery] = useState("");
   const { totalItems, addItem } = useCart();
+  const { products } = useCatalog();
   const { favoriteIds, isFavorite, toggleFavorite } = useWishlist();
   const favoriteProducts = products.filter((product) =>
     favoriteIds.includes(product.id),

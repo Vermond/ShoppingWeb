@@ -3,15 +3,12 @@
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { Tab, Tabs } from "@mui/material";
 import { useMemo, useState } from "react";
-import {
-  products,
-  type ProductFilter,
-} from "../../data/products";
+import type { ProductFilter } from "../../data/products";
 import { useWishlist } from "./WishlistProvider";
 import styles from "../../app/page.module.css";
+import { useCatalog } from "./CatalogProvider";
 import { ProductCard } from "./ProductCard";
 
-const filters: ProductFilter[] = ["전체", "리빙", "패션", "액세서리", "뷰티"];
 type SortOrder = "recommended" | "priceAsc" | "priceDesc";
 
 const sortLabels: Record<SortOrder, string> = {
@@ -35,7 +32,12 @@ export function ProductSection({
 }: ProductSectionProps) {
   const [addedProduct, setAddedProduct] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("recommended");
+  const { products, categories } = useCatalog();
   const { isFavorite, toggleFavorite } = useWishlist();
+  const filters = useMemo<ProductFilter[]>(
+    () => ["전체", ...categories.map((category) => category.name)],
+    [categories],
+  );
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -61,7 +63,7 @@ export function ProductSection({
     }
 
     return filteredProducts;
-  }, [activeFilter, query, sortOrder]);
+  }, [activeFilter, products, query, sortOrder]);
 
   const cycleSortOrder = () => {
     setSortOrder((current) => {
