@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import type { Product } from "../../types/catalog";
 import { formatPrice } from "../../utils/format";
-import styles from "../../app/page.module.css";
+import styles from "./ProductCard.module.css";
 
 type ProductCardProps = {
   product: Product;
