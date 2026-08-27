@@ -15,6 +15,15 @@ export type UpdateUserInput = {
   name?: string;
 };
 
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
+export type EmailVerificationInput = {
+  token: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -78,6 +87,16 @@ function readPassword(body: Record<string, unknown>): string {
   return password;
 }
 
+function readLoginPassword(body: Record<string, unknown>): string {
+  const password = body.password;
+
+  if (typeof password !== 'string' || password.length === 0) {
+    throw new BadRequestException('password은(는) 필수 문자열입니다.');
+  }
+
+  return password;
+}
+
 export function parseCreateUserInput(value: unknown): CreateUserInput {
   const body = readBody(value);
   validateFields(body, ['email', 'password', 'name']);
@@ -112,4 +131,38 @@ export function parseUpdateUserInput(value: unknown): UpdateUserInput {
   }
 
   return input;
+}
+
+export function parseLoginInput(value: unknown): LoginInput {
+  const body = readBody(value);
+  validateFields(body, ['email', 'password']);
+
+  return {
+    email: readEmail(body),
+    password: readLoginPassword(body),
+  };
+}
+
+export function parseEmailVerificationInput(
+  value: unknown,
+): EmailVerificationInput {
+  const body = readBody(value);
+  validateFields(body, ['token']);
+
+  const token = readNonEmptyString(body, 'token');
+
+  if (token.length > 256) {
+    throw new BadRequestException('인증 토큰이 너무 깁니다.');
+  }
+
+  return { token };
+}
+
+export function parseEmailVerificationResendInput(value: unknown): {
+  email: string;
+} {
+  const body = readBody(value);
+  validateFields(body, ['email']);
+
+  return { email: readEmail(body) };
 }

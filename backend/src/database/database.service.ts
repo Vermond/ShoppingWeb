@@ -4,6 +4,13 @@ import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 export type DatabaseQueryValue =
   string | number | boolean | Date | Buffer | null;
 
+export interface DatabaseQueryExecutor {
+  query<T extends QueryResultRow>(
+    queryText: string,
+    values?: DatabaseQueryValue[],
+  ): Promise<QueryResult<T>>;
+}
+
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
   private pool?: Pool;
@@ -17,6 +24,38 @@ export class DatabaseService implements OnModuleDestroy {
     }
 
     return this.getPool().query<T>(queryText);
+  }
+
+  async transaction<T>(
+    callback: (executor: DatabaseQueryExecutor) => Promise<T>,
+  ): Promise<T> {
+    const client = await this.getPool().connect();
+    const executor: DatabaseQueryExecutor = {
+      query: <R extends QueryResultRow>(
+        queryText: string,
+        values?: DatabaseQueryValue[],
+      ) =>
+        values
+          ? client.query<R>(queryText, values)
+          : client.query<R>(queryText),
+    };
+
+    try {
+      await client.query('BEGIN');
+      const result = await callback(executor);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Keep the original database error as the one reported to the caller.
+      }
+
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
