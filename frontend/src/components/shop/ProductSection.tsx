@@ -1,7 +1,8 @@
 "use client";
 
-import { KeyboardArrowDown } from "@mui/icons-material";
+import { ArrowForward, KeyboardArrowDown } from "@mui/icons-material";
 import { Tab, Tabs } from "@mui/material";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ProductFilter } from "../../data/products";
 import { useWishlist } from "./WishlistProvider";
@@ -32,7 +33,7 @@ export function ProductSection({
 }: ProductSectionProps) {
   const [addedProduct, setAddedProduct] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("recommended");
-  const { products, categories } = useCatalog();
+  const { products, categories, isLoading, errorMessage } = useCatalog();
   const { isFavorite, toggleFavorite } = useWishlist();
   const filters = useMemo<ProductFilter[]>(
     () => ["전체", ...categories.map((category) => category.name)],
@@ -78,6 +79,18 @@ export function ProductSection({
       return "recommended";
     });
   };
+
+  const emptyMessage = isLoading
+    ? "상품 정보를 불러오는 중이에요."
+    : errorMessage
+      ? "상품 정보를 불러오지 못했어요."
+      : products.length === 0
+        ? "등록된 상품이 없어요."
+        : "검색 결과가 없어요. 다른 단어로 찾아보세요.";
+  const hasMoreProducts = visibleProducts.length >= 9;
+  const displayedProducts = hasMoreProducts
+    ? visibleProducts.slice(0, 7)
+    : visibleProducts;
 
   const addToCart = (productId: string) => {
     onAddToCart(productId);
@@ -145,20 +158,29 @@ export function ProductSection({
 
       {visibleProducts.length > 0 ? (
         <div className={styles.productGrid}>
-          {visibleProducts.map((product) => (
+          {displayedProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
-              index={products.indexOf(product)}
               isFavorite={isFavorite(product.id)}
               isAdded={addedProduct === product.id}
               onToggleFavorite={toggleFavorite}
               onAddToCart={addToCart}
             />
           ))}
+          {hasMoreProducts && (
+            <Link
+              className={styles.moreCard}
+              href="/shop"
+              aria-label="상품 전체 보기"
+            >
+              <span>더보기</span>
+              <ArrowForward />
+            </Link>
+          )}
         </div>
       ) : (
-        <div className={styles.emptyState}>검색 결과가 없어요. 다른 단어로 찾아보세요.</div>
+        <div className={styles.emptyState}>{emptyMessage}</div>
       )}
     </section>
   );

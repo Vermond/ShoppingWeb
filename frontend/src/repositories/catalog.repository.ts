@@ -1,8 +1,4 @@
-import {
-  products as fallbackProducts,
-  type Product,
-  type ProductCategory,
-} from "../data/products";
+import type { Product, ProductCategory } from "../data/products";
 
 export type CatalogCategory = {
   id: string;
@@ -171,11 +167,6 @@ function buildCategories(
     tone: categoryTones[index % categoryTones.length],
   }));
 }
-
-export const fallbackCatalog: CatalogData = {
-  products: fallbackProducts,
-  categories: buildCategories(fallbackProducts),
-};
 
 export async function fetchCatalog(): Promise<CatalogData> {
   const [categoriesResponse, productsResponse] = await Promise.all([

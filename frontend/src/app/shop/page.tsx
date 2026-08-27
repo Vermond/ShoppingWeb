@@ -3,7 +3,8 @@
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { Tab, Tabs } from "@mui/material";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductCard } from "../../components/shop/ProductCard";
@@ -20,17 +21,31 @@ const sortLabels: Record<SortOrder, string> = {
   priceDesc: "높은 가격순",
 };
 
-export default function ShopPage() {
+function ShopContent() {
   const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ProductFilter>("전체");
+  const [selectedFilter, setSelectedFilter] = useState<ProductFilter | null>(
+    null,
+  );
   const [sortOrder, setSortOrder] = useState<SortOrder>("recommended");
+  const searchParams = useSearchParams();
   const { totalItems, addItem } = useCart();
-  const { products, categories } = useCatalog();
+  const { products, categories, isLoading, errorMessage } = useCatalog();
   const { isFavorite, toggleFavorite } = useWishlist();
+  const requestedCategoryId = searchParams.get("categoryId");
+  const requestedCategory = categories.find(
+    ({ id }) => id === requestedCategoryId,
+  )?.name;
   const filters = useMemo<ProductFilter[]>(
     () => ["전체", ...categories.map((category) => category.name)],
     [categories],
   );
+
+  const activeFilter =
+    selectedFilter ??
+    (requestedCategory &&
+    categories.some(({ name }) => name === requestedCategory)
+      ? requestedCategory
+      : "전체");
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -71,6 +86,14 @@ export default function ShopPage() {
     });
   };
 
+  const emptyMessage = isLoading
+    ? "상품 정보를 불러오는 중이에요."
+    : errorMessage
+      ? "상품 정보를 불러오지 못했어요."
+      : products.length === 0
+        ? "등록된 상품이 없어요."
+        : "찾으시는 물건이 없어요. 다른 단어로 찾아보세요.";
+
   return (
     <div className={styles.shopPage}>
       <SiteHeader
@@ -97,7 +120,7 @@ export default function ShopPage() {
           <div className={styles.catalogToolbar}>
             <Tabs
               value={activeFilter}
-              onChange={(_, value: ProductFilter) => setActiveFilter(value)}
+              onChange={(_, value: ProductFilter) => setSelectedFilter(value)}
               aria-label="상품 카테고리 필터"
               variant="scrollable"
               scrollButtons={false}
@@ -149,7 +172,6 @@ export default function ShopPage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  index={products.indexOf(product)}
                   isFavorite={isFavorite(product.id)}
                   isAdded={false}
                   onToggleFavorite={toggleFavorite}
@@ -158,9 +180,7 @@ export default function ShopPage() {
               ))}
             </div>
           ) : (
-            <div className={styles.emptyShop}>
-              찾으시는 물건이 없어요. 다른 단어로 찾아보세요.
-            </div>
+            <div className={styles.emptyShop}>{emptyMessage}</div>
           )}
         </section>
       </main>
@@ -170,5 +190,13 @@ export default function ShopPage() {
         <Link href="/">Back to Morrow</Link>
       </footer>
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={<div className={styles.shopPage} />}>
+      <ShopContent />
+    </Suspense>
   );
 }

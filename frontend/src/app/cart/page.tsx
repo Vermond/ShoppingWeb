@@ -90,7 +90,6 @@ export default function CartPage() {
                     <div className={styles.cartItemArt}>
                       <ProductArt
                         product={product}
-                        index={products.indexOf(product)}
                       />
                     </div>
 

@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  fallbackCatalog,
   fetchCatalog,
   type CatalogData,
 } from "../../repositories/catalog.repository";
@@ -20,9 +19,13 @@ type CatalogContextValue = CatalogData & {
 };
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
+const emptyCatalog: CatalogData = {
+  products: [],
+  categories: [],
+};
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
-  const [catalog, setCatalog] = useState<CatalogData>(fallbackCatalog);
+  const [catalog, setCatalog] = useState<CatalogData>(emptyCatalog);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -39,6 +42,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         if (!cancelled) {
+          setCatalog(emptyCatalog);
           setErrorMessage(
             error instanceof Error
               ? error.message

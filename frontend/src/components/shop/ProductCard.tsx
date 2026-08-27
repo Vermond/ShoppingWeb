@@ -17,7 +17,6 @@ import styles from "../../app/page.module.css";
 
 type ProductCardProps = {
   product: Product;
-  index: number;
   isFavorite: boolean;
   isAdded: boolean;
   onToggleFavorite: (productId: string) => void;
@@ -30,11 +29,9 @@ function formatPrice(price: number) {
 
 export function ProductArt({
   product,
-  index,
   className,
 }: {
   product: Product;
-  index: number;
   className?: string;
 }) {
   return (
@@ -48,14 +45,12 @@ export function ProductArt({
         <span />
         <span />
       </div>
-      <span className={styles.artIndex}>0{index + 1}</span>
     </div>
   );
 }
 
 export function ProductCard({
   product,
-  index,
   isFavorite,
   isAdded,
   onToggleFavorite,
@@ -69,7 +64,7 @@ export function ProductCard({
           href={`/products/${product.id}`}
           aria-label={`${product.name} 상세 보기`}
         >
-          <ProductArt product={product} index={index} />
+          <ProductArt product={product} />
         </Link>
 
         {product.tag && (

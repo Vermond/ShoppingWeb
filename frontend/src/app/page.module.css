@@ -559,14 +559,6 @@
   transform: translateY(-5px);
 }
 
-.categoryIndex {
-  position: relative;
-  z-index: 2;
-  color: rgba(31,33,30,.55);
-  font-size: 9px;
-  letter-spacing: .1em;
-}
-
 .categoryArt {
   position: absolute;
   inset: 0;
@@ -732,6 +724,29 @@
   min-width: 0;
 }
 
+.moreCard {
+  display: flex;
+  min-height: 275px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 12px;
+  transition: background-color .2s, transform .2s;
+}
+
+.moreCard:hover {
+  background: rgba(216,210,197,.35);
+  transform: translateY(-3px);
+}
+
+.moreCard svg {
+  width: 17px;
+  height: 17px;
+  transform: rotate(-45deg);
+}
+
 .productImageWrap {
   position: relative;
 }
@@ -751,16 +766,12 @@
   padding: 15px;
 }
 
-.artLabel, .artIndex {
+.artLabel {
   position: relative;
   z-index: 2;
   color: rgba(31,33,30,.57);
   font-size: 9px;
   letter-spacing: .1em;
-}
-
-.artIndex {
-  align-self: flex-start;
 }
 
 .artObject {
@@ -1115,6 +1126,11 @@
   padding: 16px 0 10px;
 }
 
+.productInfo > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .productInfo p {
   margin-bottom: 6px;
   color: var(--muted);
@@ -1141,10 +1157,11 @@
 }
 
 .productInfo strong {
-  flex: none;
+  flex: 0 0 auto;
   padding-top: 1px;
   font-size: 11px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .addButton {
@@ -1560,6 +1577,10 @@
   .productArt {
     min-height: 185px;
     padding: 10px;
+  }
+
+  .moreCard {
+    min-height: 185px;
   }
 
   .productInfo {

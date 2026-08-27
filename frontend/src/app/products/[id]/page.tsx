@@ -66,7 +66,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  const productIndex = products.indexOf(product);
   const addToCart = () => {
     addItem(product.id);
     setIsAdded(true);
@@ -97,7 +96,6 @@ export default function ProductDetailPage() {
           <div className={styles.detailVisual}>
             <ProductArt
               product={product}
-              index={productIndex}
               className={styles.detailArt}
             />
           </div>

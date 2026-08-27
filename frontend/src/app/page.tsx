@@ -8,6 +8,7 @@ import {
   LocalShippingOutlined,
 } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useCart } from "../components/shop/CartProvider";
 import { useCatalog } from "../components/shop/CatalogProvider";
@@ -171,14 +172,12 @@ export default function Home() {
           </div>
 
           <div className={styles.categoryGrid}>
-            {categories.map((category, index) => (
-              <a
-                href="#new-arrivals"
+            {categories.map((category) => (
+              <Link
+                href={`/shop?categoryId=${encodeURIComponent(category.id)}`}
                 className={`${styles.categoryCard} ${styles[category.tone]}`}
                 key={category.id}
-                onClick={() => setActiveFilter(category.name)}
               >
-                <span className={styles.categoryIndex}>0{index + 1}</span>
                 <div className={styles.categoryArt} aria-hidden="true">
                   <span />
                   <span />
@@ -191,7 +190,7 @@ export default function Home() {
                   </div>
                   <ArrowUpward />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </section>

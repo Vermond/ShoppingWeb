@@ -50,7 +50,6 @@ export default function WishlistPage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  index={products.indexOf(product)}
                   isFavorite={isFavorite(product.id)}
                   isAdded={false}
                   onToggleFavorite={toggleFavorite}

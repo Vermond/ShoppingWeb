@@ -9,9 +9,9 @@
 }
 
 .detailMain {
-  width: min(1180px, 100%);
+  width: min(1360px, 100%);
   margin: 0 auto;
-  padding: 45px 5.5vw 120px;
+  padding: 45px clamp(36px, 4vw, 64px) 120px;
 }
 
 .backButton {
@@ -31,7 +31,7 @@
 .detailLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
-  gap: 9vw;
+  gap: clamp(56px, 6vw, 88px);
   align-items: center;
   padding-top: 55px;
 }
@@ -46,7 +46,7 @@
 }
 
 .detailCopy {
-  max-width: 440px;
+  max-width: 500px;
 }
 
 .eyebrow {
@@ -84,7 +84,7 @@
 }
 
 .description {
-  max-width: 340px;
+  max-width: 380px;
   margin: 30px 0 25px;
   color: var(--muted);
   font-size: 13px;
