@@ -8,6 +8,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { RefreshTokenRepository } from '../auth/refresh-token.repository';
 import { DatabaseService } from '../database/database.service';
 import { EmailVerificationRepository } from './email-verification.repository';
 import { EmailVerificationService } from './email-verification.service';
@@ -38,6 +39,7 @@ export class UsersService {
     private readonly passwordService: PasswordService,
     private readonly emailVerificationRepository: EmailVerificationRepository,
     private readonly emailVerificationService: EmailVerificationService,
+    private readonly refreshTokenRepository: RefreshTokenRepository,
   ) {}
 
   async create(input: CreateUserInput): Promise<UserRecord> {
@@ -118,6 +120,13 @@ export class UsersService {
               )
             : undefined;
 
+          if (emailChanged) {
+            await this.refreshTokenRepository.revokeAllForUser(
+              user.id,
+              executor,
+            );
+          }
+
           return { user, challenge };
         },
       );
@@ -161,6 +170,7 @@ export class UsersService {
             user.id,
             executor,
           );
+          await this.refreshTokenRepository.revokeAllForUser(user.id, executor);
         }
 
         return user;

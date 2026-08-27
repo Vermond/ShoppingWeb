@@ -18,6 +18,14 @@ const nextConfig: NextConfig = {
         source: "/api/categories",
         destination: `${backendApiBaseUrl}/api/categories`,
       },
+      {
+        source: "/api/users",
+        destination: `${backendApiBaseUrl}/api/users`,
+      },
+      {
+        source: "/api/users/:path*",
+        destination: `${backendApiBaseUrl}/api/users/:path*`,
+      },
     ];
   },
 };

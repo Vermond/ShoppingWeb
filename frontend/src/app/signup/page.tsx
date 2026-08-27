@@ -3,6 +3,7 @@
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import { Button, TextField } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { requestSignup } from "../../repositories/auth.repository";
 import styles from "../login/page.module.css";
@@ -13,6 +14,7 @@ type Feedback = {
 } | null;
 
 export default function SignupPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,10 +35,9 @@ export default function SignupPage() {
 
     try {
       const result = await requestSignup({ name, email, password });
-      setFeedback({
-        tone: "success",
-        message: result.message ?? "회원가입이 완료되었어요.",
-      });
+      router.push(
+        `/auth/verify-email?email=${encodeURIComponent(result.user.email)}`,
+      );
     } catch (error) {
       setFeedback({
         tone: "error",
@@ -131,13 +132,13 @@ export default function SignupPage() {
             </Button>
           </form>
           {feedback && (
-            <p className={`${styles.feedback} ${styles[feedback.tone]}`} role="status">
+            <p
+              className={`${styles.feedback} ${styles[feedback.tone]}`}
+              role="status"
+            >
               {feedback.message}
             </p>
           )}
-          <p className={styles.mockNotice}>
-            회원가입은 서버 연결 전 목업으로 동작합니다.
-          </p>
         </section>
         <aside className={styles.loginVisual} aria-hidden="true" />
       </main>

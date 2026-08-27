@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
 import styles from "../../app/page.module.css";
 
 const navSections = [
@@ -39,6 +40,7 @@ export function SiteHeader({
   activeSection,
 }: SiteHeaderProps) {
   const pathname = usePathname();
+  const { status } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrollSection, setScrollSection] =
     useState<SectionId>("new-arrivals");
@@ -82,6 +84,8 @@ export function SiteHeader({
 
   const selectedSection = activeSection === undefined ? scrollSection : activeSection;
   const isHome = pathname === "/";
+  const accountHref = status === "authenticated" ? "/account" : "/login";
+  const accountLabel = status === "authenticated" ? "내 계정" : "로그인";
 
   const closeSearch = () => {
     onQueryChange("");
@@ -116,10 +120,10 @@ export function SiteHeader({
           <IconButton
             className={styles.iconButton}
             component="a"
-            href="/login"
+            href={accountHref}
             type="button"
             disableRipple
-            aria-label="로그인"
+            aria-label={accountLabel}
           >
             <AccountCircle />
           </IconButton>

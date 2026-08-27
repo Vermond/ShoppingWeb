@@ -3,8 +3,11 @@
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import { Button, TextField } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { useAuth } from "../../components/auth/AuthProvider";
 import {
+  AuthRequestError,
   requestLogin,
   socialProviders,
   type SocialProvider,
@@ -17,6 +20,8 @@ type Feedback = {
 } | null;
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,8 +33,28 @@ export default function LoginPage() {
 
     try {
       const result = await requestLogin(payload);
+
+      if (payload.method === "email") {
+        signIn(result.user);
+        router.replace("/");
+        return;
+      }
+
       setFeedback({ tone: "success", message: result.message });
     } catch (error) {
+      if (
+        error instanceof AuthRequestError &&
+        error.code === "EMAIL_NOT_VERIFIED" &&
+        payload.method === "email"
+      ) {
+        router.replace(
+          `/auth/verification-required?email=${encodeURIComponent(
+            payload.email,
+          )}`,
+        );
+        return;
+      }
+
       setFeedback({
         tone: "error",
         message:
@@ -180,7 +205,7 @@ export default function LoginPage() {
           )}
 
           <p className={styles.mockNotice}>
-            현재 로그인 기능은 서버 연결 전 목업으로 동작합니다.
+            소셜 로그인은 연결 준비 중입니다.
           </p>
         </section>
 

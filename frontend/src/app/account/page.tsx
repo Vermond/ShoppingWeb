@@ -3,23 +3,70 @@
 import { ArrowForward, EditOutlined } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import styles from "./page.module.css";
 
 export default function AccountPage() {
+  const router = useRouter();
+  const { user, status, signOut } = useAuth();
   const [query, setQuery] = useState("");
+  const [logoutError, setLogoutError] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { totalItems } = useCart();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [router, status]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    setLogoutError("");
+
+    try {
+      await signOut();
+      router.replace("/login");
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error ? error.message : "로그아웃하지 못했어요.",
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const siteHeader = (
+    <SiteHeader
+      activeSection={null}
+      cartCount={totalItems}
+      query={query}
+      onQueryChange={setQuery}
+    />
+  );
+
+  if (status !== "authenticated" || !user) {
+    return (
+      <div className={styles.accountPage}>
+        {siteHeader}
+        {status === "loading" && (
+          <main className={styles.accountMain}>
+            <p className={styles.loadingMessage}>
+              로그인 정보를 확인하는 중...
+            </p>
+          </main>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.accountPage}>
-      <SiteHeader
-        activeSection={null}
-        cartCount={totalItems}
-        query={query}
-        onQueryChange={setQuery}
-      />
+      {siteHeader}
 
       <main className={styles.accountMain}>
         <section className={styles.accountHero} aria-labelledby="account-title">
@@ -33,14 +80,27 @@ export default function AccountPage() {
             <div className={styles.profileHeader}>
               <div>
                 <p className={styles.eyebrow}>Profile</p>
-                <h2 id="profile-title">Morrow member</h2>
+                <h2 id="profile-title">{user.name}</h2>
               </div>
               <IconButton type="button" size="small" disableRipple aria-label="프로필 수정">
                 <EditOutlined />
               </IconButton>
             </div>
-            <p className={styles.profileEmail}>hello@morrow.mock</p>
-            <p className={styles.mockNote}>회원 정보는 서버 연결 전 목업으로 표시됩니다.</p>
+            <p className={styles.profileEmail}>{user.email}</p>
+            <Button
+              className={styles.continueButton}
+              type="button"
+              disableRipple
+              disabled={isLoggingOut}
+              onClick={handleLogout}
+            >
+              {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+            </Button>
+            {logoutError && (
+              <p className={styles.errorMessage} role="alert">
+                {logoutError}
+              </p>
+            )}
           </section>
 
           <section className={styles.accountLinks} aria-label="계정 메뉴">

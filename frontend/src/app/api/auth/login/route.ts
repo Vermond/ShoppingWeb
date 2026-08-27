@@ -3,6 +3,7 @@ import {
   type LoginRequest,
   type SocialProvider,
 } from "@/repositories/auth.repository";
+import { proxyAuthRequest } from "../proxy";
 
 export const dynamic = "force-dynamic";
 
@@ -53,17 +54,26 @@ export async function POST(request: Request) {
     );
   }
 
+  if (body.method === "email") {
+    return proxyAuthRequest(
+      request,
+      "/api/auth/login",
+      JSON.stringify({
+        email: body.email,
+        password: body.password,
+      }),
+    );
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 450));
 
-  const provider =
-    body.method === "social" ? providerLabels[body.provider] : "이메일";
-  const email = body.method === "email" ? body.email : null;
+  const provider = providerLabels[body.provider];
 
   return Response.json({
     user: {
       id: "mock-user-001",
-      name: email?.split("@")[0] ?? `${provider} 사용자`,
-      email,
+      name: `${provider} 사용자`,
+      email: null,
     },
     provider,
     message: `${provider} 로그인 목업이 완료되었어요.`,

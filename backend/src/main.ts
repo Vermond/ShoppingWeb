@@ -18,6 +18,16 @@ async function bootstrap() {
     .setTitle('ShoppingWeb Backend API')
     .setDescription('ShoppingWeb backend API documentation')
     .setVersion('1.0')
+    .addCookieAuth(
+      'access_token',
+      { type: 'apiKey', in: 'cookie' },
+      'access_token',
+    )
+    .addCookieAuth(
+      'refresh_token',
+      { type: 'apiKey', in: 'cookie' },
+      'refresh_token',
+    )
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
 
