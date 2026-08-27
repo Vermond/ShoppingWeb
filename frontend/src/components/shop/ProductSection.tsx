@@ -4,7 +4,7 @@ import { ArrowForward, KeyboardArrowDown } from "@mui/icons-material";
 import { Tab, Tabs } from "@mui/material";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { ProductFilter } from "../../data/products";
+import type { ProductFilter } from "../../types/catalog";
 import { useWishlist } from "./WishlistProvider";
 import styles from "../../app/page.module.css";
 import { useCatalog } from "./CatalogProvider";

@@ -1,30 +1,14 @@
-import {
-  socialProviders,
-  type LoginRequest,
-  type SocialProvider,
-} from "@/repositories/auth.repository";
+import type { LoginRequest } from "@/repositories/auth.repository";
 import { proxyAuthRequest } from "../proxy";
 
 export const dynamic = "force-dynamic";
 
-const providerLabels: Record<SocialProvider, string> = Object.fromEntries(
-  socialProviders.map(({ id, label }) => [id, label]),
-) as Record<SocialProvider, string>;
-
-function isSocialProvider(value: unknown): value is SocialProvider {
-  return socialProviders.some(({ id }) => id === value);
-}
-
-function isLoginRequest(value: unknown): value is LoginRequest {
+function isEmailLoginRequest(value: unknown): value is Extract<LoginRequest, { method: "email" }> {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const request = value as Partial<LoginRequest>;
-
-  if (request.method === "social") {
-    return isSocialProvider(request.provider);
-  }
+  const request = value as Partial<Extract<LoginRequest, { method: "email" }>>;
 
   return (
     request.method === "email" &&
@@ -47,35 +31,19 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isLoginRequest(body)) {
+  if (!isEmailLoginRequest(body)) {
     return Response.json(
       { error: "로그인 정보를 확인해주세요." },
       { status: 400 },
     );
   }
 
-  if (body.method === "email") {
-    return proxyAuthRequest(
-      request,
-      "/api/auth/login",
-      JSON.stringify({
-        email: body.email,
-        password: body.password,
-      }),
-    );
-  }
-
-  await new Promise((resolve) => setTimeout(resolve, 450));
-
-  const provider = providerLabels[body.provider];
-
-  return Response.json({
-    user: {
-      id: "mock-user-001",
-      name: `${provider} 사용자`,
-      email: null,
-    },
-    provider,
-    message: `${provider} 로그인 목업이 완료되었어요.`,
-  });
+  return proxyAuthRequest(
+    request,
+    "/api/auth/login",
+    JSON.stringify({
+      email: body.email,
+      password: body.password,
+    }),
+  );
 }

@@ -10,7 +10,7 @@ import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductCard } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { useWishlist } from "../../components/shop/WishlistProvider";
-import type { ProductFilter } from "../../data/products";
+import type { ProductFilter } from "../../types/catalog";
 import styles from "./page.module.css";
 
 type SortOrder = "recommended" | "priceAsc" | "priceDesc";

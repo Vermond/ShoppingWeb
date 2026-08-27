@@ -1,6 +1,6 @@
-import { products } from "@/data/products";
-import type { CheckoutRequest, MockOrder } from "@/repositories/orders.repository";
 import { requestCurrentUserOnServer } from "@/repositories/auth.server.repository";
+import { mockOrders } from "@/data/mock/orders";
+import type { CheckoutRequest } from "@/types/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -18,23 +18,6 @@ async function hasAuthenticatedUser(request: Request) {
   }
 }
 
-const mockOrders: MockOrder[] = [
-  {
-    id: "MORROW-250615",
-    status: "배송 완료",
-    createdAt: "2025. 06. 15",
-    total: 117000,
-    itemCount: 2,
-  },
-  {
-    id: "MORROW-250528",
-    status: "상품 준비중",
-    createdAt: "2025. 05. 28",
-    total: 89000,
-    itemCount: 1,
-  },
-];
-
 function isCheckoutRequest(value: unknown): value is CheckoutRequest {
   if (!value || typeof value !== "object") {
     return false;
@@ -44,22 +27,23 @@ function isCheckoutRequest(value: unknown): value is CheckoutRequest {
   const customer = request.customer;
 
   return (
-    request.paymentMethod === "card" || request.paymentMethod === "bank"
-  ) && Boolean(
-    customer &&
-      typeof customer.name === "string" &&
-      typeof customer.email === "string" &&
-      typeof customer.phone === "string" &&
-      typeof customer.address === "string" &&
-      Array.isArray(request.items) &&
-      request.items.length > 0 &&
-      request.items.every(
-        (item) =>
-          item &&
-          typeof item.productId === "string" &&
-          Number.isInteger(item.quantity) &&
-          item.quantity > 0,
-      ),
+    (request.paymentMethod === "card" || request.paymentMethod === "bank") &&
+    Boolean(
+      customer &&
+        typeof customer.name === "string" &&
+        typeof customer.email === "string" &&
+        typeof customer.phone === "string" &&
+        typeof customer.address === "string" &&
+        Array.isArray(request.items) &&
+        request.items.length > 0 &&
+        request.items.every(
+          (item) =>
+            item &&
+            typeof item.productId === "string" &&
+            Number.isInteger(item.quantity) &&
+            item.quantity > 0,
+        ),
+    )
   );
 }
 
@@ -96,11 +80,10 @@ export async function POST(request: Request) {
 
   const itemCount = body.items.reduce((total, item) => total + item.quantity, 0);
   const total = body.items.reduce((sum, item) => {
-    const product = products.find(({ id }) => id === item.productId);
     const price =
       typeof item.price === "number" && Number.isFinite(item.price)
         ? item.price
-        : product?.price ?? 0;
+        : 0;
 
     return sum + price * item.quantity;
   }, 0);

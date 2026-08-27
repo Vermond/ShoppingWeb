@@ -1,4 +1,4 @@
-import type { ProductCategory } from "./products";
+import type { ProductCategory } from "../types/catalog";
 
 export type AdminProductStatus = "판매중" | "재고 부족" | "판매 예정";
 export type AdminCustomerStatus = "활성" | "휴면";

@@ -141,7 +141,11 @@ async function throwIfRequestFailed(
 export async function requestLogin(
   payload: LoginRequest,
 ): Promise<LoginResponse> {
-  const response = await fetch("/api/auth/login", {
+  const endpoint =
+    payload.method === "social"
+      ? "/api/mock/auth/login"
+      : "/api/auth/login";
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -337,7 +341,7 @@ export async function requestResendVerification(
 }
 
 export async function requestPasswordReset(email: string) {
-  const response = await fetch("/api/auth/forgot-password", {
+  const response = await fetch("/api/mock/auth/forgot-password", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

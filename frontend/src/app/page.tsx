@@ -14,7 +14,7 @@ import { useCart } from "../components/shop/CartProvider";
 import { useCatalog } from "../components/shop/CatalogProvider";
 import { ProductSection } from "../components/shop/ProductSection";
 import { SiteHeader } from "../components/shop/SiteHeader";
-import type { ProductFilter } from "../data/products";
+import type { ProductFilter } from "../types/catalog";
 import { requestNewsletterSignup } from "../repositories/newsletter.repository";
 import styles from "./page.module.css";
 

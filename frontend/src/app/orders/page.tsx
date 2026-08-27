@@ -8,11 +8,11 @@ import { useCart } from "../../components/shop/CartProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import {
   fetchOrders,
-  type MockOrder,
+  type OrderSummary,
 } from "../../repositories/orders.repository";
 import styles from "../account/page.module.css";
 
-const statusClass: Record<MockOrder["status"], string> = {
+const statusClass: Record<OrderSummary["status"], string> = {
   "결제 완료": styles.paymentComplete,
   "상품 준비중": styles.preparing,
   배송중: styles.shipping,
@@ -25,7 +25,7 @@ function formatPrice(price: number) {
 
 export default function OrdersPage() {
   const [query, setQuery] = useState("");
-  const [orders, setOrders] = useState<MockOrder[]>([]);
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const { totalItems } = useCart();

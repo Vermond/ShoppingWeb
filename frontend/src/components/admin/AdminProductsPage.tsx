@@ -25,7 +25,7 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import type { AdminProductRecord } from "../../data/admin-pages";
-import type { ProductCategory } from "../../data/products";
+import type { ProductCategory } from "../../types/catalog";
 import { AdminSectionHeader } from "./AdminSectionHeader";
 import { AdminShell, adminTextSizes } from "./AdminShell";
 

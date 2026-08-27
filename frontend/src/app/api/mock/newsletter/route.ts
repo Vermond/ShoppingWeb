@@ -11,7 +11,11 @@ export async function POST(request: Request) {
 
   const requestBody = body as { email?: unknown } | null;
 
-  if (!requestBody || typeof requestBody.email !== "string" || !requestBody.email.includes("@")) {
+  if (
+    !requestBody ||
+    typeof requestBody.email !== "string" ||
+    !requestBody.email.includes("@")
+  ) {
     return Response.json(
       { error: "이메일 주소를 확인해주세요." },
       { status: 400 },

@@ -1,5 +1,5 @@
 export async function requestNewsletterSignup(email: string) {
-  const response = await fetch("/api/newsletter", {
+  const response = await fetch("/api/mock/newsletter", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

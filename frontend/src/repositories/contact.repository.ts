@@ -5,7 +5,7 @@ export type ContactRequest = {
 };
 
 export async function requestContact(payload: ContactRequest) {
-  const response = await fetch("/api/contact", {
+  const response = await fetch("/api/mock/contact", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

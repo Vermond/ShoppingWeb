@@ -12,7 +12,7 @@ import {
   IconButton,
 } from "@mui/material";
 import Link from "next/link";
-import type { Product } from "../../data/products";
+import type { Product } from "../../types/catalog";
 import styles from "../../app/page.module.css";
 
 type ProductCardProps = {

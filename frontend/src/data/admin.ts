@@ -1,4 +1,4 @@
-import type { ProductCategory } from "./products";
+import type { ProductCategory } from "../types/catalog";
 
 export type AdminOrderStatus =
   | "결제 완료"
