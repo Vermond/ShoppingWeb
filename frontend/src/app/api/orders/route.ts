@@ -1,7 +1,22 @@
 import { products } from "@/data/products";
 import type { CheckoutRequest, MockOrder } from "@/repositories/orders.repository";
+import { requestCurrentUserOnServer } from "@/repositories/auth.server.repository";
 
 export const dynamic = "force-dynamic";
+
+async function hasAuthenticatedUser(request: Request) {
+  const cookieHeader = request.headers.get("cookie");
+
+  if (!cookieHeader) {
+    return false;
+  }
+
+  try {
+    return Boolean(await requestCurrentUserOnServer(cookieHeader));
+  } catch {
+    return false;
+  }
+}
 
 const mockOrders: MockOrder[] = [
   {
@@ -48,11 +63,19 @@ function isCheckoutRequest(value: unknown): value is CheckoutRequest {
   );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!(await hasAuthenticatedUser(request))) {
+    return Response.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  }
+
   return Response.json({ orders: mockOrders });
 }
 
 export async function POST(request: Request) {
+  if (!(await hasAuthenticatedUser(request))) {
+    return Response.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  }
+
   let body: unknown;
 
   try {

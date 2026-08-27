@@ -1,7 +1,6 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { requestCurrentUserOnServer } from "../../repositories/auth.server.repository";
+import { requireAuthenticatedUser } from "../../components/auth/require-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,24 +11,7 @@ type AdminLayoutProps = {
 export default async function AdminLayout({
   children,
 }: AdminLayoutProps) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
-  if (!cookieHeader) {
-    redirect("/login");
-  }
-
-  let user;
-
-  try {
-    user = await requestCurrentUserOnServer(cookieHeader);
-  } catch {
-    redirect("/login");
-  }
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireAuthenticatedUser();
 
   if (user.role?.trim().toLowerCase() !== "admin") {
     redirect("/");
