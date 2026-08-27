@@ -9,14 +9,11 @@ import { useWishlist } from "./WishlistProvider";
 import styles from "../../app/page.module.css";
 import { useCatalog } from "./CatalogProvider";
 import { ProductCard } from "./ProductCard";
-
-type SortOrder = "recommended" | "priceAsc" | "priceDesc";
-
-const sortLabels: Record<SortOrder, string> = {
-  recommended: "추천순",
-  priceAsc: "낮은 가격순",
-  priceDesc: "높은 가격순",
-};
+import {
+  filterAndSortProducts,
+  sortLabels,
+  type SortOrder,
+} from "../../utils/catalog";
 
 type ProductSectionProps = {
   activeFilter: ProductFilter;
@@ -41,29 +38,7 @@ export function ProductSection({
   );
 
   const visibleProducts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    const filteredProducts = products.filter((product) => {
-      const matchesCategory =
-        activeFilter === "전체" || product.category === activeFilter;
-      const matchesQuery =
-        !normalizedQuery ||
-        `${product.name} ${product.description}`
-          .toLowerCase()
-          .includes(normalizedQuery);
-
-      return matchesCategory && matchesQuery;
-    });
-
-    if (sortOrder === "priceAsc") {
-      return filteredProducts.sort((a, b) => a.price - b.price);
-    }
-
-    if (sortOrder === "priceDesc") {
-      return filteredProducts.sort((a, b) => b.price - a.price);
-    }
-
-    return filteredProducts;
+    return filterAndSortProducts(products, activeFilter, query, sortOrder);
   }, [activeFilter, products, query, sortOrder]);
 
   const cycleSortOrder = () => {

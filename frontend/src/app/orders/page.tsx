@@ -10,6 +10,7 @@ import {
   fetchOrders,
   type OrderSummary,
 } from "../../repositories/orders.repository";
+import { formatPrice } from "../../utils/format";
 import styles from "../account/page.module.css";
 
 const statusClass: Record<OrderSummary["status"], string> = {
@@ -18,10 +19,6 @@ const statusClass: Record<OrderSummary["status"], string> = {
   배송중: styles.shipping,
   "배송 완료": styles.delivered,
 };
-
-function formatPrice(price: number) {
-  return `${price.toLocaleString("ko-KR")}원`;
-}
 
 export default function OrdersPage() {
   const [query, setQuery] = useState("");

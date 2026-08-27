@@ -13,12 +13,9 @@ import { useCart } from "../../../components/shop/CartProvider";
 import { useCatalog } from "../../../components/shop/CatalogProvider";
 import { ProductArt } from "../../../components/shop/ProductCard";
 import { SiteHeader } from "../../../components/shop/SiteHeader";
+import { formatPrice } from "../../../utils/format";
 import { useWishlist } from "../../../components/shop/WishlistProvider";
 import styles from "./page.module.css";
-
-function formatPrice(price: number) {
-  return `${price.toLocaleString("ko-KR")}원`;
-}
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();

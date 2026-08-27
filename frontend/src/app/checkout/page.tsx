@@ -8,11 +8,9 @@ import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { createOrder, type CheckoutRequest } from "../../repositories/orders.repository";
+import { formatPrice } from "../../utils/format";
+import { calculateShipping } from "../../utils/order";
 import styles from "./page.module.css";
-
-function formatPrice(price: number) {
-  return `${price.toLocaleString("ko-KR")}원`;
-}
 
 const initialCustomer: CheckoutRequest["customer"] = {
   name: "",
@@ -31,7 +29,7 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const { items, totalItems, subtotal, clearCart } = useCart();
   const { products } = useCatalog();
-  const shipping = subtotal === 0 || subtotal >= 30000 ? 0 : 3000;
+  const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
 
   const updateCustomer = (key: keyof typeof customer, value: string) => {

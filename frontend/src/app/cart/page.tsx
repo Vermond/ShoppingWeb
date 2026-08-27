@@ -12,20 +12,18 @@ import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductArt } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
+import { formatPrice } from "../../utils/format";
+import {
+  calculateShipping,
+  FREE_SHIPPING_THRESHOLD,
+} from "../../utils/order";
 import styles from "./page.module.css";
-
-const freeShippingThreshold = 30000;
-const shippingFee = 3000;
-
-function formatPrice(price: number) {
-  return `${price.toLocaleString("ko-KR")}원`;
-}
 
 export default function CartPage() {
   const [query, setQuery] = useState("");
   const { items, totalItems, subtotal, updateQuantity, removeItem } = useCart();
   const { products } = useCatalog();
-  const shipping = subtotal === 0 || subtotal >= freeShippingThreshold ? 0 : shippingFee;
+  const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
 
   return (
@@ -173,9 +171,9 @@ export default function CartPage() {
                 결제하기
               </Button>
               <p className={styles.shippingNote}>
-                {subtotal >= freeShippingThreshold
+                {subtotal >= FREE_SHIPPING_THRESHOLD
                   ? "무료 배송이 적용되었어요."
-                  : `${formatPrice(freeShippingThreshold - subtotal)} 더 담으면 무료 배송`}
+                  : `${formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)} 더 담으면 무료 배송`}
               </p>
             </aside>
           </div>

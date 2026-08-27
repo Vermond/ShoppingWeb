@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import type { Product } from "../../types/catalog";
+import { formatPrice } from "../../utils/format";
 import styles from "../../app/page.module.css";
 
 type ProductCardProps = {
@@ -22,10 +23,6 @@ type ProductCardProps = {
   onToggleFavorite: (productId: string) => void;
   onAddToCart: (productId: string) => void;
 };
-
-function formatPrice(price: number) {
-  return `${price.toLocaleString("ko-KR")}원`;
-}
 
 export function ProductArt({
   product,
