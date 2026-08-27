@@ -11,9 +11,8 @@ import {
   type ReactNode,
 } from "react";
 import {
-  requestCurrentUser,
+  requestAuthenticatedUser,
   requestLogout,
-  requestRefresh,
   type AuthUser,
 } from "../../repositories/auth.repository";
 
@@ -23,6 +22,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   status: AuthStatus;
   signIn: (user: AuthUser) => void;
+  updateUser: (user: AuthUser) => void;
   signOut: () => Promise<void>;
 };
 
@@ -37,21 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
 
     const restoreSession = async () => {
-      let restoredUser: AuthUser | null = null;
-
-      try {
-        restoredUser = await requestCurrentUser();
-      } catch {
-        restoredUser = null;
-      }
-
-      if (!restoredUser) {
-        try {
-          restoredUser = await requestRefresh();
-        } catch {
-          restoredUser = null;
-        }
-      }
+      const restoredUser = await requestAuthenticatedUser();
 
       if (!active || authActionStarted.current) {
         return;
@@ -74,6 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authenticated");
   }, []);
 
+  const updateUser = useCallback((nextUser: AuthUser) => {
+    authActionStarted.current = true;
+    setUser(nextUser);
+    setStatus("authenticated");
+  }, []);
+
   const signOut = useCallback(async () => {
     authActionStarted.current = true;
     await requestLogout();
@@ -82,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, signIn, signOut }),
-    [signIn, signOut, status, user],
+    () => ({ user, status, signIn, updateUser, signOut }),
+    [signIn, signOut, status, updateUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -11,7 +11,7 @@ type AdminLayoutProps = {
 export default async function AdminLayout({
   children,
 }: AdminLayoutProps) {
-  const user = await requireAuthenticatedUser();
+  const user = await requireAuthenticatedUser("/admin");
 
   if (user.role?.trim().toLowerCase() !== "admin") {
     redirect("/");

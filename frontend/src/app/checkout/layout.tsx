@@ -10,7 +10,7 @@ type CheckoutLayoutProps = {
 export default async function CheckoutLayout({
   children,
 }: CheckoutLayoutProps) {
-  await requireAuthenticatedUser();
+  await requireAuthenticatedUser("/checkout");
 
   return children;
 }

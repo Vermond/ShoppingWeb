@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import type { AuthUser } from "../../repositories/auth.repository";
 import { requestCurrentUserOnServer } from "../../repositories/auth.server.repository";
 
-export async function requireAuthenticatedUser(): Promise<AuthUser> {
+export async function requireAuthenticatedUser(
+  returnTo = "/",
+): Promise<AuthUser> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
@@ -21,5 +23,7 @@ export async function requireAuthenticatedUser(): Promise<AuthUser> {
     // 인증 서버에 연결할 수 없는 경우에도 보호된 화면을 노출하지 않습니다.
   }
 
-  redirect("/login");
+  redirect(
+    `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}`,
+  );
 }

@@ -8,7 +8,7 @@ type OrderLayoutProps = {
 };
 
 export default async function OrderLayout({ children }: OrderLayoutProps) {
-  await requireAuthenticatedUser();
+  await requireAuthenticatedUser("/order/complete");
 
   return children;
 }

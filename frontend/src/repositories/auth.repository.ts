@@ -49,6 +49,16 @@ export type SignupResponse = {
   user: AuthUser & { email: string };
 };
 
+export type UpdateProfileRequest = {
+  name?: string;
+  email?: string;
+  password?: string;
+};
+
+export type UpdateProfileResponse = {
+  user: AuthUser & { email: string };
+};
+
 export type EmailVerificationResponse = {
   code: string;
   message: string;
@@ -138,6 +148,24 @@ async function throwIfRequestFailed(
   });
 }
 
+async function requestWithAuthRetry(
+  request: () => Promise<Response>,
+): Promise<Response> {
+  const response = await request();
+
+  if (response.status !== 401) {
+    return response;
+  }
+
+  try {
+    await requestRefresh();
+  } catch {
+    return response;
+  }
+
+  return request();
+}
+
 export async function requestLogin(
   payload: LoginRequest,
 ): Promise<LoginResponse> {
@@ -221,6 +249,24 @@ export async function requestRefresh(): Promise<AuthUser> {
   return readAuthUser(result, "토큰 갱신 응답을 확인하지 못했어요.");
 }
 
+export async function requestAuthenticatedUser(): Promise<AuthUser | null> {
+  try {
+    const currentUser = await requestCurrentUser();
+
+    if (currentUser) {
+      return currentUser;
+    }
+  } catch {
+    // Access Token이 만료된 경우 Refresh Token으로 복구를 시도합니다.
+  }
+
+  try {
+    return await requestRefresh();
+  } catch {
+    return null;
+  }
+}
+
 export async function requestLogout(): Promise<LogoutResponse> {
   const response = await fetch("/api/auth/logout", {
     method: "POST",
@@ -263,6 +309,39 @@ export async function requestSignup(
 
   if (!isAuthUser(user) || typeof user.email !== "string") {
     throw new AuthRequestError("회원가입 응답을 확인하지 못했어요.", {
+      status: 502,
+    });
+  }
+
+  return { user: { ...user, email: user.email } };
+}
+
+export async function requestUpdateProfile(
+  userId: string,
+  payload: UpdateProfileRequest,
+): Promise<UpdateProfileResponse> {
+  const response = await requestWithAuthRetry(() =>
+    fetch(`/api/users/${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    }),
+  );
+
+  const result = await readResponse(response);
+  await throwIfRequestFailed(
+    response,
+    "사용자 정보를 수정하지 못했어요.",
+    result,
+  );
+
+  const user = isRecord(result) ? result.user : undefined;
+
+  if (!isAuthUser(user) || typeof user.email !== "string") {
+    throw new AuthRequestError("사용자 정보 수정 응답을 확인하지 못했어요.", {
       status: 502,
     });
   }

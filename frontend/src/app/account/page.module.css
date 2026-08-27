@@ -84,9 +84,45 @@
   height: 18px;
 }
 
+.profileEditForm {
+  display: grid;
+  gap: 22px;
+  margin-top: 25px;
+}
+
+.profileActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.cancelButton {
+  min-width: auto;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .profileEmail {
   margin-top: 25px;
   font-size: 12px;
+}
+
+.profileFeedback {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.profileFeedback.success {
+  color: #557252;
+}
+
+.profileFeedback.error {
+  color: #a5533c;
 }
 
 .mockNote {
