@@ -1,13 +1,21 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 
+export type DatabaseQueryValue =
+  string | number | boolean | Date | Buffer | null;
+
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
   private pool?: Pool;
 
   async query<T extends QueryResultRow>(
     queryText: string,
+    values?: DatabaseQueryValue[],
   ): Promise<QueryResult<T>> {
+    if (values) {
+      return this.getPool().query<T>(queryText, values);
+    }
+
     return this.getPool().query<T>(queryText);
   }
 
