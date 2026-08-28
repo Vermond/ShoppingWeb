@@ -40,6 +40,11 @@ describe('validateEnvironment', () => {
     expect(environment.AUTH_REFRESH_TOKEN_TTL).toBe(2_592_000);
     expect(environment.AUTH_COOKIE_SECURE).toBe(false);
     expect(environment.AUTH_RATE_LIMIT_RESEND_TTL_SECONDS).toBe(900);
+
+    expect(
+      validateEnvironment({ ...validEnvironment, SWAGGER_ENABLED: 'false' })
+        .SWAGGER_ENABLED,
+    ).toBe(false);
   });
 
   it('reports invalid settings without including secret values', () => {
@@ -87,5 +92,68 @@ describe('validateEnvironment', () => {
     ).toThrow(
       /production 환경에서는 SWAGGER_ENABLED=true를 사용할 수 없습니다/,
     );
+  });
+
+  it('rejects invalid Swagger and environment values', () => {
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, SWAGGER_ENABLED: 'yes' }),
+    ).toThrow(/SWAGGER_ENABLED은 true 또는 false여야 합니다/);
+
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, NODE_ENV: 'staging' }),
+    ).toThrow(/NODE_ENV는 development, test, production 중 하나여야 합니다/);
+
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, DATABASE_URL: 'mysql://db' }),
+    ).toThrow(/DATABASE_URL은 PostgreSQL URL이어야 합니다/);
+
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, FRONTEND_URL: 'not-a-url' }),
+    ).toThrow(/FRONTEND_URL 형식이 올바르지 않습니다/);
+
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        AUTH_COOKIE_SAME_SITE: 'none',
+        AUTH_COOKIE_SECURE: 'false',
+      }),
+    ).toThrow(
+      /AUTH_COOKIE_SAME_SITE=none일 때 AUTH_COOKIE_SECURE=true여야 합니다/,
+    );
+  });
+
+  it('requires production rate limit settings', () => {
+    const productionEnvironment = { ...validEnvironment };
+    delete productionEnvironment.AUTH_RATE_LIMIT_LOGIN_LIMIT;
+
+    expect(() =>
+      validateEnvironment({
+        ...productionEnvironment,
+        NODE_ENV: 'production',
+        FRONTEND_URL: 'https://shop.example.com',
+        AUTH_COOKIE_SECURE: 'true',
+        AUTH_COOKIE_SAME_SITE: 'none',
+      }),
+    ).toThrow(/AUTH_RATE_LIMIT_LOGIN_LIMIT은 필수입니다/);
+  });
+
+  it.each([
+    'DATABASE_URL',
+    'FRONTEND_URL',
+    'RESEND_API_KEY',
+    'RESEND_FROM_EMAIL',
+    'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES',
+    'AUTH_ACCESS_TOKEN_SECRET',
+    'AUTH_REFRESH_TOKEN_SECRET',
+    'AUTH_ACCESS_TOKEN_TTL',
+    'AUTH_REFRESH_TOKEN_TTL',
+    'AUTH_ACCESS_COOKIE_NAME',
+    'AUTH_REFRESH_COOKIE_NAME',
+    'AUTH_COOKIE_SECURE',
+    'AUTH_COOKIE_SAME_SITE',
+  ])('requires %s', (name) => {
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, [name]: undefined }),
+    ).toThrow(new RegExp(`${name}은 필수입니다`));
   });
 });

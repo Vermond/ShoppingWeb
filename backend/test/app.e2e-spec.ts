@@ -26,6 +26,10 @@ describe('HealthController (e2e)', () => {
       .expect({ status: 'ok' });
   });
 
+  it('/ (GET) is not a public application route', () => {
+    return request(baseUrl).get('/').expect(404);
+  });
+
   it('/api/auth/login rate limits repeated requests', async () => {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       await request(baseUrl).post('/api/auth/login').send({}).expect(400);
