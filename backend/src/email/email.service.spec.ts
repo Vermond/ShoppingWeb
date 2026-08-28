@@ -9,11 +9,12 @@ jest.mock('resend', () => ({
 
 describe('EmailService', () => {
   const resendConstructor = Resend as unknown as jest.Mock;
-  const configValues: Record<string, string> = {
+  const configValues: Record<string, string | number> = {
     RESEND_API_KEY: 're_test_key',
     RESEND_FROM_EMAIL: 'onboarding@resend.dev',
     RESEND_FROM_NAME: 'ShoppingWeb',
     FRONTEND_URL: 'http://localhost:3000',
+    EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: 1_440,
   };
   const configService = {
     getOrThrow: jest.fn((name: string) => configValues[name]),
@@ -51,8 +52,33 @@ describe('EmailService', () => {
       }),
     );
     expect(send.mock.calls[0]?.[0].html).toContain(
+      '이 링크는 24시간 동안 유효합니다.',
+    );
+    expect(send.mock.calls[0]?.[0].text).toContain(
+      '이 링크는 24시간 동안 유효합니다.',
+    );
+    expect(send.mock.calls[0]?.[0].html).toContain(
       'http://localhost:3000/auth/verify-email?token=raw-token',
     );
+  });
+
+  it('formats the configured validity period in the email', async () => {
+    configValues.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES = 90;
+    const service = new EmailService(configService);
+
+    await service.sendVerificationEmail({
+      email: 'user@example.com',
+      name: 'User',
+      token: 'raw-token',
+    });
+
+    expect(send.mock.calls[0]?.[0].html).toContain(
+      '이 링크는 1시간 30분 동안 유효합니다.',
+    );
+    expect(send.mock.calls[0]?.[0].text).toContain(
+      '이 링크는 1시간 30분 동안 유효합니다.',
+    );
+    configValues.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES = 1_440;
   });
 
   it('converts a Resend error response into an exception', async () => {

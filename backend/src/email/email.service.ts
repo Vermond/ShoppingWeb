@@ -27,6 +27,11 @@ export class EmailService {
     const fromEmail =
       this.configService.getOrThrow<string>('RESEND_FROM_EMAIL');
     const fromName = this.configService.get<string>('RESEND_FROM_NAME');
+    const validityText = formatDuration(
+      this.configService.getOrThrow<number>(
+        'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES',
+      ),
+    );
     const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
     const safeName = escapeHtml(name);
     const safeVerificationUrl = escapeHtml(verificationUrl);
@@ -39,13 +44,13 @@ export class EmailService {
         <p>${safeName}님, 안녕하세요.</p>
         <p>아래 링크를 클릭하면 이메일 인증이 완료됩니다.</p>
         <p><a href="${safeVerificationUrl}">이메일 인증하기</a></p>
-        <p>이 링크는 24시간 동안 유효합니다.</p>
+        <p>이 링크는 ${validityText} 동안 유효합니다.</p>
       `,
       text: [
         `${name}님, 안녕하세요.`,
         '아래 링크를 클릭하면 이메일 인증이 완료됩니다.',
         verificationUrl,
-        '이 링크는 24시간 동안 유효합니다.',
+        `이 링크는 ${validityText} 동안 유효합니다.`,
       ].join('\n\n'),
     });
 
@@ -92,4 +97,20 @@ function escapeHtml(value: string): string {
         '"': '&quot;',
       })[character] ?? character,
   );
+}
+
+function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours}시간`);
+  }
+
+  if (remainingMinutes > 0) {
+    parts.push(`${remainingMinutes}분`);
+  }
+
+  return parts.join(' ');
 }
