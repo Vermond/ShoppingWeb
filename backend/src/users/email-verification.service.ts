@@ -8,6 +8,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import {
   DatabaseService,
@@ -15,6 +16,7 @@ import {
 } from '../database/database.service';
 import { EmailVerificationRepository } from './email-verification.repository';
 import { UsersRepository } from './users.repository';
+import type { EnvironmentVariables } from '../config/environment.validation';
 
 export type EmailVerificationResult = {
   status: 'verified' | 'already_verified';
@@ -44,6 +46,7 @@ export class EmailVerificationService {
     private readonly usersRepository: UsersRepository,
     private readonly emailVerificationRepository: EmailVerificationRepository,
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
   async issueForUser(
@@ -187,7 +190,13 @@ export class EmailVerificationService {
     executor: DatabaseQueryExecutor,
   ): Promise<EmailVerificationChallenge> {
     const token = randomBytes(32).toString('base64url');
-    const expiresAt = new Date(Date.now() + this.readTtlMinutes() * 60_000);
+    const expiresAt = new Date(
+      Date.now() +
+        this.configService.getOrThrow<number>(
+          'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES',
+        ) *
+          60_000,
+    );
 
     await this.emailVerificationRepository.create(
       userId,
@@ -197,19 +206,6 @@ export class EmailVerificationService {
     );
 
     return { token, expiresAt };
-  }
-
-  private readTtlMinutes(): number {
-    const value = process.env.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES ?? '1440';
-    const minutes = Number(value);
-
-    if (!Number.isInteger(minutes) || minutes <= 0) {
-      throw new Error(
-        'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES는 양의 정수여야 합니다.',
-      );
-    }
-
-    return minutes;
   }
 
   private logError(message: string, error: unknown): void {

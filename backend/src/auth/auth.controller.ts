@@ -9,6 +9,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiBody,
   ApiCookieAuth,
@@ -16,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { parseLoginInput } from '../users/users.input';
 import type { UserRecord } from '../users/users.repository';
@@ -29,13 +31,26 @@ import { getAuthConfig } from './auth.config';
 import { CurrentUser } from './auth.decorators';
 import { AuthService } from './auth.service';
 import { clearAuthCookies, readCookie, setAuthCookies } from './cookie.util';
+import { RateLimitGuard } from '../rate-limit/rate-limit.guard';
+import { getRateLimitConfig } from '../rate-limit/rate-limit.config';
+import type { EnvironmentVariables } from '../config/environment.validation';
 
 @Controller('api/auth')
 @ApiTags('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService<EnvironmentVariables>,
+  ) {}
 
   @Post('login')
+  @UseGuards(RateLimitGuard)
+  @Throttle({
+    default: {
+      limit: () => getRateLimitConfig().login.limit,
+      ttl: () => getRateLimitConfig().login.ttlMilliseconds,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '사용자 로그인' })
   @ApiBody({ type: LoginBodyDto })
@@ -50,6 +65,7 @@ export class AuthController {
     description: '이메일 또는 비밀번호가 올바르지 않음',
   })
   @ApiResponse({ status: 403, description: '미인증 또는 비활성 계정' })
+  @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
   async login(
     @Body() body: unknown,
     @Res({ passthrough: true }) response: Response,
@@ -57,7 +73,7 @@ export class AuthController {
     const result = await this.authService.login(parseLoginInput(body));
     setAuthCookies(
       response,
-      getAuthConfig(),
+      getAuthConfig(this.configService),
       result.accessToken,
       result.refreshToken,
     );
@@ -66,6 +82,13 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @UseGuards(RateLimitGuard)
+  @Throttle({
+    default: {
+      limit: () => getRateLimitConfig().refresh.limit,
+      ttl: () => getRateLimitConfig().refresh.ttlMilliseconds,
+    },
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh Token으로 인증 토큰 재발급' })
   @ApiCookieAuth('refresh_token')
@@ -75,11 +98,12 @@ export class AuthController {
     description: '기존 Refresh Token을 폐기하고 새 토큰 Cookie를 설정함',
   })
   @ApiResponse({ status: 401, description: 'Refresh Token이 유효하지 않음' })
+  @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ user: UserRecord }> {
-    const config = getAuthConfig();
+    const config = getAuthConfig(this.configService);
     const refreshToken = readCookie(request, config.refreshCookieName);
     const result = await this.authService.refresh(refreshToken ?? '');
     setAuthCookies(response, config, result.accessToken, result.refreshToken);
@@ -96,7 +120,7 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<LogoutResponseDto> {
-    const config = getAuthConfig();
+    const config = getAuthConfig(this.configService);
     await this.authService.logout(
       readCookie(request, config.refreshCookieName),
     );

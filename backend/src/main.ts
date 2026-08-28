@@ -1,19 +1,12 @@
-import { existsSync } from 'node:fs';
-import { loadEnvFile } from 'node:process';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-
-function loadLocalEnvironment(): void {
-  if (existsSync('.env.local')) {
-    loadEnvFile('.env.local');
-  }
-}
+import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from './config/environment.validation';
 
 async function bootstrap() {
-  loadLocalEnvironment();
-
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService<EnvironmentVariables>);
   const swaggerConfig = new DocumentBuilder()
     .setTitle('ShoppingWeb Backend API')
     .setDescription('ShoppingWeb backend API documentation')
@@ -35,6 +28,6 @@ async function bootstrap() {
     jsonDocumentUrl: 'docs-json',
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(configService.getOrThrow<number>('PORT'));
 }
 void bootstrap();

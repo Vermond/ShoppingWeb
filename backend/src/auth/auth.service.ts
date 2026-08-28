@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   DatabaseService,
@@ -19,6 +20,7 @@ import type {
   RefreshTokenPayload,
 } from './auth.types';
 import { RefreshTokenRepository } from './refresh-token.repository';
+import type { EnvironmentVariables } from '../config/environment.validation';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +30,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly usersRepository: UsersRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
 
   async login(input: LoginInput): Promise<AuthTokenPair> {
@@ -37,7 +40,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<AuthTokenPair> {
-    const config = getAuthConfig();
+    const config = getAuthConfig(this.configService);
     let payload: RefreshTokenPayload;
 
     try {
@@ -118,7 +121,7 @@ export class AuthService {
     user: AuthTokenPair['user'],
     executor: DatabaseQueryExecutor = this.databaseService,
   ): Promise<AuthTokenPair> {
-    const config = getAuthConfig();
+    const config = getAuthConfig(this.configService);
     const refreshTokenId = randomUUID();
     const accessTokenPayload: AccessTokenPayload = {
       sub: user.id,

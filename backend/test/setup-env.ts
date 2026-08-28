@@ -1,0 +1,28 @@
+process.env.NODE_ENV = 'test';
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+process.env.PORT = '3001';
+process.env.FRONTEND_URL = 'http://localhost:3000';
+process.env.RESEND_API_KEY = 're_test_key';
+process.env.RESEND_FROM_EMAIL = 'onboarding@resend.dev';
+process.env.RESEND_FROM_NAME = 'ShoppingWeb Test';
+process.env.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES = '1440';
+process.env.AUTH_ACCESS_TOKEN_SECRET =
+  'test_access_secret_123456789012345678901234';
+process.env.AUTH_REFRESH_TOKEN_SECRET =
+  'test_refresh_secret_123456789012345678901234';
+process.env.AUTH_ACCESS_TOKEN_TTL = '15m';
+process.env.AUTH_REFRESH_TOKEN_TTL = '30d';
+process.env.AUTH_ACCESS_COOKIE_NAME = 'access_token';
+process.env.AUTH_REFRESH_COOKIE_NAME = 'refresh_token';
+process.env.AUTH_COOKIE_SECURE = 'false';
+process.env.AUTH_COOKIE_SAME_SITE = 'lax';
+process.env.AUTH_RATE_LIMIT_LOGIN_LIMIT = '5';
+process.env.AUTH_RATE_LIMIT_LOGIN_TTL_SECONDS = '60';
+process.env.AUTH_RATE_LIMIT_RESEND_LIMIT = '3';
+process.env.AUTH_RATE_LIMIT_RESEND_TTL_SECONDS = '900';
+process.env.AUTH_RATE_LIMIT_SIGNUP_LIMIT = '10';
+process.env.AUTH_RATE_LIMIT_SIGNUP_TTL_SECONDS = '3600';
+process.env.AUTH_RATE_LIMIT_VERIFY_LIMIT = '10';
+process.env.AUTH_RATE_LIMIT_VERIFY_TTL_SECONDS = '60';
+process.env.AUTH_RATE_LIMIT_REFRESH_LIMIT = '30';
+process.env.AUTH_RATE_LIMIT_REFRESH_TTL_SECONDS = '60';

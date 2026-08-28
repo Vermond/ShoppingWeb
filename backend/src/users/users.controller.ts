@@ -11,6 +11,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiBody,
   ApiCookieAuth,
@@ -30,6 +31,8 @@ import {
   UpdateUserBodyDto,
   UserEnvelopeResponseDto,
 } from '../swagger/swagger.schemas';
+import { RateLimitGuard } from '../rate-limit/rate-limit.guard';
+import { getRateLimitConfig } from '../rate-limit/rate-limit.config';
 
 @Controller('api/users')
 @ApiTags('users')
@@ -37,6 +40,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @UseGuards(RateLimitGuard)
+  @Throttle({
+    default: {
+      limit: () => getRateLimitConfig().signup.limit,
+      ttl: () => getRateLimitConfig().signup.ttlMilliseconds,
+    },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '신규 사용자 등록' })
   @ApiBody({ type: CreateUserBodyDto })
@@ -44,6 +54,7 @@ export class UsersController {
   @ApiResponse({ status: 400, description: '입력값이 유효하지 않음' })
   @ApiResponse({ status: 409, description: '이미 사용 중인 이메일' })
   @ApiResponse({ status: 503, description: '인증 메일 발송 실패' })
+  @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
   async create(@Body() body: unknown): Promise<{ user: UserRecord }> {
     const user = await this.usersService.create(parseCreateUserInput(body));
 

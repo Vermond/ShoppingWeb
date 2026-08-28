@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import type { EnvironmentVariables } from '../config/environment.validation';
 
 type VerificationEmailInput = {
   email: string;
@@ -12,14 +14,19 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private resend?: Resend;
 
+  constructor(
+    private readonly configService: ConfigService<EnvironmentVariables>,
+  ) {}
+
   async sendVerificationEmail({
     email,
     name,
     token,
   }: VerificationEmailInput): Promise<void> {
     const verificationUrl = this.createVerificationUrl(token);
-    const fromEmail = this.readRequiredEnvironmentVariable('RESEND_FROM_EMAIL');
-    const fromName = process.env.RESEND_FROM_NAME?.trim();
+    const fromEmail =
+      this.configService.getOrThrow<string>('RESEND_FROM_EMAIL');
+    const fromName = this.configService.get<string>('RESEND_FROM_NAME');
     const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
     const safeName = escapeHtml(name);
     const safeVerificationUrl = escapeHtml(verificationUrl);
@@ -53,14 +60,14 @@ export class EmailService {
       return this.resend;
     }
 
-    const apiKey = this.readRequiredEnvironmentVariable('RESEND_API_KEY');
+    const apiKey = this.configService.getOrThrow<string>('RESEND_API_KEY');
     this.resend = new Resend(apiKey);
 
     return this.resend;
   }
 
   private createVerificationUrl(token: string): string {
-    const frontendUrl = this.readRequiredEnvironmentVariable('FRONTEND_URL');
+    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
     const url = new URL('/auth/verify-email', frontendUrl);
 
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
@@ -70,16 +77,6 @@ export class EmailService {
     url.searchParams.set('token', token);
 
     return url.toString();
-  }
-
-  private readRequiredEnvironmentVariable(name: string): string {
-    const value = process.env[name]?.trim();
-
-    if (!value) {
-      throw new Error(`${name} 환경변수가 설정되지 않았습니다.`);
-    }
-
-    return value;
   }
 }
 
