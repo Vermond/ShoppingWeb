@@ -2,6 +2,7 @@ import { validateEnvironment } from './environment.validation';
 
 const validEnvironment = {
   NODE_ENV: 'test',
+  SWAGGER_ENABLED: 'true',
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   PORT: '3001',
   FRONTEND_URL: 'http://localhost:3000',
@@ -34,6 +35,7 @@ describe('validateEnvironment', () => {
     const environment = validateEnvironment(validEnvironment);
 
     expect(environment.PORT).toBe(3001);
+    expect(environment.SWAGGER_ENABLED).toBe(true);
     expect(environment.AUTH_ACCESS_TOKEN_TTL).toBe(900);
     expect(environment.AUTH_REFRESH_TOKEN_TTL).toBe(2_592_000);
     expect(environment.AUTH_COOKIE_SECURE).toBe(false);
@@ -58,5 +60,32 @@ describe('validateEnvironment', () => {
         AUTH_REFRESH_TOKEN_SECRET: 'secret_value_that_is_long_enough_123456',
       }),
     ).toThrow(/서로 달라야 합니다/);
+  });
+
+  it('disables Swagger by default in production', () => {
+    const environment = validateEnvironment({
+      ...validEnvironment,
+      NODE_ENV: 'production',
+      SWAGGER_ENABLED: undefined,
+      FRONTEND_URL: 'https://shop.example.com',
+      AUTH_COOKIE_SECURE: 'true',
+      AUTH_COOKIE_SAME_SITE: 'none',
+    });
+
+    expect(environment.SWAGGER_ENABLED).toBe(false);
+  });
+
+  it('rejects Swagger being enabled in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: 'production',
+        FRONTEND_URL: 'https://shop.example.com',
+        AUTH_COOKIE_SECURE: 'true',
+        AUTH_COOKIE_SAME_SITE: 'none',
+      }),
+    ).toThrow(
+      /production 환경에서는 SWAGGER_ENABLED=true를 사용할 수 없습니다/,
+    );
   });
 });

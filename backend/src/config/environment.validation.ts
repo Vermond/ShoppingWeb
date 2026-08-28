@@ -4,6 +4,7 @@ export type NodeEnvironment = 'development' | 'test' | 'production';
 
 export interface EnvironmentVariables {
   NODE_ENV: NodeEnvironment;
+  SWAGGER_ENABLED: boolean;
   DATABASE_URL: string;
   PORT: number;
   FRONTEND_URL: string;
@@ -48,6 +49,12 @@ export function validateEnvironment(
 ): EnvironmentVariables {
   const errors: string[] = [];
   const nodeEnvironment = readNodeEnvironment(config, errors);
+  const swaggerEnabled = readOptionalBoolean(
+    'SWAGGER_ENABLED',
+    config,
+    errors,
+    nodeEnvironment !== 'production',
+  );
 
   const databaseUrl = readDatabaseUrl(config, errors);
   const port = readPort(config, errors);
@@ -110,6 +117,12 @@ export function validateEnvironment(
   }
 
   if (nodeEnvironment === 'production') {
+    if (swaggerEnabled) {
+      errors.push(
+        'production 환경에서는 SWAGGER_ENABLED=true를 사용할 수 없습니다.',
+      );
+    }
+
     if (!cookieSecure) {
       errors.push('production 환경에서는 AUTH_COOKIE_SECURE=true여야 합니다.');
     }
@@ -132,6 +145,7 @@ export function validateEnvironment(
 
   return {
     NODE_ENV: nodeEnvironment,
+    SWAGGER_ENABLED: swaggerEnabled,
     DATABASE_URL: databaseUrl,
     PORT: port,
     FRONTEND_URL: frontendUrl,
@@ -334,6 +348,30 @@ function readBoolean(
 
   errors.push(`${name}은 true 또는 false여야 합니다.`);
   return false;
+}
+
+function readOptionalBoolean(
+  name: string,
+  config: Record<string, unknown>,
+  errors: string[],
+  fallback: boolean,
+): boolean {
+  const value = readOptionalString(name, config);
+
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (value === 'true') {
+    return true;
+  }
+
+  if (value === 'false') {
+    return false;
+  }
+
+  errors.push(`${name}은 true 또는 false여야 합니다.`);
+  return fallback;
 }
 
 function readSameSite(
