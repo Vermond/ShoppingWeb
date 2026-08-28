@@ -25,6 +25,30 @@ export type ProductResponse = Omit<
   updated_at: string;
 };
 
+export type ProductPageRow = {
+  rows: ProductRow[];
+  totalItems: number;
+};
+
+export type ProductPagination = {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+export type ProductPage = {
+  products: ProductRecord[];
+  pagination: ProductPagination;
+};
+
+export type ProductPageResponse = {
+  products: ProductResponse[];
+  pagination: ProductPagination;
+};
+
 export function toProductRecord(row: ProductRow): ProductRecord {
   return {
     ...row,

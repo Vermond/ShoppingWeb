@@ -72,7 +72,7 @@ describe('API contracts (e2e)', () => {
   let baseUrl: string;
   let client: ReturnType<typeof createClient>;
   let databaseService: { checkConnection: jest.Mock };
-  let productsService: { findAll: jest.Mock };
+  let productsService: { findPage: jest.Mock };
   let categoriesService: { findAll: jest.Mock };
   let usersService: {
     create: jest.Mock;
@@ -92,7 +92,19 @@ describe('API contracts (e2e)', () => {
 
   beforeAll(async () => {
     databaseService = { checkConnection: jest.fn() };
-    productsService = { findAll: jest.fn().mockResolvedValue([]) };
+    productsService = {
+      findPage: jest.fn().mockResolvedValue({
+        products: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          totalItems: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      }),
+    };
     categoriesService = { findAll: jest.fn().mockResolvedValue([]) };
     usersService = {
       create: jest.fn().mockResolvedValue(user),
@@ -163,17 +175,82 @@ describe('API contracts (e2e)', () => {
   it('returns product and category envelopes', async () => {
     const products = [product];
     const categories = [category];
-    productsService.findAll.mockResolvedValue(products);
+    productsService.findPage.mockResolvedValue({
+      products,
+      pagination: {
+        page: 1,
+        limit: 20,
+        totalItems: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    });
     categoriesService.findAll.mockResolvedValue(categories);
 
     await client
       .get('/api/products')
       .expect(200)
-      .expect({ products: [serializedProduct] });
+      .expect({
+        products: [serializedProduct],
+        pagination: {
+          page: 1,
+          limit: 20,
+          totalItems: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      });
+    expect(productsService.findPage).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+    });
     await client
       .get('/api/categories')
       .expect(200)
       .expect({ categories: [serializedCategory] });
+  });
+
+  it('supports custom product pagination parameters', async () => {
+    productsService.findPage.mockResolvedValue({
+      products: [],
+      pagination: {
+        page: 3,
+        limit: 5,
+        totalItems: 12,
+        totalPages: 3,
+        hasNextPage: false,
+        hasPreviousPage: true,
+      },
+    });
+
+    await client
+      .get('/api/products?page=3&limit=5')
+      .expect(200)
+      .expect({
+        products: [],
+        pagination: {
+          page: 3,
+          limit: 5,
+          totalItems: 12,
+          totalPages: 3,
+          hasNextPage: false,
+          hasPreviousPage: true,
+        },
+      });
+    expect(productsService.findPage).toHaveBeenCalledWith({
+      page: 3,
+      limit: 5,
+    });
+  });
+
+  it('rejects invalid product pagination parameters', async () => {
+    const callCount = productsService.findPage.mock.calls.length;
+
+    await client.get('/api/products?page=0&limit=101').expect(400);
+
+    expect(productsService.findPage.mock.calls).toHaveLength(callCount);
   });
 
   it('creates, updates, and withdraws users through the HTTP contract', async () => {

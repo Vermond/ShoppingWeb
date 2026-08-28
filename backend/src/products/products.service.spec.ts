@@ -18,29 +18,40 @@ describe('ProductsService', () => {
       updated_at: new Date('2026-01-01T00:00:00.000Z'),
     };
     const repository = {
-      findAll: jest.fn().mockResolvedValue([product]),
+      findPage: jest.fn().mockResolvedValue({
+        rows: [product],
+        totalItems: 41,
+      }),
     } as unknown as ProductsRepository;
     const service = new ProductsService(repository);
 
-    const products = await service.findAll();
+    const result = await service.findPage({ page: 2, limit: 20 });
 
-    expect(products).toHaveLength(1);
-    expect(products[0]).toMatchObject({
+    expect(result.products).toHaveLength(1);
+    expect(result.products[0]).toMatchObject({
       ...product,
       price: expect.any(Decimal),
     });
-    expect(products[0]?.price.toFixed(2)).toBe('12900.00');
-    expect(repository.findAll).toHaveBeenCalledTimes(1);
+    expect(result.products[0]?.price.toFixed(2)).toBe('12900.00');
+    expect(result.pagination).toEqual({
+      page: 2,
+      limit: 20,
+      totalItems: 41,
+      totalPages: 3,
+      hasNextPage: true,
+      hasPreviousPage: true,
+    });
+    expect(repository.findPage).toHaveBeenCalledWith(20, 20);
   });
 
   it('maps repository failures to an internal server error', async () => {
     const repository = {
-      findAll: jest.fn().mockRejectedValue(new Error('database failed')),
+      findPage: jest.fn().mockRejectedValue(new Error('database failed')),
     } as unknown as ProductsRepository;
     const service = new ProductsService(repository);
 
-    await expect(service.findAll()).rejects.toBeInstanceOf(
-      InternalServerErrorException,
-    );
+    await expect(
+      service.findPage({ page: 1, limit: 20 }),
+    ).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 });

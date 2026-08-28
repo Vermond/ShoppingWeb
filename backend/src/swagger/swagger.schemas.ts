@@ -79,9 +79,32 @@ export class UserResponseDto {
   updated_at!: string;
 }
 
+export class ProductPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  limit!: number;
+
+  @ApiProperty({ example: 125 })
+  totalItems!: number;
+
+  @ApiProperty({ example: 7 })
+  totalPages!: number;
+
+  @ApiProperty({ example: true })
+  hasNextPage!: boolean;
+
+  @ApiProperty({ example: false })
+  hasPreviousPage!: boolean;
+}
+
 export class ProductsResponseDto {
   @ApiProperty({ type: [ProductResponseDto] })
   products!: ProductResponseDto[];
+
+  @ApiProperty({ type: ProductPaginationDto })
+  pagination!: ProductPaginationDto;
 }
 
 export class CategoriesResponseDto {

@@ -1,7 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query } from '@nestjs/common';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ProductsService } from './products.service';
-import { serializeProduct, type ProductResponse } from './products.types';
+import { parseProductsQuery } from './products.input';
+import { serializeProduct, type ProductPageResponse } from './products.types';
 import { ProductsResponseDto } from '../swagger/swagger.schemas';
 
 @Controller('api/products')
@@ -11,10 +17,23 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({ summary: '상품 목록 조회' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 20,
+    description: '페이지당 상품 수 (최대 100)',
+  })
   @ApiOkResponse({ type: ProductsResponseDto })
-  async findAll(): Promise<{ products: ProductResponse[] }> {
-    const products = await this.productsService.findAll();
+  async findAll(@Query() query: unknown): Promise<ProductPageResponse> {
+    const result = await this.productsService.findPage(
+      parseProductsQuery(query),
+    );
 
-    return { products: products.map(serializeProduct) };
+    return {
+      products: result.products.map(serializeProduct),
+      pagination: result.pagination,
+    };
   }
 }

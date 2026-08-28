@@ -4,7 +4,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ProductsRepository } from './products.repository';
-import { toProductRecord, type ProductRecord } from './products.types';
+import { calculateProductPagination } from './products.pagination';
+import type { ProductsQuery } from './products.input';
+import { toProductRecord, type ProductPage } from './products.types';
 
 @Injectable()
 export class ProductsService {
@@ -12,11 +14,18 @@ export class ProductsService {
 
   constructor(private readonly productsRepository: ProductsRepository) {}
 
-  async findAll(): Promise<ProductRecord[]> {
+  async findPage(query: ProductsQuery): Promise<ProductPage> {
     try {
-      const products = await this.productsRepository.findAll();
+      const offset = (query.page - 1) * query.limit;
+      const result = await this.productsRepository.findPage(
+        query.limit,
+        offset,
+      );
 
-      return products.map(toProductRecord);
+      return {
+        products: result.rows.map(toProductRecord),
+        pagination: calculateProductPagination(query, result.totalItems),
+      };
     } catch (error) {
       this.logger.error(
         '상품 목록 조회에 실패했습니다.',
