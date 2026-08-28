@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.7",
     "@nestjs/throttler": "^6.5.0",
+    "decimal.js": "^10.6.0",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.24.0",

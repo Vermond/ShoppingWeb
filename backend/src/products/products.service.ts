@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ProductsRepository } from './products.repository';
-import type { ProductRecord } from './products.repository';
+import { toProductRecord, type ProductRecord } from './products.types';
 
 @Injectable()
 export class ProductsService {
@@ -14,7 +14,9 @@ export class ProductsService {
 
   async findAll(): Promise<ProductRecord[]> {
     try {
-      return await this.productsRepository.findAll();
+      const products = await this.productsRepository.findAll();
+
+      return products.map(toProductRecord);
     } catch (error) {
       this.logger.error(
         '상품 목록 조회에 실패했습니다.',

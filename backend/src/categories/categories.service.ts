@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { CategoriesRepository } from './categories.repository';
-import type { CategoryRecord } from './categories.repository';
+import type { CategoryRecord } from './categories.types';
 
 @Injectable()
 export class CategoriesService {

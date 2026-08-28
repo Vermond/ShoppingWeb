@@ -14,11 +14,13 @@ export class ProductResponseDto {
   description!: string | null;
 
   @ApiProperty({
+    type: String,
+    example: '12900.00',
+    pattern: '^\\d+\\.\\d{2}$',
     description:
-      '상품 가격. PostgreSQL numeric 타입은 문자열로 반환될 수 있습니다.',
-    oneOf: [{ type: 'number' }, { type: 'string' }],
+      '상품 가격. 정확한 금액 보존을 위해 decimal 문자열로 반환합니다.',
   })
-  price!: number | string;
+  price!: string;
 
   @ApiProperty({ description: '재고 수량' })
   stock!: number;
@@ -35,10 +37,11 @@ export class ProductResponseDto {
 
 export class CategoryResponseDto {
   @ApiProperty({
+    type: String,
+    example: '1',
     description: '카테고리 ID',
-    oneOf: [{ type: 'string' }, { type: 'integer' }],
   })
-  id!: string | number;
+  id!: string;
 
   @ApiProperty({ description: '카테고리명' })
   name!: string;

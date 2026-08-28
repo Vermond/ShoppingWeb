@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
-import type { ProductRecord } from './products.repository';
+import { serializeProduct, type ProductResponse } from './products.types';
 import { ProductsResponseDto } from '../swagger/swagger.schemas';
 
 @Controller('api/products')
@@ -12,9 +12,9 @@ export class ProductsController {
   @Get()
   @ApiOperation({ summary: '상품 목록 조회' })
   @ApiOkResponse({ type: ProductsResponseDto })
-  async findAll(): Promise<{ products: ProductRecord[] }> {
+  async findAll(): Promise<{ products: ProductResponse[] }> {
     const products = await this.productsService.findAll();
 
-    return { products };
+    return { products: products.map(serializeProduct) };
   }
 }

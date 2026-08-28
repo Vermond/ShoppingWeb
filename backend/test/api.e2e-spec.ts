@@ -14,6 +14,9 @@ import { ProductsService } from './../src/products/products.service';
 import { RateLimitGuard } from './../src/rate-limit/rate-limit.guard';
 import type { UserRecord } from './../src/users/users.repository';
 import { UsersService } from './../src/users/users.service';
+import Decimal from 'decimal.js';
+import type { ProductRecord } from './../src/products/products.types';
+import type { CategoryRow } from './../src/categories/categories.types';
 
 const user: UserRecord = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -30,6 +33,38 @@ const serializedUser = {
   ...user,
   created_at: user.created_at.toISOString(),
   updated_at: user.updated_at.toISOString(),
+};
+
+const product: ProductRecord = {
+  id: '11111111-1111-4111-8111-111111111112',
+  category_id: '1',
+  name: 'Product',
+  description: null,
+  price: new Decimal('12900.00'),
+  stock: 3,
+  status: 'active',
+  created_at: new Date('2026-01-01T00:00:00.000Z'),
+  updated_at: new Date('2026-01-01T00:00:00.000Z'),
+};
+
+const serializedProduct = {
+  ...product,
+  price: '12900.00',
+  created_at: product.created_at.toISOString(),
+  updated_at: product.updated_at.toISOString(),
+};
+
+const category: CategoryRow = {
+  id: '1',
+  name: 'Category',
+  created_at: new Date('2026-01-01T00:00:00.000Z'),
+  updated_at: new Date('2026-01-01T00:00:00.000Z'),
+};
+
+const serializedCategory = {
+  ...category,
+  created_at: category.created_at.toISOString(),
+  updated_at: category.updated_at.toISOString(),
 };
 
 describe('API contracts (e2e)', () => {
@@ -126,13 +161,19 @@ describe('API contracts (e2e)', () => {
   });
 
   it('returns product and category envelopes', async () => {
-    const products = [{ id: 'product-1', name: 'Product' }];
-    const categories = [{ id: 1, name: 'Category' }];
+    const products = [product];
+    const categories = [category];
     productsService.findAll.mockResolvedValue(products);
     categoriesService.findAll.mockResolvedValue(categories);
 
-    await client.get('/api/products').expect(200).expect({ products });
-    await client.get('/api/categories').expect(200).expect({ categories });
+    await client
+      .get('/api/products')
+      .expect(200)
+      .expect({ products: [serializedProduct] });
+    await client
+      .get('/api/categories')
+      .expect(200)
+      .expect({ categories: [serializedCategory] });
   });
 
   it('creates, updates, and withdraws users through the HTTP contract', async () => {
