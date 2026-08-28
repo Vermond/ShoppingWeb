@@ -63,7 +63,13 @@ export default function ProductDetailPage() {
     );
   }
 
+  const isOutOfStock = product.stock <= 0;
+
   const addToCart = () => {
+    if (isOutOfStock) {
+      return;
+    }
+
     addItem(product.id);
     setIsAdded(true);
     window.setTimeout(() => setIsAdded(false), 1600);
@@ -116,6 +122,9 @@ export default function ProductDetailPage() {
             </div>
             <p className={styles.description}>{product.description}</p>
             <strong className={styles.price}>{formatPrice(product.price)}</strong>
+            {isOutOfStock && (
+              <p className={styles.outOfStockMessage}>재고 없음</p>
+            )}
 
             <dl className={styles.detailInfo}>
               <div>
@@ -133,18 +142,23 @@ export default function ProductDetailPage() {
             </dl>
 
             <Button
-              className={styles.addButton}
+              className={`${styles.addButton} ${isOutOfStock ? styles.outOfStockButton : ""}`}
               variant="contained"
               fullWidth
               disableRipple
+              disabled={isOutOfStock}
               onClick={addToCart}
               startIcon={isAdded ? undefined : <AddShoppingCart />}
             >
-              {isAdded ? "장바구니에 담았어요" : "장바구니 담기"}
+              {isOutOfStock
+                ? "재고 없음"
+                : isAdded
+                  ? "장바구니에 담았어요"
+                  : "장바구니 담기"}
             </Button>
 
             <p className={styles.detailNote}>
-              화면의 상품 정보와 재고는 서버 연결 전 목업 데이터입니다.
+              상품 정보와 재고는 서버 기준으로 표시됩니다.
             </p>
           </div>
         </section>

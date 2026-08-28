@@ -131,6 +131,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
             return currentItems;
           }
 
+          const product = products.find(({ id }) => id === productId);
+
+          if (!product || product.stock <= 0) {
+            return currentItems;
+          }
+
           const existingItem = normalizedItems.find(
             (item) => item.productId === productId,
           );
@@ -152,8 +158,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
             return currentItems.filter((item) => item.productId !== productId);
           }
 
+          const product = products.find(({ id }) => id === productId);
+
+          if (!product || product.stock <= 0) {
+            return currentItems;
+          }
+
           return currentItems.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item,
+            item.productId === productId
+              ? { ...item, quantity: Math.min(quantity, product.stock) }
+              : item,
           );
         });
       },

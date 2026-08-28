@@ -96,6 +96,12 @@
   font-weight: 500;
 }
 
+.outOfStockMessage {
+  margin-top: 12px;
+  color: #b2513d;
+  font-size: 12px;
+}
+
 .detailInfo {
   display: grid;
   gap: 13px;
@@ -131,6 +137,13 @@
 
 .addButton:hover {
   background: var(--ink);
+}
+
+.outOfStockButton.Mui-disabled,
+.outOfStockButton.Mui-disabled:hover {
+  background: #e6e6df;
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 .detailNote {

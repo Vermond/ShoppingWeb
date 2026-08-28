@@ -29,6 +29,10 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const { items, totalItems, subtotal, clearCart } = useCart();
   const { products } = useCatalog();
+  const hasUnavailableItems = items.some((item) => {
+    const product = products.find(({ id }) => id === item.productId);
+    return !product || product.stock <= 0;
+  });
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
 
@@ -38,6 +42,12 @@ export default function CheckoutPage() {
 
   const submitOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (hasUnavailableItems) {
+      setErrorMessage("재고가 없는 상품을 먼저 장바구니에서 삭제해주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -219,7 +229,7 @@ export default function CheckoutPage() {
               variant="contained"
               fullWidth
               disableRipple
-              disabled={isSubmitting}
+              disabled={isSubmitting || hasUnavailableItems}
               endIcon={!isSubmitting && <ArrowForward />}
             >
               {isSubmitting ? "주문 처리 중..." : "목업 결제하기"}

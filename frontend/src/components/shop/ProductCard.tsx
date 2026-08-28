@@ -53,6 +53,8 @@ export function ProductCard({
   onToggleFavorite,
   onAddToCart,
 }: ProductCardProps) {
+  const isOutOfStock = product.stock <= 0;
+
   return (
     <article className={styles.productCard}>
       <div className={styles.productImageWrap}>
@@ -107,16 +109,19 @@ export function ProductCard({
       </div>
 
       <Button
-        className={`${styles.addButton} ${isAdded ? styles.addedButton : ""}`}
+        className={`${styles.addButton} ${isAdded ? styles.addedButton : ""} ${isOutOfStock ? styles.outOfStockButton : ""}`}
         type="button"
         variant="outlined"
         disableRipple
+        disabled={isOutOfStock}
         onClick={() => onAddToCart(product.id)}
         sx={{
           fontSize: "10px",
         }}
       >
-        {isAdded ? (
+        {isOutOfStock ? (
+          "재고 없음"
+        ) : isAdded ? (
           <>
             <Check />
             담았어요

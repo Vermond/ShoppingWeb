@@ -115,6 +115,10 @@ function toProduct(
   const description =
     typeof record.description === "string" ? record.description.trim() : "";
   const price = Number(record.price);
+  const stockValue = Number(record.stock);
+  const stock = Number.isFinite(stockValue)
+    ? Math.max(0, Math.floor(stockValue))
+    : 0;
 
   if (!id || !name || !Number.isFinite(price)) {
     return null;
@@ -134,6 +138,7 @@ function toProduct(
     name,
     category,
     price,
+    stock,
     tag: tag || undefined,
     description,
     color:

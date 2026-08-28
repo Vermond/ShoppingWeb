@@ -23,6 +23,10 @@ export default function CartPage() {
   const [query, setQuery] = useState("");
   const { items, totalItems, subtotal, updateQuantity, removeItem } = useCart();
   const { products } = useCatalog();
+  const hasUnavailableItems = items.some((item) => {
+    const product = products.find(({ id }) => id === item.productId);
+    return !product || product.stock <= 0;
+  });
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
 
@@ -83,6 +87,8 @@ export default function CartPage() {
                   return null;
                 }
 
+                const isOutOfStock = product.stock <= 0;
+
                 return (
                   <article className={styles.cartItem} key={item.productId}>
                     <div className={styles.cartItemArt}>
@@ -97,6 +103,11 @@ export default function CartPage() {
                           <p>{product.category}</p>
                           <h3>{product.name}</h3>
                           <span>{product.description}</span>
+                          {isOutOfStock && (
+                            <strong className={styles.outOfStockMessage}>
+                              재고 없음
+                            </strong>
+                          )}
                         </div>
                         <IconButton
                           type="button"
@@ -115,6 +126,7 @@ export default function CartPage() {
                             type="button"
                             size="small"
                             disableRipple
+                            disabled={isOutOfStock}
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity - 1)
                             }
@@ -127,6 +139,7 @@ export default function CartPage() {
                             type="button"
                             size="small"
                             disableRipple
+                            disabled={isOutOfStock}
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity + 1)
                             }
@@ -167,9 +180,15 @@ export default function CartPage() {
                 variant="contained"
                 disableRipple
                 fullWidth
+                disabled={hasUnavailableItems}
               >
-                결제하기
+                {hasUnavailableItems ? "재고를 확인해주세요" : "결제하기"}
               </Button>
+              {hasUnavailableItems && (
+                <p className={styles.outOfStockNote}>
+                  재고가 없는 상품을 장바구니에서 삭제한 후 결제할 수 있어요.
+                </p>
+              )}
               <p className={styles.shippingNote}>
                 {subtotal >= FREE_SHIPPING_THRESHOLD
                   ? "무료 배송이 적용되었어요."
