@@ -1,0 +1,135 @@
+.page {
+  min-height: 100vh;
+  background: var(--morrow-palette-background-default, #f7f7f3);
+  color: var(--morrow-palette-text-primary, #1f211e);
+}
+
+.content {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 48px 5.5vw 120px;
+}
+
+.backLink {
+  display: inline-block;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.intro {
+  padding: 72px 0 56px;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.eyebrow,
+.panelLabel {
+  margin: 0 0 16px;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  margin: 0 0 24px;
+  font-family: var(--font-display);
+  font-size: clamp(46px, 7vw, 78px);
+  font-weight: 400;
+  letter-spacing: -0.08em;
+  line-height: 0.95;
+}
+
+.intro > p:last-child,
+.panelDescription {
+  margin: 0;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.testPanel {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 48px 0;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.testPanel h2 {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 1;
+}
+
+.searchButton {
+  min-width: 132px;
+  min-height: 44px;
+  flex-shrink: 0;
+  border-radius: 0;
+  background: var(--morrow-palette-text-primary, #1f211e);
+  color: var(--morrow-palette-background-default, #f7f7f3);
+  font-size: 11px;
+}
+
+.searchButton:hover {
+  background: var(--morrow-palette-text-primary, #1f211e);
+}
+
+.result {
+  padding: 36px 0;
+}
+
+.result dl {
+  margin: 0;
+  border-top: 1px solid var(--morrow-palette-text-primary, #1f211e);
+}
+
+.result dl > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+  font-size: 13px;
+}
+
+.result dt {
+  color: var(--morrow-palette-text-secondary, #787a72);
+}
+
+.result dd {
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: 34px 18px 84px;
+  }
+
+  .intro {
+    padding: 56px 0 42px;
+  }
+
+  .testPanel {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 28px;
+    padding: 42px 0;
+  }
+
+  .searchButton {
+    width: 100%;
+  }
+
+  .result dl > div {
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 12px;
+  }
+}

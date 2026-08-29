@@ -1,0 +1,229 @@
+.addressToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.addAddressButton {
+  min-height: 42px;
+  border-radius: 0;
+  background: var(--morrow-palette-text-primary, #1f211e);
+  color: var(--morrow-palette-background-default, #f7f7f3);
+  font-size: 11px;
+}
+
+.addAddressButton:hover {
+  background: var(--morrow-palette-text-primary, #1f211e);
+}
+
+.feedback {
+  margin: 20px 0 0;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.feedback.success {
+  color: #557252;
+}
+
+.feedback.error {
+  color: #a5533c;
+}
+
+.addressSection {
+  padding-top: 42px;
+}
+
+.addressList {
+  border-top: 1px solid var(--morrow-palette-text-primary, #1f211e);
+}
+
+.addressListHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.addressListHeader h2 {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.addressListHeader span {
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.addressCard {
+  padding: 25px 0;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.addressCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.addressCardHeader > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.addressCard h3 {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 400;
+  letter-spacing: -.06em;
+}
+
+.defaultChip {
+  height: 24px;
+  background: #e8eee5;
+  color: #557252;
+  font-size: 10px;
+}
+
+.addressCardActions {
+  display: flex;
+  gap: 4px;
+  color: var(--morrow-palette-text-secondary, #787a72);
+}
+
+.addressCardActions button {
+  padding: 4px;
+}
+
+.addressCardActions svg {
+  width: 18px;
+  height: 18px;
+}
+
+.addressLine {
+  margin-top: 11px;
+  color: var(--morrow-palette-text-primary, #1f211e);
+  font-size: 13px;
+}
+
+.addressLine + .addressLine {
+  margin-top: 5px;
+  color: var(--morrow-palette-text-secondary, #787a72);
+}
+
+.addressPhone {
+  margin-top: 17px;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 11px;
+}
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 90px 20px;
+  text-align: center;
+}
+
+.emptyState h2 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 50px);
+  font-weight: 400;
+  letter-spacing: -.07em;
+}
+
+.emptyState p {
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 13px;
+}
+
+.addressFormGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 20px;
+  padding-top: 8px;
+}
+
+.postalCodeField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.addressSearchButton {
+  min-width: 92px;
+  min-height: 36px;
+  border-radius: 0;
+  border-color: var(--morrow-palette-divider, #dedfd9);
+  color: var(--morrow-palette-text-primary, #1f211e);
+  font-size: 11px;
+}
+
+.addressSearchButton:hover {
+  border-color: var(--morrow-palette-text-primary, #1f211e);
+  background: transparent;
+}
+
+.addressLockedField :global(.MuiInputBase-root.Mui-disabled) {
+  cursor: not-allowed;
+  background: rgb(31 33 30 / 3%);
+}
+
+.addressLockedField :global(.MuiInputBase-input.Mui-disabled) {
+  cursor: not-allowed;
+}
+
+.addressWideField {
+  grid-column: 1 / -1;
+}
+
+.defaultCheckbox {
+  margin: 28px 0 0;
+}
+
+.defaultCheckbox :global(.MuiFormControlLabel-label) {
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .addressToolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .addAddressButton {
+    width: 100%;
+  }
+
+  .addressCardHeader {
+    gap: 12px;
+  }
+
+  .addressCard h3 {
+    font-size: 22px;
+  }
+
+  .addressFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .addressWideField {
+    grid-column: auto;
+  }
+
+  .postalCodeField {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

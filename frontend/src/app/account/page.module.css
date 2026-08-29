@@ -106,8 +106,13 @@
 }
 
 .profileEmail {
-  margin-top: 25px;
   font-size: 12px;
+}
+
+.profileContact {
+  display: grid;
+  gap: 8px;
+  margin-top: 25px;
 }
 
 .profileFeedback {

@@ -68,6 +68,32 @@
   font-weight: 500;
 }
 
+.addressHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.addressHeading h2 {
+  margin-bottom: 28px;
+}
+
+.addressHeading button {
+  min-width: auto;
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.addressNote {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -76,6 +102,40 @@
 
 .fullField {
   grid-column: 1 / -1;
+}
+
+.addressField {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.addressInput {
+  min-width: 0;
+  flex: 1;
+}
+
+.addressSearchButton {
+  min-width: 92px;
+  min-height: 36px;
+  border-radius: 0;
+  border-color: var(--line);
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.addressSearchButton:hover {
+  border-color: var(--ink);
+  background: transparent;
+}
+
+.addressLockedField :global(.MuiInputBase-root.Mui-disabled) {
+  cursor: not-allowed;
+  background: rgb(31 33 30 / 3%);
+}
+
+.addressLockedField :global(.MuiInputBase-input.Mui-disabled) {
+  cursor: not-allowed;
 }
 
 .paymentOptions {
@@ -245,5 +305,9 @@
 
   .fullField {
     grid-column: auto;
+  }
+
+  .addressField {
+    gap: 12px;
   }
 }

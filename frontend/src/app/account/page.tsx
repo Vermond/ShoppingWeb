@@ -277,10 +277,10 @@ export default function AccountPage() {
               </span>
               <ArrowForward />
             </Link>
-            <Link href="/shipping-returns">
+            <Link href="/account/addresses">
               <span>
                 <small>03</small>
-                배송지·교환 안내
+                배송지 관리
               </span>
               <ArrowForward />
             </Link>
