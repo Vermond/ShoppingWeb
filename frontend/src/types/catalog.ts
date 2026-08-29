@@ -12,3 +12,14 @@ export type Product = {
   color: string;
   art: "ceramic" | "linen" | "bag" | "glow" | "wood" | "glass";
 };
+
+export type ProductImage = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+export type ProductDetail = Product & {
+  categoryId: string;
+  images: ProductImage[];
+};

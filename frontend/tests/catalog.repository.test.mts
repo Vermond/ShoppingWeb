@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fetchCatalog } from "../src/repositories/catalog.repository.ts";
+import {
+  fetchCatalog,
+  fetchProductById,
+} from "../src/repositories/catalog.repository.ts";
 
 test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리를 매핑한다", async () => {
   const originalFetch = globalThis.fetch;
@@ -68,6 +71,56 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
         { id: "cat-electronics", name: "전자제품", count: 1 },
         { id: "cat-living", name: "리빙", count: 1 },
       ],
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("상품 상세 조회는 상세 API의 이미지와 재고를 매핑한다", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestPath = "";
+
+  globalThis.fetch = async (input) => {
+    requestPath = String(input);
+
+    return new Response(
+      JSON.stringify({
+        product: {
+          id: "product-detail",
+          category_id: "cat-electronics",
+          name: "무선 스피커",
+          description: null,
+          price: "49000.00",
+          stock: 0,
+          status: "active",
+          images: [
+            {
+              id: "image-2",
+              image_url: "https://example.com/second.png",
+              sort_order: 2,
+            },
+            {
+              id: "image-1",
+              image_url: "https://example.com/first.png",
+              sort_order: 1,
+            },
+          ],
+        },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+
+  try {
+    const product = await fetchProductById("product-detail");
+
+    assert.equal(requestPath, "/api/products/product-detail");
+    assert.equal(product.stock, 0);
+    assert.equal(product.categoryId, "cat-electronics");
+    assert.deepEqual(
+      product.images.map(({ id }) => id),
+      ["image-1", "image-2"],
     );
   } finally {
     globalThis.fetch = originalFetch;

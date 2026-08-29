@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         destination: `${backendApiBaseUrl}/api/products`,
       },
       {
+        source: "/api/products/:path*",
+        destination: `${backendApiBaseUrl}/api/products/:path*`,
+      },
+      {
         source: "/api/categories",
         destination: `${backendApiBaseUrl}/api/categories`,
       },

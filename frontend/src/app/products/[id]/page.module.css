@@ -45,6 +45,15 @@
   min-height: min(54vw, 600px);
 }
 
+.detailImageFrame {
+  position: relative;
+  min-height: min(54vw, 600px);
+}
+
+.detailImage {
+  object-fit: cover;
+}
+
 .detailCopy {
   max-width: 500px;
 }
@@ -183,6 +192,10 @@
   }
 
   .detailArt {
+    min-height: 430px;
+  }
+
+  .detailImageFrame {
     min-height: 430px;
   }
 

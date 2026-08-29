@@ -1,4 +1,9 @@
-import type { Product, ProductCategory } from "../types/catalog";
+import type {
+  Product,
+  ProductCategory,
+  ProductDetail,
+  ProductImage,
+} from "../types/catalog";
 
 export type CatalogCategory = {
   id: string;
@@ -67,6 +72,29 @@ function readRecords(value: unknown, key: string): ApiRecord[] {
   }
 
   return records.map(asRecord).filter((record): record is ApiRecord => record !== null);
+}
+
+function readProductImages(value: unknown): ProductImage[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(asRecord)
+    .filter((record): record is ApiRecord => record !== null)
+    .reduce<ProductImage[]>((images, record) => {
+      const id = toStringId(record.id);
+      const imageUrl =
+        typeof record.image_url === "string" ? record.image_url.trim() : "";
+      const sortOrder = Number(record.sort_order);
+
+      if (id && imageUrl && Number.isFinite(sortOrder)) {
+        images.push({ id, imageUrl, sortOrder });
+      }
+
+      return images;
+    }, [])
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 async function requestJson(path: string): Promise<unknown> {
@@ -151,6 +179,24 @@ function toProduct(
   };
 }
 
+function toProductDetail(
+  record: ApiRecord,
+  categoryNames: Map<string, string> = new Map(),
+): ProductDetail | null {
+  const product = toProduct(record, 0, categoryNames);
+  const categoryId = toStringId(record.category_id ?? record.categoryId);
+
+  if (!product || !categoryId) {
+    return null;
+  }
+
+  return {
+    ...product,
+    categoryId,
+    images: readProductImages(record.images),
+  };
+}
+
 function buildCategories(
   catalogProducts: Product[],
   apiCategories: ApiCategory[] = [],
@@ -190,4 +236,31 @@ export async function fetchCatalog(): Promise<CatalogData> {
     products: catalogProducts,
     categories: buildCategories(catalogProducts, apiCategories),
   };
+}
+
+export async function fetchProductById(id: string): Promise<ProductDetail> {
+  const path = `/api/products/${encodeURIComponent(id)}`;
+  const response = await fetch(path, {
+    cache: "no-store",
+  });
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message =
+      asRecord(result) && typeof result.message === "string"
+        ? result.message
+        : "상품 정보를 불러오지 못했어요.";
+    throw new Error(message);
+  }
+
+  const productRecord = asRecord(result) && asRecord(result.product);
+  const product = productRecord
+    ? toProductDetail(productRecord)
+    : null;
+
+  if (!product) {
+    throw new Error("상품 상세 응답 형식이 올바르지 않아요.");
+  }
+
+  return product;
 }

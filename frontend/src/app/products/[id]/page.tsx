@@ -7,12 +7,15 @@ import {
   FavoriteBorder,
 } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
+import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../../../components/shop/CartProvider";
 import { useCatalog } from "../../../components/shop/CatalogProvider";
 import { ProductArt } from "../../../components/shop/ProductCard";
 import { SiteHeader } from "../../../components/shop/SiteHeader";
+import { fetchProductById } from "../../../repositories/catalog.repository";
+import type { ProductDetail } from "../../../types/catalog";
 import { formatPrice } from "../../../utils/format";
 import { useWishlist } from "../../../components/shop/WishlistProvider";
 import styles from "./page.module.css";
@@ -21,13 +24,51 @@ export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const [query, setQuery] = useState("");
   const [isAdded, setIsAdded] = useState(false);
+  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [isProductLoading, setIsProductLoading] = useState(true);
+  const [productError, setProductError] = useState<string | null>(null);
   const { totalItems, addItem } = useCart();
-  const { products, isLoading } = useCatalog();
+  const { categories } = useCatalog();
   const { isFavorite, toggleFavorite } = useWishlist();
   const productId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const product = products.find(({ id }) => id === productId);
 
-  if (!product && isLoading) {
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProduct = async () => {
+      setIsProductLoading(true);
+      setProductError(null);
+
+      try {
+        const result = await fetchProductById(productId);
+
+        if (!cancelled) {
+          setProduct(result);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setProduct(null);
+          setProductError(
+            error instanceof Error
+              ? error.message
+              : "상품 정보를 불러오지 못했어요.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsProductLoading(false);
+        }
+      }
+    };
+
+    void loadProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [productId]);
+
+  if (!product && isProductLoading) {
     return (
       <div className={styles.detailPage}>
         <SiteHeader
@@ -53,8 +94,8 @@ export default function ProductDetailPage() {
           onQueryChange={setQuery}
         />
         <main className={styles.notFound}>
-          <p className={styles.eyebrow}>Object not found</p>
-          <h1>찾으시는 물건이 없어요.</h1>
+          <p className={styles.eyebrow}>Object unavailable</p>
+          <h1>{productError ?? "찾으시는 물건이 없어요."}</h1>
           <Button component="a" href="/shop" startIcon={<ArrowBack />}>
             상품 목록으로 돌아가기
           </Button>
@@ -63,6 +104,12 @@ export default function ProductDetailPage() {
     );
   }
 
+  const displayProduct = {
+    ...product,
+    category:
+      categories.find(({ id }) => id === product.categoryId)?.name ??
+      product.category,
+  };
   const isOutOfStock = product.stock <= 0;
 
   const addToCart = () => {
@@ -97,14 +144,24 @@ export default function ProductDetailPage() {
 
         <section className={styles.detailLayout} aria-labelledby="product-title">
           <div className={styles.detailVisual}>
-            <ProductArt
-              product={product}
-              className={styles.detailArt}
-            />
+            {product.images[0] ? (
+              <div className={styles.detailImageFrame}>
+                <Image
+                  className={styles.detailImage}
+                  src={product.images[0].imageUrl}
+                  alt={product.name}
+                  fill
+                  unoptimized
+                  sizes="(max-width: 800px) 100vw, 54vw"
+                />
+              </div>
+            ) : (
+              <ProductArt product={displayProduct} className={styles.detailArt} />
+            )}
           </div>
 
           <div className={styles.detailCopy}>
-            <p className={styles.eyebrow}>{product.category}</p>
+            <p className={styles.eyebrow}>{displayProduct.category}</p>
             <div className={styles.titleRow}>
               <h1 id="product-title">{product.name}</h1>
               <IconButton
