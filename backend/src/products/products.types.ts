@@ -1,5 +1,14 @@
 import Decimal from 'decimal.js';
 
+export const PRODUCT_STATUSES = [
+  'active',
+  'inactive',
+  'draft',
+  'archived',
+] as const;
+
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
 export type ProductRow = {
   id: string;
   category_id: string;
@@ -12,8 +21,9 @@ export type ProductRow = {
   updated_at: Date;
 };
 
-export type ProductRecord = Omit<ProductRow, 'price'> & {
+export type ProductRecord = Omit<ProductRow, 'price' | 'status'> & {
   price: Decimal;
+  status: ProductStatus;
 };
 
 export type ProductResponse = Omit<
@@ -49,9 +59,18 @@ export type ProductPageResponse = {
   pagination: ProductPagination;
 };
 
+export function isProductStatus(value: string): value is ProductStatus {
+  return (PRODUCT_STATUSES as readonly string[]).includes(value);
+}
+
 export function toProductRecord(row: ProductRow): ProductRecord {
+  if (!isProductStatus(row.status)) {
+    throw new Error('상품 상태가 허용된 값이 아닙니다.');
+  }
+
   return {
     ...row,
+    status: row.status,
     price: new Decimal(row.price),
   };
 }

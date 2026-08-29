@@ -1,4 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  PRODUCT_STATUSES,
+  type ProductStatus,
+} from '../products/products.types';
 
 export class ApiErrorResponseDto {
   @ApiProperty({ example: 'VALIDATION_ERROR' })
@@ -39,8 +43,8 @@ export class ProductResponseDto {
   @ApiProperty({ description: '재고 수량' })
   stock!: number;
 
-  @ApiProperty({ description: '상품 상태' })
-  status!: string;
+  @ApiProperty({ enum: [...PRODUCT_STATUSES], description: '상품 상태' })
+  status!: ProductStatus;
 
   @ApiProperty({ format: 'date-time', description: '생성 시각' })
   created_at!: string;

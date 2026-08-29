@@ -5,12 +5,14 @@ import type { ProductPageRow, ProductRow } from './products.types';
 const COUNT_PRODUCTS_QUERY = `
   SELECT COUNT(*)::int AS total_items
   FROM catalog.products
+  WHERE status = 'active'
 `;
 
 const FIND_PRODUCTS_PAGE_QUERY = `
   SELECT id, category_id, name, description, price, stock, status,
          created_at, updated_at
   FROM catalog.products
+  WHERE status = 'active'
   ORDER BY created_at DESC, id DESC
   LIMIT $1 OFFSET $2
 `;

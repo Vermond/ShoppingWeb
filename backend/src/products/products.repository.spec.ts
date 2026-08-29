@@ -37,10 +37,12 @@ describe('ProductsRepository', () => {
     const countQuery = executor.query.mock.calls[0]?.[0] as string;
     const productsQuery = executor.query.mock.calls[1]?.[0] as string;
     expect(countQuery).toContain('SELECT COUNT(*)::int AS total_items');
+    expect(countQuery).toContain("WHERE status = 'active'");
     expect(productsQuery).toContain(
       'SELECT id, category_id, name, description, price, stock, status',
     );
     expect(productsQuery).toContain('created_at, updated_at');
+    expect(productsQuery).toContain("WHERE status = 'active'");
     expect(productsQuery).toContain('ORDER BY created_at DESC, id DESC');
     expect(productsQuery).toContain('LIMIT $1 OFFSET $2');
     expect(productsQuery).not.toMatch(/SELECT\s+\*/i);
