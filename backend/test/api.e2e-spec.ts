@@ -12,7 +12,7 @@ import { DatabaseService } from './../src/database/database.service';
 import { EmailVerificationService } from './../src/users/email-verification.service';
 import { ProductsService } from './../src/products/products.service';
 import { RateLimitGuard } from './../src/rate-limit/rate-limit.guard';
-import type { UserRecord } from './../src/users/users.repository';
+import type { UserRecord } from './../src/users/users.types';
 import { UsersService } from './../src/users/users.service';
 import Decimal from 'decimal.js';
 import type { ProductRecord } from './../src/products/products.types';

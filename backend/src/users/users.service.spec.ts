@@ -14,7 +14,8 @@ import type { EmailVerificationService } from './email-verification.service';
 import type { EmailVerificationRepository } from './email-verification.repository';
 import { PasswordService } from './password.service';
 import type { CreateUserInput } from './users.input';
-import { UsersRepository, type UserRecord } from './users.repository';
+import { UsersRepository } from './users.repository';
+import type { UserRecord } from './users.types';
 import { UsersService } from './users.service';
 
 const user: UserRecord = {

@@ -3,7 +3,8 @@ import type { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { ExecutionContext } from '@nestjs/common';
 import type { EnvironmentVariables } from '../config/environment.validation';
-import type { UserRecord, UsersRepository } from '../users/users.repository';
+import type { UsersRepository } from '../users/users.repository';
+import type { UserRecord } from '../users/users.types';
 import type { AuthenticatedRequest } from './auth.decorators';
 import { AccessTokenGuard } from './access-token.guard';
 

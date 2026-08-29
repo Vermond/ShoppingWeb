@@ -1,5 +1,6 @@
 import type { DatabaseService } from '../database/database.service';
-import { UsersRepository, type UserRecord } from './users.repository';
+import { UsersRepository } from './users.repository';
+import type { UserRecord } from './users.types';
 
 const user: UserRecord = {
   id: '11111111-1111-4111-8111-111111111111',

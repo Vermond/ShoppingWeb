@@ -3,21 +3,7 @@ import {
   DatabaseService,
   type DatabaseQueryExecutor,
 } from '../database/database.service';
-
-export type UserRecord = Record<string, unknown> & {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  status: string;
-  email_verified: boolean;
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type StoredUserRecord = UserRecord & {
-  password_hash: string | null;
-};
+import type { StoredUserRecord, UserRecord } from './users.types';
 
 const USER_COLUMNS = `
   id, email, "name", "role", status, email_verified, created_at, updated_at

@@ -20,7 +20,11 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { parseLoginInput } from '../users/users.input';
-import type { UserRecord } from '../users/users.repository';
+import {
+  serializeUser,
+  type UserRecord,
+  type UserResponse,
+} from '../users/users.types';
 import {
   LoginBodyDto,
   LogoutResponseDto,
@@ -69,7 +73,7 @@ export class AuthController {
   async login(
     @Body() body: unknown,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<{ user: UserRecord }> {
+  ): Promise<{ user: UserResponse }> {
     const result = await this.authService.login(parseLoginInput(body));
     setAuthCookies(
       response,
@@ -78,7 +82,7 @@ export class AuthController {
       result.refreshToken,
     );
 
-    return { user: result.user };
+    return { user: serializeUser(result.user) };
   }
 
   @Post('refresh')
@@ -102,13 +106,13 @@ export class AuthController {
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<{ user: UserRecord }> {
+  ): Promise<{ user: UserResponse }> {
     const config = getAuthConfig(this.configService);
     const refreshToken = readCookie(request, config.refreshCookieName);
     const result = await this.authService.refresh(refreshToken ?? '');
     setAuthCookies(response, config, result.accessToken, result.refreshToken);
 
-    return { user: result.user };
+    return { user: serializeUser(result.user) };
   }
 
   @Post('logout')
@@ -138,7 +142,7 @@ export class AuthController {
     status: 401,
     description: '로그인이 필요하거나 Access Token이 유효하지 않음',
   })
-  getMe(@CurrentUser() user: UserRecord): { user: UserRecord } {
-    return { user };
+  getMe(@CurrentUser() user: UserRecord): { user: UserResponse } {
+    return { user: serializeUser(user) };
   }
 }

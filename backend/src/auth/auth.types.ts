@@ -1,4 +1,4 @@
-import type { UserRecord } from '../users/users.repository';
+import type { UserRecord } from '../users/users.types';
 
 export type AccessTokenPayload = {
   sub: string;

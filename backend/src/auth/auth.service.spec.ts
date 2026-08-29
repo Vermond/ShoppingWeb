@@ -8,7 +8,8 @@ import type {
 } from '../database/database.service';
 import type { EnvironmentVariables } from '../config/environment.validation';
 import type { UsersService } from '../users/users.service';
-import type { UserRecord, UsersRepository } from '../users/users.repository';
+import type { UsersRepository } from '../users/users.repository';
+import type { UserRecord } from '../users/users.types';
 import type {
   RefreshTokenRecord,
   RefreshTokenRepository,

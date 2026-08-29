@@ -23,7 +23,11 @@ import {
 } from '@nestjs/swagger';
 import { parseCreateUserInput, parseUpdateUserInput } from './users.input';
 import { UsersService } from './users.service';
-import type { UserRecord } from './users.repository';
+import {
+  serializeUser,
+  type UserRecord,
+  type UserResponse,
+} from './users.types';
 import { AccessTokenGuard } from '../auth/access-token.guard';
 import { CurrentUser } from '../auth/auth.decorators';
 import {
@@ -55,10 +59,10 @@ export class UsersController {
   @ApiResponse({ status: 409, description: '이미 사용 중인 이메일' })
   @ApiResponse({ status: 503, description: '인증 메일 발송 실패' })
   @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
-  async create(@Body() body: unknown): Promise<{ user: UserRecord }> {
+  async create(@Body() body: unknown): Promise<{ user: UserResponse }> {
     const user = await this.usersService.create(parseCreateUserInput(body));
 
-    return { user };
+    return { user: serializeUser(user) };
   }
 
   @Patch(':id')
@@ -81,11 +85,11 @@ export class UsersController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() body: unknown,
     @CurrentUser() currentUser: UserRecord,
-  ): Promise<{ user: UserRecord }> {
+  ): Promise<{ user: UserResponse }> {
     this.assertSelf(id, currentUser);
     const user = await this.usersService.update(id, parseUpdateUserInput(body));
 
-    return { user };
+    return { user: serializeUser(user) };
   }
 
   @Delete(':id')
@@ -100,11 +104,11 @@ export class UsersController {
   async withdraw(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @CurrentUser() currentUser: UserRecord,
-  ): Promise<{ user: UserRecord }> {
+  ): Promise<{ user: UserResponse }> {
     this.assertSelf(id, currentUser);
     const user = await this.usersService.withdraw(id);
 
-    return { user };
+    return { user: serializeUser(user) };
   }
 
   private assertSelf(id: string, currentUser: UserRecord): void {

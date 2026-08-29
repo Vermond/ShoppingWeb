@@ -12,7 +12,8 @@ import type {
 } from '../database/database.service';
 import type { EmailService } from '../email/email.service';
 import type { EnvironmentVariables } from '../config/environment.validation';
-import type { UserRecord, UsersRepository } from './users.repository';
+import type { UsersRepository } from './users.repository';
+import type { UserRecord } from './users.types';
 import { EmailVerificationService } from './email-verification.service';
 import type { EmailVerificationRepository } from './email-verification.repository';
 

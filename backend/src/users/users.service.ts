@@ -14,7 +14,7 @@ import { EmailVerificationRepository } from './email-verification.repository';
 import { EmailVerificationService } from './email-verification.service';
 import { PasswordService } from './password.service';
 import { UsersRepository } from './users.repository';
-import type { UserRecord } from './users.repository';
+import type { UserRecord } from './users.types';
 import type {
   CreateUserInput,
   LoginInput,
