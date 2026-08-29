@@ -92,6 +92,7 @@ describe('Cart API (e2e)', () => {
   let cartService: {
     findByUserId: jest.Mock;
     addItem: jest.Mock;
+    mergeItems: jest.Mock;
     updateItem: jest.Mock;
     removeItem: jest.Mock;
   };
@@ -100,6 +101,7 @@ describe('Cart API (e2e)', () => {
     cartService = {
       findByUserId: jest.fn().mockResolvedValue(cart),
       addItem: jest.fn().mockResolvedValue(cart),
+      mergeItems: jest.fn().mockResolvedValue(cart),
       updateItem: jest.fn().mockResolvedValue(cart),
       removeItem: jest.fn().mockResolvedValue(cart),
     };
@@ -166,6 +168,33 @@ describe('Cart API (e2e)', () => {
       .expect(200)
       .expect({ cart: serializedCart });
     expect(cartService.removeItem).toHaveBeenCalledWith(user.id, product.id);
+  });
+
+  it('merges the guest cart into the authenticated user cart', async () => {
+    await request(baseUrl)
+      .post('/api/cart/merge')
+      .send({
+        items: [
+          { product_id: product.id, quantity: 1 },
+          {
+            product_id: '44444444-4444-4444-8444-444444444444',
+            quantity: 2,
+          },
+        ],
+      })
+      .retry(2, retryOnConnectionReset)
+      .expect(200)
+      .expect({ cart: serializedCart });
+
+    expect(cartService.mergeItems).toHaveBeenCalledWith(user.id, {
+      items: [
+        { product_id: product.id, quantity: 1 },
+        {
+          product_id: '44444444-4444-4444-8444-444444444444',
+          quantity: 2,
+        },
+      ],
+    });
   });
 
   it('rejects malformed cart item requests before calling the service', async () => {

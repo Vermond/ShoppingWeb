@@ -10,7 +10,11 @@ import {
   DatabaseService,
   type DatabaseQueryExecutor,
 } from '../database/database.service';
-import type { AddCartItemInput, UpdateCartItemInput } from './cart.input';
+import type {
+  AddCartItemInput,
+  MergeCartInput,
+  UpdateCartItemInput,
+} from './cart.input';
 import { CartRepository } from './cart.repository';
 import { toCartRecord, type CartRecord } from './cart.types';
 import type { ProductRow } from '../products/products.types';
@@ -78,6 +82,59 @@ export class CartService {
 
           return this.readCart(userId, executor);
         }),
+    );
+  }
+
+  async mergeItems(userId: string, input: MergeCartInput): Promise<CartRecord> {
+    return this.withDatabaseError('장바구니 병합에 실패했습니다.', async () =>
+      this.databaseService.transaction(async (executor) => {
+        const cartId = await this.cartRepository.getOrCreateCartId(
+          userId,
+          executor,
+        );
+        const items = [...input.items].sort((left, right) =>
+          left.product_id.localeCompare(right.product_id),
+        );
+
+        for (const item of items) {
+          const product = await this.cartRepository.findProductByIdForUpdate(
+            item.product_id,
+            executor,
+          );
+
+          assertProductCanBePurchased(product);
+
+          const existingItem = await this.cartRepository.findItemForUpdate(
+            cartId,
+            item.product_id,
+            executor,
+          );
+          const nextQuantity = (existingItem?.quantity ?? 0) + item.quantity;
+
+          assertQuantityCanBePurchased(product, nextQuantity);
+
+          if (existingItem) {
+            await this.cartRepository.updateItem(
+              existingItem.id,
+              nextQuantity,
+              executor,
+            );
+          } else {
+            await this.cartRepository.insertItem(
+              cartId,
+              item.product_id,
+              item.quantity,
+              executor,
+            );
+          }
+        }
+
+        if (items.length > 0) {
+          await this.cartRepository.touchCart(cartId, executor);
+        }
+
+        return this.readCart(userId, executor);
+      }),
     );
   }
 

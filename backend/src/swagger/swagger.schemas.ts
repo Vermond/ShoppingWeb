@@ -3,6 +3,7 @@ import {
   CART_ITEM_UNAVAILABLE_REASONS,
   type CartItemUnavailableReason,
 } from '../cart/cart.types';
+import { MAX_CART_MERGE_ITEMS } from '../cart/cart.input';
 import {
   PRODUCT_STATUSES,
   type ProductStatus,
@@ -142,6 +143,15 @@ export class AddCartItemBodyDto {
 export class UpdateCartItemBodyDto {
   @ApiProperty({ minimum: 1, description: '변경할 수량' })
   quantity!: number;
+}
+
+export class MergeCartBodyDto {
+  @ApiProperty({
+    type: [AddCartItemBodyDto],
+    maxItems: MAX_CART_MERGE_ITEMS,
+    description: '로그인 전 장바구니 상품 목록',
+  })
+  items!: AddCartItemBodyDto[];
 }
 
 export class ProductImageResponseDto {

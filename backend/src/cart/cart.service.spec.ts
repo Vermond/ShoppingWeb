@@ -77,6 +77,45 @@ describe('CartService', () => {
     expect(repository.touchCart).not.toHaveBeenCalled();
   });
 
+  it('merges multiple guest items into the current cart in one transaction', async () => {
+    const { service, repository } = createService();
+    const secondProduct: ProductRow = {
+      ...product,
+      id: '22222222-2222-4222-8222-222222222222',
+    };
+    repository.findProductByIdForUpdate.mockImplementation((productId) =>
+      Promise.resolve(productId === secondProduct.id ? secondProduct : product),
+    );
+    repository.findItemForUpdate.mockImplementation((_cartId, productId) =>
+      Promise.resolve(
+        productId === product.id ? { id: '1', quantity: 1 } : null,
+      ),
+    );
+
+    await service.mergeItems('user-1', {
+      items: [
+        { product_id: secondProduct.id, quantity: 1 },
+        { product_id: product.id, quantity: 2 },
+      ],
+    });
+
+    expect(repository.updateItem).toHaveBeenCalledWith(
+      '1',
+      3,
+      expect.anything(),
+    );
+    expect(repository.insertItem).toHaveBeenCalledWith(
+      cartRow.id,
+      secondProduct.id,
+      1,
+      expect.anything(),
+    );
+    expect(repository.touchCart).toHaveBeenCalledWith(
+      cartRow.id,
+      expect.anything(),
+    );
+  });
+
   it('rejects unavailable products and missing cart items', async () => {
     const unavailable = createService();
     unavailable.repository.findProductByIdForUpdate.mockResolvedValue({

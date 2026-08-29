@@ -27,9 +27,14 @@ import {
   AddCartItemBodyDto,
   ApiErrorResponseDto,
   CartEnvelopeResponseDto,
+  MergeCartBodyDto,
   UpdateCartItemBodyDto,
 } from '../swagger/swagger.schemas';
-import { parseAddCartItemInput, parseUpdateCartItemInput } from './cart.input';
+import {
+  parseAddCartItemInput,
+  parseMergeCartInput,
+  parseUpdateCartItemInput,
+} from './cart.input';
 import { CartService } from './cart.service';
 import { serializeCart, type CartResponse } from './cart.types';
 
@@ -70,6 +75,28 @@ export class CartController {
     const cart = await this.cartService.addItem(
       user.id,
       parseAddCartItemInput(body),
+    );
+
+    return { cart: serializeCart(cart) };
+  }
+
+  @Post('merge')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '비로그인 장바구니와 서버 장바구니 병합' })
+  @ApiBody({ type: MergeCartBodyDto })
+  @ApiOkResponse({ type: CartEnvelopeResponseDto })
+  @ApiResponse({ status: 400, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 409, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
+  async mergeItems(
+    @Body() body: unknown,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ cart: CartResponse }> {
+    const cart = await this.cartService.mergeItems(
+      user.id,
+      parseMergeCartInput(body),
     );
 
     return { cart: serializeCart(cart) };
