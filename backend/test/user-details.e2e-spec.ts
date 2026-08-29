@@ -7,10 +7,7 @@ import { AccessTokenGuard } from './../src/auth/access-token.guard';
 import type { AuthenticatedRequest } from './../src/auth/auth.decorators';
 import type { AuthenticatedUser } from './../src/auth/auth.types';
 import { UserDetailsService } from './../src/users/user-details.service';
-import type {
-  UserAddressRecord,
-  UserProfileRecord,
-} from './../src/users/user-details.types';
+import type { UserAddressRecord } from './../src/users/user-details.types';
 
 const user: AuthenticatedUser = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -21,13 +18,6 @@ const user: AuthenticatedUser = {
   email_verified: true,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),
-};
-
-const profile: UserProfileRecord = {
-  user_id: user.id,
-  phone_number: '01012345678',
-  created_at: new Date('2026-01-01T00:00:00.000Z'),
-  updated_at: new Date('2026-01-02T00:00:00.000Z'),
 };
 
 const address: UserAddressRecord = {
@@ -43,12 +33,10 @@ const address: UserAddressRecord = {
   updated_at: new Date('2026-01-02T00:00:00.000Z'),
 };
 
-describe('User profile and address API (e2e)', () => {
+describe('User address API (e2e)', () => {
   let app: INestApplication<App>;
   let baseUrl: string;
   let service: {
-    findProfile: jest.Mock;
-    saveProfile: jest.Mock;
     findAddresses: jest.Mock;
     createAddress: jest.Mock;
     updateAddress: jest.Mock;
@@ -57,8 +45,6 @@ describe('User profile and address API (e2e)', () => {
 
   beforeAll(async () => {
     service = {
-      findProfile: jest.fn().mockResolvedValue(profile),
-      saveProfile: jest.fn().mockResolvedValue(profile),
       findAddresses: jest.fn().mockResolvedValue([address]),
       createAddress: jest.fn().mockResolvedValue(address),
       updateAddress: jest.fn().mockResolvedValue(address),
@@ -89,38 +75,7 @@ describe('User profile and address API (e2e)', () => {
     baseUrl = await app.getUrl();
   });
 
-  it('gets and saves the current user profile', async () => {
-    await request(baseUrl)
-      .get('/api/users/me/profile')
-      .expect(200)
-      .expect({
-        profile: {
-          user_id: user.id,
-          phone_number: '01012345678',
-          created_at: '2026-01-01T00:00:00.000Z',
-          updated_at: '2026-01-02T00:00:00.000Z',
-        },
-      });
-
-    await request(baseUrl)
-      .put('/api/users/me/profile')
-      .send({ phone_number: '010-9876-5432' })
-      .expect(200)
-      .expect({
-        profile: {
-          user_id: user.id,
-          phone_number: '01012345678',
-          created_at: '2026-01-01T00:00:00.000Z',
-          updated_at: '2026-01-02T00:00:00.000Z',
-        },
-      });
-
-    expect(service.saveProfile).toHaveBeenCalledWith(user.id, {
-      phone_number: '01098765432',
-    });
-  });
-
-  it('manages the current user addresses', async () => {
+  it('manages the current user address list', async () => {
     await request(baseUrl)
       .get('/api/users/me/addresses')
       .expect(200)
@@ -177,19 +132,25 @@ describe('User profile and address API (e2e)', () => {
     expect(service.deleteAddress).toHaveBeenCalledWith(user.id, address.id);
   });
 
-  it('rejects unsupported profile fields before calling the service', async () => {
-    const callCount = service.saveProfile.mock.calls.length;
+  it('rejects unsupported fields before calling the service', async () => {
+    const callCount = service.createAddress.mock.calls.length;
 
     await request(baseUrl)
-      .put('/api/users/me/profile')
-      .send({ phone_number: '01012345678', email: 'other@example.com' })
+      .post('/api/users/me/addresses')
+      .send({
+        recipient_name: '홍길동',
+        phone_number: '01012345678',
+        postal_code: '06236',
+        address_line1: '주소',
+        extra: true,
+      })
       .expect(400)
       .expect({
         code: 'VALIDATION_ERROR',
-        message: '지원하지 않는 필드입니다: email',
+        message: '지원하지 않는 필드입니다: extra',
       });
 
-    expect(service.saveProfile.mock.calls).toHaveLength(callCount);
+    expect(service.createAddress.mock.calls).toHaveLength(callCount);
   });
 
   afterAll(async () => {

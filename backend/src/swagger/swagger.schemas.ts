@@ -255,32 +255,6 @@ export class CategoriesResponseDto {
   categories!: CategoryResponseDto[];
 }
 
-export class UserProfileResponseDto {
-  @ApiProperty({ format: 'uuid', description: '사용자 ID' })
-  user_id!: string;
-
-  @ApiProperty({
-    description: '전화번호. 서버에는 정규화된 숫자 형식으로 저장됩니다.',
-  })
-  phone_number!: string;
-
-  @ApiProperty({ format: 'date-time', description: '생성 시각' })
-  created_at!: string;
-
-  @ApiProperty({ format: 'date-time', description: '수정 시각' })
-  updated_at!: string;
-}
-
-export class UserProfileEnvelopeResponseDto {
-  @ApiProperty({ type: UserProfileResponseDto })
-  profile!: UserProfileResponseDto;
-}
-
-export class UpdateUserProfileBodyDto {
-  @ApiProperty({ description: '전화번호' })
-  phone_number!: string;
-}
-
 export class UserAddressResponseDto {
   @ApiProperty({ format: 'uuid', description: '배송지 ID' })
   id!: string;

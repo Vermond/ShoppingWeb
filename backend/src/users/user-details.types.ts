@@ -1,18 +1,3 @@
-export type UserProfileRecord = {
-  user_id: string;
-  phone_number: string;
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type UserProfileResponse = Omit<
-  UserProfileRecord,
-  'created_at' | 'updated_at'
-> & {
-  created_at: string;
-  updated_at: string;
-};
-
 export type UserAddressRecord = {
   id: string;
   user_id: string;
@@ -33,17 +18,6 @@ export type UserAddressResponse = Omit<
   created_at: string;
   updated_at: string;
 };
-
-export function serializeUserProfile(
-  profile: UserProfileRecord,
-): UserProfileResponse {
-  return {
-    user_id: profile.user_id,
-    phone_number: profile.phone_number,
-    created_at: profile.created_at.toISOString(),
-    updated_at: profile.updated_at.toISOString(),
-  };
-}
 
 export function serializeUserAddress(
   address: UserAddressRecord,

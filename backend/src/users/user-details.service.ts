@@ -13,13 +13,9 @@ import {
 import type {
   CreateUserAddressInput,
   UpdateUserAddressInput,
-  UpdateUserProfileInput,
 } from './user-details.input';
 import { UserDetailsRepository } from './user-details.repository';
-import type {
-  UserAddressRecord,
-  UserProfileRecord,
-} from './user-details.types';
+import type { UserAddressRecord } from './user-details.types';
 
 function isUniqueViolation(error: unknown): boolean {
   if (typeof error !== 'object' || error === null || !('code' in error)) {
@@ -37,33 +33,6 @@ export class UserDetailsService {
     private readonly databaseService: DatabaseService,
     private readonly repository: UserDetailsRepository,
   ) {}
-
-  async findProfile(userId: string): Promise<UserProfileRecord> {
-    return this.withDatabaseError(
-      '사용자 프로필 조회에 실패했습니다.',
-      async () => {
-        const profile = await this.repository.findProfileByUserId(userId);
-
-        if (!profile) {
-          throw new NotFoundException({
-            code: 'USER_PROFILE_NOT_FOUND',
-            message: '사용자 프로필을 찾을 수 없습니다.',
-          });
-        }
-
-        return profile;
-      },
-    );
-  }
-
-  async saveProfile(
-    userId: string,
-    input: UpdateUserProfileInput,
-  ): Promise<UserProfileRecord> {
-    return this.withDatabaseError('사용자 프로필 저장에 실패했습니다.', () =>
-      this.repository.upsertProfile(userId, input.phone_number),
-    );
-  }
 
   async findAddresses(userId: string): Promise<UserAddressRecord[]> {
     return this.withDatabaseError('배송지 목록 조회에 실패했습니다.', () =>

@@ -5,10 +5,6 @@ const MAX_NAME_LENGTH = 100;
 const MAX_POSTAL_CODE_LENGTH = 20;
 const MAX_ADDRESS_LENGTH = 300;
 
-export type UpdateUserProfileInput = {
-  phone_number: string;
-};
-
 export type CreateUserAddressInput = {
   recipient_name: string;
   phone_number: string;
@@ -26,13 +22,6 @@ export type UpdateUserAddressInput = {
   address_line2?: string | null;
   is_default?: boolean;
 };
-
-export function parseUserProfileInput(value: unknown): UpdateUserProfileInput {
-  const body = readBody(value);
-  validateFields(body, ['phone_number']);
-
-  return { phone_number: readPhoneNumber(body, 'phone_number') };
-}
 
 export function parseCreateUserAddressInput(
   value: unknown,

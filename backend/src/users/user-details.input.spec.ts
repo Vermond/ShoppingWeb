@@ -2,17 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import {
   parseCreateUserAddressInput,
   parseUpdateUserAddressInput,
-  parseUserProfileInput,
 } from './user-details.input';
 
-describe('user details input parsers', () => {
-  it('normalizes a required profile phone number', () => {
-    expect(parseUserProfileInput({ phone_number: ' 010-1234-5678 ' })).toEqual({
-      phone_number: '01012345678',
-    });
-  });
-
-  it('parses a user address and defaults the default flag to false', () => {
+describe('user address input parsers', () => {
+  it('normalizes a phone number and parses an address', () => {
     expect(
       parseCreateUserAddressInput({
         recipient_name: ' 홍길동 ',
@@ -31,7 +24,7 @@ describe('user details input parsers', () => {
     });
   });
 
-  it('parses partial address updates and allows clearing details', () => {
+  it('parses partial updates and allows clearing the detail address', () => {
     expect(
       parseUpdateUserAddressInput({
         phone_number: '010 9876 5432',
@@ -46,9 +39,14 @@ describe('user details input parsers', () => {
   });
 
   it('rejects invalid, empty, and unsupported values', () => {
-    expect(() => parseUserProfileInput({ phone_number: 'abc' })).toThrow(
-      BadRequestException,
-    );
+    expect(() =>
+      parseCreateUserAddressInput({
+        recipient_name: '홍길동',
+        phone_number: 'abc',
+        postal_code: '06236',
+        address_line1: '주소',
+      }),
+    ).toThrow(BadRequestException);
     expect(() =>
       parseCreateUserAddressInput({
         recipient_name: '홍길동',

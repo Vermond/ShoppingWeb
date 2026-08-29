@@ -1,29 +1,17 @@
-# 사용자 프로필·배송지 정책
+# 사용자 배송지 정책
 
 ## 접근 권한
 
-프로필과 배송지 API는 Access Token Cookie가 있는 이메일 인증 완료 사용자만 사용할 수 있다. 모든 조회·수정·삭제는 인증된 현재 사용자 ID를 기준으로 처리하며, 사용자 ID를 요청 본문에서 받지 않는다.
+배송지 API는 Access Token Cookie가 있는 이메일 인증 완료 사용자만 사용할 수 있다. 모든 조회·수정·삭제는 인증된 현재 사용자 ID를 기준으로 처리하며, 사용자 ID를 요청 본문에서 받지 않는다.
 
 ## API
 
 | Method | Path | 설명 |
 | --- | --- | --- |
-| `GET` | `/api/users/me/profile` | 현재 사용자 프로필 조회 |
-| `PUT` | `/api/users/me/profile` | 전화번호 프로필 저장 또는 수정 |
 | `GET` | `/api/users/me/addresses` | 배송지 목록 조회 |
 | `POST` | `/api/users/me/addresses` | 배송지 추가 |
 | `PATCH` | `/api/users/me/addresses/:addressId` | 배송지 수정 |
 | `DELETE` | `/api/users/me/addresses/:addressId` | 배송지 삭제 |
-
-## 프로필
-
-전화번호는 필수이며, 서버는 공백·괄호·하이픈을 제거한 숫자 형식으로 저장한다. 전화번호를 변경할 때는 다음 요청을 사용한다.
-
-```json
-{
-  "phone_number": "010-1234-5678"
-}
-```
 
 ## 배송지
 

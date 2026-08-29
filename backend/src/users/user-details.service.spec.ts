@@ -5,21 +5,11 @@ import type {
 } from '../database/database.service';
 import { UserDetailsRepository } from './user-details.repository';
 import { UserDetailsService } from './user-details.service';
-import type {
-  UserAddressRecord,
-  UserProfileRecord,
-} from './user-details.types';
+import type { UserAddressRecord } from './user-details.types';
 
 const userId = '11111111-1111-4111-8111-111111111111';
 const addressId = '22222222-2222-4222-8222-222222222222';
 const otherAddressId = '33333333-3333-4333-8333-333333333333';
-
-const profile: UserProfileRecord = {
-  user_id: userId,
-  phone_number: '01012345678',
-  created_at: new Date('2026-01-01T00:00:00.000Z'),
-  updated_at: new Date('2026-01-02T00:00:00.000Z'),
-};
 
 const address: UserAddressRecord = {
   id: addressId,
@@ -37,8 +27,6 @@ const address: UserAddressRecord = {
 function createService() {
   const executor = {} as DatabaseQueryExecutor;
   const repository = {
-    findProfileByUserId: jest.fn().mockResolvedValue(profile),
-    upsertProfile: jest.fn().mockResolvedValue(profile),
     findAddressesByUserId: jest.fn().mockResolvedValue([address]),
     findAddressById: jest.fn().mockResolvedValue(address),
     lockUser: jest.fn().mockResolvedValue(true),
@@ -65,18 +53,6 @@ function createService() {
 }
 
 describe('UserDetailsService', () => {
-  it('upserts the required user profile phone number', async () => {
-    const { service, repository } = createService();
-
-    await expect(
-      service.saveProfile(userId, { phone_number: '01098765432' }),
-    ).resolves.toBe(profile);
-    expect(repository.upsertProfile).toHaveBeenCalledWith(
-      userId,
-      '01098765432',
-    );
-  });
-
   it('makes the first address the default address', async () => {
     const { service, repository } = createService();
     repository.findAddressesByUserId.mockResolvedValue([]);
@@ -99,7 +75,6 @@ describe('UserDetailsService', () => {
 
   it('promotes another address before unsetting the current default', async () => {
     const { service, repository } = createService();
-    repository.findAddressById.mockResolvedValue(address);
     repository.updateAddress.mockResolvedValue({
       ...address,
       is_default: false,
@@ -130,12 +105,10 @@ describe('UserDetailsService', () => {
     await expect(
       service.updateAddress(userId, addressId, { is_default: false }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(repository.updateAddress).toHaveBeenCalled();
   });
 
   it('promotes another address when the default address is deleted', async () => {
     const { service, repository } = createService();
-    repository.deleteAddress.mockResolvedValue(address);
 
     await service.deleteAddress(userId, addressId);
 
@@ -146,14 +119,10 @@ describe('UserDetailsService', () => {
     );
   });
 
-  it('returns not found for a profile or address that does not exist', async () => {
+  it('returns not found for an address that does not exist', async () => {
     const { service, repository } = createService();
-    repository.findProfileByUserId.mockResolvedValue(null);
     repository.findAddressById.mockResolvedValue(null);
 
-    await expect(service.findProfile(userId)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
     await expect(
       service.updateAddress(userId, otherAddressId, {
         recipient_name: '새 이름',

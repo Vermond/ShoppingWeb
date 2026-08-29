@@ -1,28 +1,10 @@
 import {
   serializeUserAddress,
-  serializeUserProfile,
   type UserAddressRecord,
-  type UserProfileRecord,
 } from './user-details.types';
 
-describe('user details serializers', () => {
-  it('serializes a profile without exposing database date objects', () => {
-    const profile: UserProfileRecord = {
-      user_id: '11111111-1111-4111-8111-111111111111',
-      phone_number: '01012345678',
-      created_at: new Date('2026-01-01T00:00:00.000Z'),
-      updated_at: new Date('2026-01-02T00:00:00.000Z'),
-    };
-
-    expect(serializeUserProfile(profile)).toEqual({
-      user_id: profile.user_id,
-      phone_number: profile.phone_number,
-      created_at: '2026-01-01T00:00:00.000Z',
-      updated_at: '2026-01-02T00:00:00.000Z',
-    });
-  });
-
-  it('does not expose the internal user id in an address response', () => {
+describe('user address serializers', () => {
+  it('serializes address timestamps and excludes the internal user id', () => {
     const address: UserAddressRecord = {
       id: '22222222-2222-4222-8222-222222222222',
       user_id: '11111111-1111-4111-8111-111111111111',
@@ -36,7 +18,9 @@ describe('user details serializers', () => {
       updated_at: new Date('2026-01-02T00:00:00.000Z'),
     };
 
-    expect(serializeUserAddress(address)).toEqual({
+    const response = serializeUserAddress(address);
+
+    expect(response).toEqual({
       id: address.id,
       recipient_name: address.recipient_name,
       phone_number: address.phone_number,
@@ -47,5 +31,6 @@ describe('user details serializers', () => {
       created_at: '2026-01-01T00:00:00.000Z',
       updated_at: '2026-01-02T00:00:00.000Z',
     });
+    expect(response).not.toHaveProperty('user_id');
   });
 });

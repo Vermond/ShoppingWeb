@@ -9,7 +9,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Put,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -30,22 +29,17 @@ import {
   CreateUserAddressBodyDto,
   DeleteUserAddressResponseDto,
   UpdateUserAddressBodyDto,
-  UpdateUserProfileBodyDto,
   UserAddressEnvelopeResponseDto,
   UserAddressesResponseDto,
-  UserProfileEnvelopeResponseDto,
 } from '../swagger/swagger.schemas';
 import {
   parseCreateUserAddressInput,
   parseUpdateUserAddressInput,
-  parseUserProfileInput,
 } from './user-details.input';
 import { UserDetailsService } from './user-details.service';
 import {
   serializeUserAddress,
-  serializeUserProfile,
   type UserAddressResponse,
-  type UserProfileResponse,
 } from './user-details.types';
 
 @Controller('api/users/me')
@@ -54,39 +48,6 @@ import {
 @ApiCookieAuth('access_token')
 export class UserDetailsController {
   constructor(private readonly service: UserDetailsService) {}
-
-  @Get('profile')
-  @ApiOperation({ summary: '현재 사용자 프로필 조회' })
-  @ApiOkResponse({ type: UserProfileEnvelopeResponseDto })
-  @ApiResponse({ status: 401, type: ApiErrorResponseDto })
-  @ApiResponse({ status: 404, type: ApiErrorResponseDto })
-  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
-  async findProfile(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<{ profile: UserProfileResponse }> {
-    const profile = await this.service.findProfile(user.id);
-
-    return { profile: serializeUserProfile(profile) };
-  }
-
-  @Put('profile')
-  @ApiOperation({ summary: '현재 사용자 프로필 저장' })
-  @ApiBody({ type: UpdateUserProfileBodyDto })
-  @ApiOkResponse({ type: UserProfileEnvelopeResponseDto })
-  @ApiResponse({ status: 400, type: ApiErrorResponseDto })
-  @ApiResponse({ status: 401, type: ApiErrorResponseDto })
-  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
-  async saveProfile(
-    @Body() body: unknown,
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<{ profile: UserProfileResponse }> {
-    const profile = await this.service.saveProfile(
-      user.id,
-      parseUserProfileInput(body),
-    );
-
-    return { profile: serializeUserProfile(profile) };
-  }
 
   @Get('addresses')
   @ApiOperation({ summary: '현재 사용자 배송지 목록 조회' })

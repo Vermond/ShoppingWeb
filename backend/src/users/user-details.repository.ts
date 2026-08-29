@@ -3,34 +3,12 @@ import {
   DatabaseService,
   type DatabaseQueryExecutor,
 } from '../database/database.service';
-import type {
-  UserAddressRecord,
-  UserProfileRecord,
-} from './user-details.types';
+import type { UserAddressRecord } from './user-details.types';
 import type { UpdateUserAddressInput } from './user-details.input';
-
-const PROFILE_COLUMNS = `
-  user_id, phone_number, created_at, updated_at
-`;
 
 const ADDRESS_COLUMNS = `
   id, user_id, recipient_name, phone_number, postal_code,
   address_line1, address_line2, is_default, created_at, updated_at
-`;
-
-const FIND_PROFILE_QUERY = `
-  SELECT ${PROFILE_COLUMNS}
-  FROM auth.user_profiles
-  WHERE user_id = $1
-`;
-
-const UPSERT_PROFILE_QUERY = `
-  INSERT INTO auth.user_profiles (user_id, phone_number)
-  VALUES ($1, $2)
-  ON CONFLICT (user_id) DO UPDATE
-  SET phone_number = EXCLUDED.phone_number,
-      updated_at = now()
-  RETURNING ${PROFILE_COLUMNS}
 `;
 
 const FIND_ADDRESSES_QUERY = `
@@ -110,35 +88,6 @@ type UserIdRow = { id: string };
 @Injectable()
 export class UserDetailsRepository {
   constructor(private readonly databaseService: DatabaseService) {}
-
-  async findProfileByUserId(
-    userId: string,
-    executor: DatabaseQueryExecutor = this.databaseService,
-  ): Promise<UserProfileRecord | null> {
-    const result = await executor.query<UserProfileRecord>(FIND_PROFILE_QUERY, [
-      userId,
-    ]);
-
-    return result.rows[0] ?? null;
-  }
-
-  async upsertProfile(
-    userId: string,
-    phoneNumber: string,
-    executor: DatabaseQueryExecutor = this.databaseService,
-  ): Promise<UserProfileRecord> {
-    const result = await executor.query<UserProfileRecord>(
-      UPSERT_PROFILE_QUERY,
-      [userId, phoneNumber],
-    );
-    const profile = result.rows[0];
-
-    if (!profile) {
-      throw new Error('사용자 프로필 저장 결과를 확인할 수 없습니다.');
-    }
-
-    return profile;
-  }
 
   async findAddressesByUserId(
     userId: string,

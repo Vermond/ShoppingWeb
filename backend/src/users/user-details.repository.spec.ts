@@ -8,31 +8,7 @@ const userId = '11111111-1111-4111-8111-111111111111';
 const addressId = '22222222-2222-4222-8222-222222222222';
 
 describe('UserDetailsRepository', () => {
-  it('queries and maps a profile using explicit columns', async () => {
-    const row = {
-      user_id: userId,
-      phone_number: '01012345678',
-      created_at: new Date('2026-01-01T00:00:00.000Z'),
-      updated_at: new Date('2026-01-02T00:00:00.000Z'),
-    };
-    const executor = {
-      query: jest.fn().mockResolvedValue({ rows: [row] }),
-    } as unknown as DatabaseQueryExecutor;
-    const repository = new UserDetailsRepository(
-      executor as unknown as DatabaseService,
-    );
-
-    await expect(
-      repository.findProfileByUserId(userId, executor),
-    ).resolves.toEqual(row);
-
-    const query = executor.query.mock.calls[0]?.[0] as string;
-    expect(query).toContain('FROM auth.user_profiles');
-    expect(query).not.toMatch(/SELECT\s+\*/i);
-    expect(executor.query).toHaveBeenCalledWith(expect.any(String), [userId]);
-  });
-
-  it('returns only addresses owned by the requested user', async () => {
+  it('returns only an address owned by the requested user', async () => {
     const row = {
       id: addressId,
       user_id: userId,
@@ -63,5 +39,6 @@ describe('UserDetailsRepository', () => {
     expect(executor.query.mock.calls[0]?.[0]).toContain(
       'WHERE user_id = $1 AND id = $2',
     );
+    expect(executor.query.mock.calls[0]?.[0]).not.toMatch(/SELECT\s+\*/i);
   });
 });
