@@ -39,6 +39,11 @@ export type ServerCart = {
   updatedAt: string;
 };
 
+export type CartItemRequest = {
+  productId: string;
+  quantity: number;
+};
+
 type ApiRecord = Record<string, unknown>;
 
 function isRecord(value: unknown): value is ApiRecord {
@@ -287,6 +292,23 @@ export function requestAddCartItem(
     body: JSON.stringify({
       product_id: productId,
       quantity,
+    }),
+  });
+}
+
+export function requestMergeCart(
+  items: readonly CartItemRequest[],
+): Promise<ServerCart> {
+  return requestCartApi("/api/cart/merge", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      items: items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      })),
     }),
   });
 }

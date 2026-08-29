@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -12,6 +13,7 @@ import { useAuth } from "../auth/AuthProvider";
 import {
   requestAddCartItem,
   requestCart,
+  requestMergeCart,
   requestRemoveCartItem,
   requestUpdateCartItem,
   type CartItemUnavailableReason,
@@ -132,6 +134,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [serverCart, setServerCart] = useState<ServerCart | null>(null);
   const [serverCartError, setServerCartError] = useState<string | null>(null);
+  const serverCartLoadedForSession = useRef(false);
   const { status: authStatus } = useAuth();
   const {
     products,
@@ -169,6 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (authStatus !== "authenticated") {
+      serverCartLoadedForSession.current = false;
       const resetId = window.setTimeout(() => {
         setServerCart(null);
         setServerCartError(null);
@@ -177,19 +181,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return () => window.clearTimeout(resetId);
     }
 
+    if (!isHydrated || serverCartLoadedForSession.current) {
+      return;
+    }
+
+    serverCartLoadedForSession.current = true;
+
     let active = true;
+    const guestItems = items.map(({ productId, quantity }) => ({
+      productId,
+      quantity,
+    }));
 
     const loadServerCart = async () => {
       try {
-        const result = await requestCart();
+        const result = guestItems.length
+          ? await requestMergeCart(guestItems)
+          : await requestCart();
 
         if (active) {
           setServerCart(result);
+          setServerCartError(null);
+
+          if (guestItems.length > 0) {
+            setItems([]);
+
+            try {
+              window.localStorage.removeItem(cartStorageKey);
+            } catch {
+              // 저장소를 사용할 수 없는 환경에서도 서버 병합 결과는 유지합니다.
+            }
+          }
         }
       } catch (error) {
         if (active) {
-          setServerCart(null);
-          setServerCartError(getErrorMessage(error));
+          try {
+            const result = await requestCart();
+
+            if (active) {
+              setServerCart(result);
+              setServerCartError(getErrorMessage(error));
+            }
+          } catch (cartError) {
+            if (active) {
+              setServerCart(null);
+              setServerCartError(getErrorMessage(cartError));
+            }
+          }
         }
       }
     };
@@ -199,7 +237,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [authStatus]);
+  }, [authStatus, isHydrated, items]);
 
   const availableItems = useMemo(
     () =>

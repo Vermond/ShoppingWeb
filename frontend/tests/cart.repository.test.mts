@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   requestAddCartItem,
   requestCart,
+  requestMergeCart,
   requestRemoveCartItem,
   requestUpdateCartItem,
 } from "../src/repositories/cart.repository.ts";
@@ -112,6 +113,35 @@ test("장바구니 변경 요청은 API 경로와 서버 요청 형식을 사용
         body: null,
       },
     ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("로그인 전 장바구니 병합은 서버가 요구하는 배열 형식으로 요청한다", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestPath = "";
+  let requestBody: unknown;
+
+  globalThis.fetch = async (input, init) => {
+    requestPath = String(input);
+    requestBody = JSON.parse(String(init?.body));
+    return jsonResponse(cartResponse);
+  };
+
+  try {
+    await requestMergeCart([
+      { productId: "product-1", quantity: 2 },
+      { productId: "product-2", quantity: 1 },
+    ]);
+
+    assert.equal(requestPath, "/api/cart/merge");
+    assert.deepEqual(requestBody, {
+      items: [
+        { product_id: "product-1", quantity: 2 },
+        { product_id: "product-2", quantity: 1 },
+      ],
+    });
   } finally {
     globalThis.fetch = originalFetch;
   }
