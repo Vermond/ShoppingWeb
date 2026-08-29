@@ -17,13 +17,19 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({ summary: '상품 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: '페이지 번호 (최대 offset 100,000)',
+  })
   @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
     example: 20,
-    description: '페이지당 상품 수 (최대 100)',
+    description: '페이지당 상품 수 (최대 100, offset과 함께 범위 제한)',
   })
   @ApiOkResponse({ type: ProductsResponseDto })
   async findAll(@Query() query: unknown): Promise<ProductPageResponse> {

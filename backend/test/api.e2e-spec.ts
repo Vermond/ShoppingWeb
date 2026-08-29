@@ -249,6 +249,7 @@ describe('API contracts (e2e)', () => {
     const callCount = productsService.findPage.mock.calls.length;
 
     await client.get('/api/products?page=0&limit=101').expect(400);
+    await client.get('/api/products?page=1002&limit=100').expect(400);
 
     expect(productsService.findPage.mock.calls).toHaveLength(callCount);
   });

@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const MAX_OFFSET = 100_000;
 
 export type ProductsQuery = {
   page: number;
@@ -33,8 +34,12 @@ export function parseProductsQuery(value: unknown): ProductsQuery {
     );
   }
 
-  if (!Number.isSafeInteger((page - 1) * limit)) {
-    throw new BadRequestException('page 값이 너무 큽니다.');
+  const offset = (page - 1) * limit;
+
+  if (!Number.isSafeInteger(offset) || offset > MAX_OFFSET) {
+    throw new BadRequestException(
+      `요청 가능한 상품 페이지 범위를 초과했습니다. (최대 offset: ${MAX_OFFSET})`,
+    );
   }
 
   return { page, limit };

@@ -13,6 +13,14 @@ describe('products query parser', () => {
     });
   });
 
+  it('allows the maximum offset and rejects larger offsets', () => {
+    expect(parseProductsQuery({ page: '1001', limit: '100' })).toEqual({
+      page: 1001,
+      limit: 100,
+    });
+    expectBadRequest(() => parseProductsQuery({ page: '1002', limit: '100' }));
+  });
+
   it('rejects invalid, oversized, and unsupported query values', () => {
     expectBadRequest(() => parseProductsQuery({ page: '0' }));
     expectBadRequest(() => parseProductsQuery({ limit: '0' }));
