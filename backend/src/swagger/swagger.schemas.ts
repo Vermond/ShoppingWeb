@@ -8,6 +8,7 @@ import {
   PRODUCT_STATUSES,
   type ProductStatus,
 } from '../products/products.types';
+import { ORDER_STATUSES, type OrderStatus } from '../orders/orders.types';
 
 export class ApiErrorResponseDto {
   @ApiProperty({ example: 'VALIDATION_ERROR' })
@@ -340,6 +341,117 @@ export class UpdateUserAddressBodyDto {
 export class DeleteUserAddressResponseDto {
   @ApiProperty({ example: '배송지를 삭제했습니다.' })
   message!: string;
+}
+
+export class OrderItemResponseDto {
+  @ApiProperty({ description: '주문 항목 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ description: '주문 당시 상품명' })
+  product_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '12900.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 당시 단가',
+  })
+  unit_price!: string;
+
+  @ApiProperty({ description: '주문 수량' })
+  quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 항목 소계',
+  })
+  subtotal!: string;
+}
+
+export class OrderAddressResponseDto {
+  @ApiProperty({ format: 'uuid', description: '주문 ID' })
+  order_id!: string;
+
+  @ApiProperty({ description: '수령인 이름' })
+  recipient_name!: string;
+
+  @ApiProperty({ description: '배송 연락처' })
+  phone_number!: string;
+
+  @ApiProperty({ description: '우편번호' })
+  postal_code!: string;
+
+  @ApiProperty({ description: '기본 주소' })
+  address_line1!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상세 주소' })
+  address_line2!: string | null;
+
+  @ApiPropertyOptional({ nullable: true, description: '배송 요청사항' })
+  delivery_request!: string | null;
+
+  @ApiProperty({ format: 'date-time', description: '스냅샷 생성 시각' })
+  created_at!: string;
+}
+
+export class OrderItemSummaryResponseDto {
+  @ApiProperty({ format: 'uuid', description: '주문 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '사용자 ID' })
+  user_id!: string;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES], description: '주문 상태' })
+  status!: OrderStatus;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 총액',
+  })
+  total_amount!: string;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class OrderResponseDto extends OrderItemSummaryResponseDto {
+  @ApiProperty({ type: [OrderItemResponseDto] })
+  items!: OrderItemResponseDto[];
+
+  @ApiProperty({ type: OrderAddressResponseDto })
+  address!: OrderAddressResponseDto;
+}
+
+export class OrderEnvelopeResponseDto {
+  @ApiProperty({ type: OrderResponseDto })
+  order!: OrderResponseDto;
+}
+
+export class OrdersResponseDto {
+  @ApiProperty({ type: [OrderItemSummaryResponseDto] })
+  orders!: OrderItemSummaryResponseDto[];
+}
+
+export class CreateOrderBodyDto {
+  @ApiProperty({ format: 'uuid', description: '사용할 배송지 ID' })
+  address_id!: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    maxLength: 500,
+    description: '배송 요청사항',
+  })
+  delivery_request?: string | null;
 }
 
 export class UserEnvelopeResponseDto {
