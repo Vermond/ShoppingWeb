@@ -15,13 +15,13 @@ const USER_COLUMNS_WITH_PASSWORD = `
 
 const CREATE_USER_QUERY = `
   INSERT INTO auth.users (email, password_hash, "name", email_verified)
-  VALUES ($1, $2, $3, false)
+  VALUES (lower($1), $2, $3, false)
   RETURNING ${USER_COLUMNS}
 `;
 
 const UPDATE_USER_QUERY = `
   UPDATE auth.users
-  SET email = COALESCE($2, email),
+  SET email = COALESCE(lower($2), email),
       "name" = COALESCE($3, "name"),
       password_hash = COALESCE($4, password_hash),
       email_verified = CASE WHEN $5 THEN false ELSE email_verified END,

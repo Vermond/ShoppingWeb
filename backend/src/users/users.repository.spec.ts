@@ -18,13 +18,14 @@ describe('UsersRepository', () => {
     const { repository, query } = createRepository([{ rows: [user] }]);
 
     await expect(
-      repository.create(user.email, 'password-hash', user.name),
+      repository.create('USER@example.com', 'password-hash', user.name),
     ).resolves.toBe(user);
 
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO auth.users'),
-      [user.email, 'password-hash', user.name],
+      ['USER@example.com', 'password-hash', user.name],
     );
+    expect(query.mock.calls[0]?.[0]).toContain('VALUES (lower($1)');
     expect(query.mock.calls[0]?.[0]).toContain('email_verified');
   });
 
@@ -32,7 +33,7 @@ describe('UsersRepository', () => {
     const { repository, query } = createRepository([{ rows: [user] }]);
 
     await repository.update(user.id, {
-      email: 'new@example.com',
+      email: 'NEW@example.com',
       name: 'New User',
       passwordHash: 'new-password-hash',
       emailChanged: true,
@@ -40,7 +41,10 @@ describe('UsersRepository', () => {
 
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE auth.users'),
-      [user.id, 'new@example.com', 'New User', 'new-password-hash', true],
+      [user.id, 'NEW@example.com', 'New User', 'new-password-hash', true],
+    );
+    expect(query.mock.calls[0]?.[0]).toContain(
+      'email = COALESCE(lower($2), email)',
     );
     expect(query.mock.calls[0]?.[0]).toContain('email_verified = CASE');
     expect(query.mock.calls[0]?.[0]).toContain('updated_at = now()');
