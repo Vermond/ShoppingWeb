@@ -109,10 +109,15 @@ export class AuthController {
   ): Promise<{ user: UserResponse }> {
     const config = getAuthConfig(this.configService);
     const refreshToken = readCookie(request, config.refreshCookieName);
-    const result = await this.authService.refresh(refreshToken ?? '');
-    setAuthCookies(response, config, result.accessToken, result.refreshToken);
+    try {
+      const result = await this.authService.refresh(refreshToken ?? '');
+      setAuthCookies(response, config, result.accessToken, result.refreshToken);
 
-    return { user: serializeUser(result.user) };
+      return { user: serializeUser(result.user) };
+    } catch (error) {
+      clearAuthCookies(response, config);
+      throw error;
+    }
   }
 
   @Post('logout')

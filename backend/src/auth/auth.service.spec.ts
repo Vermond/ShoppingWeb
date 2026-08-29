@@ -30,6 +30,7 @@ const user: UserRecord = {
 const tokenRecord: RefreshTokenRecord = {
   id: '22222222-2222-4222-8222-222222222222',
   user_id: user.id,
+  session_id: '44444444-4444-4444-8444-444444444444',
   token_hash: 'stored-hash',
   expires_at: new Date('2099-01-01T00:00:00.000Z'),
   revoked_at: null,
@@ -66,6 +67,7 @@ describe('AuthService', () => {
     expect(mocks.refreshTokenRepository.create).toHaveBeenCalledWith(
       expect.any(String),
       user.id,
+      expect.any(String),
       createHash('sha256').update('refresh-token', 'utf8').digest('hex'),
       expect.any(Date),
       mocks.databaseService,
@@ -103,6 +105,7 @@ describe('AuthService', () => {
     expect(mocks.refreshTokenRepository.create).toHaveBeenCalledWith(
       expect.any(String),
       user.id,
+      tokenRecord.session_id,
       createHash('sha256').update('new-refresh-token', 'utf8').digest('hex'),
       expect.any(Date),
       mocks.executor,
@@ -170,6 +173,9 @@ describe('AuthService', () => {
     await expect(
       revokedMocks.service.refresh('revoked'),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(
+      revokedMocks.refreshTokenRepository.revokeAllForSession,
+    ).toHaveBeenCalledWith(tokenRecord.session_id, revokedMocks.executor);
 
     const missingJtiMocks = createMocks();
     missingJtiMocks.jwtService.verifyAsync.mockResolvedValue({
@@ -289,7 +295,7 @@ describe('AuthService', () => {
     });
   });
 
-  it('revokes only the supplied refresh token during logout', async () => {
+  it('revokes only the current session during logout', async () => {
     const mocks = createMocks();
     mocks.refreshTokenRepository.findByHashForUpdate.mockResolvedValue(
       tokenRecord,
@@ -298,13 +304,10 @@ describe('AuthService', () => {
     await expect(
       mocks.service.logout('refresh-token'),
     ).resolves.toBeUndefined();
-    expect(mocks.refreshTokenRepository.revoke).toHaveBeenCalledWith(
-      tokenRecord.id,
-      mocks.executor,
-    );
     expect(
-      mocks.refreshTokenRepository.revokeAllForUser,
-    ).not.toHaveBeenCalled();
+      mocks.refreshTokenRepository.revokeAllForSession,
+    ).toHaveBeenCalledWith(tokenRecord.session_id, mocks.executor);
+    expect(mocks.refreshTokenRepository.revoke).not.toHaveBeenCalled();
 
     const emptyMocks = createMocks();
     await expect(emptyMocks.service.logout(undefined)).resolves.toBeUndefined();
@@ -318,7 +321,9 @@ describe('AuthService', () => {
       revoked_at: new Date(),
     });
     await revokedMocks.service.logout('already-revoked');
-    expect(revokedMocks.refreshTokenRepository.revoke).not.toHaveBeenCalled();
+    expect(
+      revokedMocks.refreshTokenRepository.revokeAllForSession,
+    ).not.toHaveBeenCalled();
   });
 });
 
@@ -357,6 +362,7 @@ function createMocks() {
     findByHashForUpdate: jest.fn(),
     revoke: jest.fn(),
     revokeAllForUser: jest.fn(),
+    revokeAllForSession: jest.fn(),
   } as unknown as RefreshTokenRepository;
   const values: Record<string, string | number> = {
     AUTH_ACCESS_TOKEN_SECRET: 'access-secret',

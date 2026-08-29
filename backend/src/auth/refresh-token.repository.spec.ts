@@ -9,11 +9,17 @@ describe('RefreshTokenRepository', () => {
     const { repository, query } = createRepository();
     const expiresAt = new Date('2099-01-01T00:00:00.000Z');
 
-    await repository.create('token-id', 'user-id', 'token-hash', expiresAt);
+    await repository.create(
+      'token-id',
+      'user-id',
+      'session-id',
+      'token-hash',
+      expiresAt,
+    );
 
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO auth.refresh_tokens'),
-      ['token-id', 'user-id', 'token-hash', expiresAt],
+      ['token-id', 'user-id', 'session-id', 'token-hash', expiresAt],
     );
     expect(query.mock.calls[0]?.[0]).not.toContain('token-hash');
   });
@@ -34,11 +40,12 @@ describe('RefreshTokenRepository', () => {
     );
   });
 
-  it('revokes one token or all active tokens for a user', async () => {
+  it('revokes one token, all active tokens for a user, or a session', async () => {
     const { repository, query } = createRepository();
 
     await repository.revoke('token-id');
     await repository.revokeAllForUser('user-id');
+    await repository.revokeAllForSession('session-id');
 
     expect(query).toHaveBeenNthCalledWith(
       1,
@@ -52,6 +59,12 @@ describe('RefreshTokenRepository', () => {
       ['user-id'],
     );
     expect(query.mock.calls[1]?.[0]).toContain('revoked_at IS NULL');
+    expect(query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('WHERE session_id = $1'),
+      ['session-id'],
+    );
+    expect(query.mock.calls[2]?.[0]).toContain('revoked_at IS NULL');
   });
 
   it('uses the supplied transaction executor', async () => {

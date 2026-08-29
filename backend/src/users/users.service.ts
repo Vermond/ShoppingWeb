@@ -120,7 +120,7 @@ export class UsersService {
               )
             : undefined;
 
-          if (emailChanged) {
+          if (emailChanged || input.password !== undefined) {
             await this.refreshTokenRepository.revokeAllForUser(
               user.id,
               executor,

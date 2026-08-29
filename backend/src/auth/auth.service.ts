@@ -72,6 +72,10 @@ export class AuthService {
         }
 
         if (storedToken.revoked_at) {
+          await this.refreshTokenRepository.revokeAllForSession(
+            storedToken.session_id,
+            executor,
+          );
           return { type: 'revoked' };
         }
 
@@ -97,7 +101,11 @@ export class AuthService {
 
         return {
           type: 'success',
-          tokenPair: await this.issueTokenPair(user, executor),
+          tokenPair: await this.issueTokenPair(
+            user,
+            executor,
+            storedToken.session_id,
+          ),
         };
       },
     );
@@ -135,7 +143,10 @@ export class AuthService {
       );
 
       if (storedToken && !storedToken.revoked_at) {
-        await this.refreshTokenRepository.revoke(storedToken.id, executor);
+        await this.refreshTokenRepository.revokeAllForSession(
+          storedToken.session_id,
+          executor,
+        );
       }
     });
   }
@@ -143,6 +154,7 @@ export class AuthService {
   private async issueTokenPair(
     user: AuthTokenPair['user'],
     executor: DatabaseQueryExecutor = this.databaseService,
+    sessionId: string = randomUUID(),
   ): Promise<AuthTokenPair> {
     const config = getAuthConfig(this.configService);
     const refreshTokenId = randomUUID();
@@ -169,6 +181,7 @@ export class AuthService {
     await this.refreshTokenRepository.create(
       refreshTokenId,
       user.id,
+      sessionId,
       hashToken(refreshToken),
       new Date(Date.now() + config.refreshTokenTtlSeconds * 1_000),
       executor,

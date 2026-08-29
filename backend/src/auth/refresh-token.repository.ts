@@ -7,6 +7,7 @@ import {
 export type RefreshTokenRecord = Record<string, unknown> & {
   id: string;
   user_id: string;
+  session_id: string;
   token_hash: string;
   expires_at: Date;
   revoked_at: Date | null;
@@ -16,12 +17,12 @@ export type RefreshTokenRecord = Record<string, unknown> & {
 
 const CREATE_REFRESH_TOKEN_QUERY = `
   INSERT INTO auth.refresh_tokens
-    (id, user_id, token_hash, expires_at)
-  VALUES ($1, $2, $3, $4)
+    (id, user_id, session_id, token_hash, expires_at)
+  VALUES ($1, $2, $3, $4, $5)
 `;
 
 const FIND_REFRESH_TOKEN_QUERY = `
-  SELECT id, user_id, token_hash, expires_at, revoked_at, created_at, last_used_at
+  SELECT id, user_id, session_id, token_hash, expires_at, revoked_at, created_at, last_used_at
   FROM auth.refresh_tokens
   WHERE id = $1
     AND token_hash = $2
@@ -29,7 +30,7 @@ const FIND_REFRESH_TOKEN_QUERY = `
 `;
 
 const FIND_REFRESH_TOKEN_BY_HASH_QUERY = `
-  SELECT id, user_id, token_hash, expires_at, revoked_at, created_at, last_used_at
+  SELECT id, user_id, session_id, token_hash, expires_at, revoked_at, created_at, last_used_at
   FROM auth.refresh_tokens
   WHERE token_hash = $1
   FOR UPDATE
@@ -49,6 +50,13 @@ const REVOKE_ALL_USER_REFRESH_TOKENS_QUERY = `
     AND revoked_at IS NULL
 `;
 
+const REVOKE_ALL_SESSION_REFRESH_TOKENS_QUERY = `
+  UPDATE auth.refresh_tokens
+  SET revoked_at = COALESCE(revoked_at, now())
+  WHERE session_id = $1
+    AND revoked_at IS NULL
+`;
+
 @Injectable()
 export class RefreshTokenRepository {
   constructor(private readonly databaseService: DatabaseService) {}
@@ -56,6 +64,7 @@ export class RefreshTokenRepository {
   async create(
     id: string,
     userId: string,
+    sessionId: string,
     tokenHash: string,
     expiresAt: Date,
     executor: DatabaseQueryExecutor = this.databaseService,
@@ -63,6 +72,7 @@ export class RefreshTokenRepository {
     await executor.query(CREATE_REFRESH_TOKEN_QUERY, [
       id,
       userId,
+      sessionId,
       tokenHash,
       expiresAt,
     ]);
@@ -105,5 +115,12 @@ export class RefreshTokenRepository {
     executor: DatabaseQueryExecutor = this.databaseService,
   ): Promise<void> {
     await executor.query(REVOKE_ALL_USER_REFRESH_TOKENS_QUERY, [userId]);
+  }
+
+  async revokeAllForSession(
+    sessionId: string,
+    executor: DatabaseQueryExecutor = this.databaseService,
+  ): Promise<void> {
+    await executor.query(REVOKE_ALL_SESSION_REFRESH_TOKENS_QUERY, [sessionId]);
   }
 }

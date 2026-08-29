@@ -6,7 +6,6 @@ import { AppModule } from './../src/app.module';
 
 describe('HealthController (e2e)', () => {
   let app: INestApplication<App>;
-  let baseUrl: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -15,27 +14,30 @@ describe('HealthController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
-    await app.listen(0, '127.0.0.1');
-    baseUrl = await app.getUrl();
   });
 
   it('/health/live (GET)', () => {
-    return request(baseUrl)
+    return request(app.getHttpServer())
       .get('/health/live')
       .expect(200)
       .expect({ status: 'ok' });
   });
 
   it('/ (GET) is not a public application route', () => {
-    return request(baseUrl).get('/').expect(404);
+    return request(app.getHttpServer()).get('/').expect(404);
   });
 
   it('/api/auth/login rate limits repeated requests', async () => {
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      await request(baseUrl).post('/api/auth/login').send({}).expect(400);
+      await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({})
+        .expect(400);
     }
 
-    const response = await request(baseUrl).post('/api/auth/login').send({});
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({});
 
     expect(response.status).toBe(429);
     expect(response.headers['retry-after']).toBe('60');

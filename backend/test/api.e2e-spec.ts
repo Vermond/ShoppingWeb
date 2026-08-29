@@ -333,6 +333,24 @@ describe('API contracts (e2e)', () => {
     );
   });
 
+  it('clears authentication cookies when refresh fails', async () => {
+    authService.refresh.mockRejectedValueOnce(
+      new UnauthorizedException('invalid refresh token'),
+    );
+
+    const response = await client
+      .post('/api/auth/refresh')
+      .set('Cookie', 'refresh_token=invalid-refresh-token')
+      .expect(401);
+
+    expect(response.headers['set-cookie']).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('access_token=;'),
+        expect.stringContaining('refresh_token=;'),
+      ]),
+    );
+  });
+
   it('returns the current user and clears cookies on logout', async () => {
     await client
       .get('/api/auth/me')

@@ -205,6 +205,36 @@ describe('UsersService', () => {
     ).not.toHaveBeenCalled();
   });
 
+  it('revokes refresh tokens when the password changes', async () => {
+    const mocks = createMocks();
+    const updatedUser = { ...user, name: 'User' };
+    mocks.usersRepository.findById.mockResolvedValue({
+      ...user,
+      email_verified: true,
+    });
+    mocks.passwordService.hash.mockResolvedValue('new-password-hash');
+    mocks.usersRepository.update.mockResolvedValue(updatedUser);
+
+    await expect(
+      mocks.service.update(user.id, { password: 'new-password' }),
+    ).resolves.toBe(updatedUser);
+
+    expect(mocks.usersRepository.update).toHaveBeenCalledWith(
+      user.id,
+      {
+        email: undefined,
+        name: undefined,
+        passwordHash: 'new-password-hash',
+        emailChanged: false,
+      },
+      mocks.executor,
+    );
+    expect(mocks.refreshTokenRepository.revokeAllForUser).toHaveBeenCalledWith(
+      user.id,
+      mocks.executor,
+    );
+  });
+
   it('maps unexpected create, update, withdraw, and login failures to 500', async () => {
     const createMocks = createMocksForUnexpectedError();
     await expect(
