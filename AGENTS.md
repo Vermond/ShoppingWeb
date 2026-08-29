@@ -222,15 +222,12 @@ React 상태는 필요한 최소 범위에 둔다.
 - NestJS
 - TypeScript
 - PostgreSQL
-- Prisma
 
 NestJS의 module / controller / service 책임을 구분한다.
 
 Controller에 비즈니스 로직을 집중시키지 않는다.
 
 DB 접근 로직이 여러 위치에 무질서하게 퍼지지 않도록 한다.
-
-Prisma schema 변경 시 기존 데이터와 migration 영향을 함께 확인한다.
 
 API 입력값을 신뢰하지 않고 적절한 validation을 적용한다.
 
