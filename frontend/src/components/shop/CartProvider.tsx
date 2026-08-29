@@ -42,6 +42,7 @@ type CartContextValue = {
   updateQuantity: (productId: string, quantity: number) => Promise<boolean>;
   removeItem: (productId: string) => Promise<boolean>;
   clearCart: () => Promise<boolean>;
+  markCartAsCleared: () => void;
 };
 
 const cartStorageKey = "morrow-cart";
@@ -306,6 +307,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setServerCartError(null);
     };
 
+    const markCartAsCleared = () => {
+      if (isAuthenticated && serverCart) {
+        setServerCartResult({
+          ...serverCart,
+          items: [],
+          totalQuantity: 0,
+          totalPrice: 0,
+          updatedAt: new Date().toISOString(),
+        });
+        return;
+      }
+
+      setItems([]);
+
+      try {
+        window.localStorage.removeItem(cartStorageKey);
+      } catch {
+        // 저장소를 사용할 수 없는 환경에서도 화면의 장바구니 상태는 비웁니다.
+      }
+    };
+
     return {
       items: displayedItems,
       totalItems,
@@ -507,6 +529,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems([]);
         return true;
       },
+      markCartAsCleared,
     };
   }, [
     authStatus,

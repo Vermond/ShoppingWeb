@@ -198,6 +198,8 @@
   gap: 25px;
   padding: 27px 0;
   border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
 }
 
 .orderCard > div:first-child p {
@@ -225,14 +227,25 @@
   font-size: 10px;
 }
 
-.orderCardMeta .preparing {
+.orderCardMeta .pending {
   background: #f4eadb;
   color: #8a642f;
 }
 
-.orderCardMeta .shipping {
+.orderCardMeta .paid,
+.orderCardMeta .completed {
+  background: #e8eee5;
+  color: #557252;
+}
+
+.orderCardMeta .shipped {
   background: #e5ecef;
   color: #4c6e78;
+}
+
+.orderCardMeta .cancelled {
+  background: #f1e2df;
+  color: #a5533c;
 }
 
 .orderCardMeta strong {

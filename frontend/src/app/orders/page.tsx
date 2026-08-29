@@ -8,30 +8,54 @@ import { useCart } from "../../components/shop/CartProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import {
   fetchOrders,
-  type OrderSummary,
+  type OrderListItem,
+  type OrderStatus,
 } from "../../repositories/orders.repository";
 import { formatPrice } from "../../utils/format";
 import styles from "../account/page.module.css";
 
-const statusClass: Record<OrderSummary["status"], string> = {
-  "결제 완료": styles.paymentComplete,
-  "상품 준비중": styles.preparing,
-  배송중: styles.shipping,
-  "배송 완료": styles.delivered,
+const statusLabels: Record<OrderStatus, string> = {
+  pending: "주문 대기",
+  paid: "결제 완료",
+  shipped: "배송중",
+  completed: "배송 완료",
+  cancelled: "주문 취소",
 };
+
+const statusClass: Record<OrderStatus, string> = {
+  pending: styles.pending,
+  paid: styles.paid,
+  shipped: styles.shipped,
+  completed: styles.completed,
+  cancelled: styles.cancelled,
+};
+
+function formatOrderDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+  }).format(date);
+}
 
 export default function OrdersPage() {
   const [query, setQuery] = useState("");
-  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const { totalItems } = useCart();
 
   useEffect(() => {
     let cancelled = false;
+
     const loadOrders = async () => {
       try {
         const result = await fetchOrders();
+
         if (!cancelled) {
           setOrders(result);
         }
@@ -50,11 +74,10 @@ export default function OrdersPage() {
       }
     };
 
-    const loadId = window.setTimeout(loadOrders, 0);
+    void loadOrders();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(loadId);
     };
   }, []);
 
@@ -75,12 +98,24 @@ export default function OrdersPage() {
         </section>
 
         <section className={styles.ordersSection} aria-label="주문 목록">
-          {isLoading && <p className={styles.loadingMessage}>주문 내역을 불러오는 중...</p>}
-          {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
+          {isLoading && (
+            <p className={styles.loadingMessage}>
+              주문 내역을 불러오는 중...
+            </p>
+          )}
+          {errorMessage && (
+            <p className={styles.errorMessage} role="alert">
+              {errorMessage}
+            </p>
+          )}
           {!isLoading && !errorMessage && orders.length === 0 && (
             <div className={styles.emptyOrders}>
-              아직 주문 내역이 없어요.
-              <Button component={Link} href="/shop" endIcon={<ArrowForward />}>
+              <p>아직 주문 내역이 없어요.</p>
+              <Button
+                component={Link}
+                href="/shop"
+                endIcon={<ArrowForward />}
+              >
                 상품 둘러보기
               </Button>
             </div>
@@ -88,22 +123,27 @@ export default function OrdersPage() {
           {!isLoading && !errorMessage && orders.length > 0 && (
             <div className={styles.orderList}>
               {orders.map((order) => (
-                <article className={styles.orderCard} key={order.id}>
+                <Link
+                  className={styles.orderCard}
+                  href={`/orders/${encodeURIComponent(order.id)}`}
+                  key={order.id}
+                >
                   <div>
-                    <p>{order.createdAt}</p>
+                    <p>{formatOrderDate(order.createdAt)}</p>
                     <h2>{order.id}</h2>
                   </div>
                   <div className={styles.orderCardMeta}>
-                    <span className={statusClass[order.status]}>{order.status}</span>
-                    <strong>{formatPrice(order.total)}</strong>
-                    <small>{order.itemCount}개 상품</small>
+                    <span className={statusClass[order.status]}>
+                      {statusLabels[order.status]}
+                    </span>
+                    <strong>{formatPrice(order.totalAmount)}</strong>
+                    <small>상세 보기</small>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           )}
         </section>
-        <p className={styles.mockNote}>주문 내역은 API 연결 전 목업 데이터입니다.</p>
       </main>
     </div>
   );

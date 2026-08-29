@@ -24,3 +24,53 @@ export type OrderSummary = {
   total: number;
   itemCount: number;
 };
+
+export const orderStatuses = [
+  "pending",
+  "paid",
+  "shipped",
+  "completed",
+  "cancelled",
+] as const;
+
+export type OrderStatus = (typeof orderStatuses)[number];
+
+export type CreateOrderRequest = {
+  addressId: string;
+  deliveryRequest?: string | null;
+};
+
+export type OrderListItem = {
+  id: string;
+  userId: string;
+  status: OrderStatus;
+  totalAmount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OrderItem = {
+  id: string;
+  orderId: string;
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+};
+
+export type OrderAddress = {
+  orderId: string;
+  recipientName: string;
+  phoneNumber: string;
+  postalCode: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  deliveryRequest: string | null;
+  createdAt: string;
+};
+
+export type Order = OrderListItem & {
+  items: OrderItem[];
+  address: OrderAddress;
+};

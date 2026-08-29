@@ -15,7 +15,10 @@ import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
-import { createOrder, type CheckoutRequest } from "../../repositories/orders.repository";
+import {
+  createOrder,
+  type CreateOrderRequest,
+} from "../../repositories/orders.repository";
 import {
   requestUserAddresses,
   type UserAddress,
@@ -25,7 +28,15 @@ import { isCartQuantityAvailable } from "../../utils/cart";
 import { calculateShipping } from "../../utils/order";
 import styles from "./page.module.css";
 
-const initialCustomer: CheckoutRequest["customer"] = {
+type CheckoutCustomer = {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  detailAddress: string;
+};
+
+const initialCustomer: CheckoutCustomer = {
   name: "",
   email: "",
   phone: "",
@@ -56,14 +67,13 @@ export default function CheckoutPage() {
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [addressError, setAddressError] = useState("");
   const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<CheckoutRequest["paymentMethod"]>("card");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const {
     items,
     totalItems,
     subtotal,
-    clearCart,
+    markCartAsCleared,
     isLoading: isCartLoading,
     errorMessage: cartError,
   } = useCart();
@@ -156,7 +166,10 @@ export default function CheckoutPage() {
 
   const updateCustomer = (key: keyof typeof customer, value: string) => {
     setCustomer((current) => ({ ...current, [key]: value }));
-    setSelectedAddressId("manual");
+
+    if (key === "address" || key === "detailAddress") {
+      setSelectedAddressId("manual");
+    }
   };
 
   const handleAddressSearchComplete = (result: AddressSearchResult) => {
@@ -172,6 +185,18 @@ export default function CheckoutPage() {
   const submitOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (authStatus !== "authenticated") {
+      setErrorMessage("로그인 후 주문할 수 있어요.");
+      return;
+    }
+
+    if (selectedAddressId === "manual") {
+      setErrorMessage(
+        "주문하려면 배송지 관리에서 주소를 저장한 뒤 선택해주세요.",
+      );
+      return;
+    }
+
     if (hasUnavailableItems || cartError) {
       setErrorMessage(
         cartError ?? "재고 또는 최대 구매 가능 수량을 먼저 확인해주세요.",
@@ -183,26 +208,12 @@ export default function CheckoutPage() {
     setErrorMessage("");
 
     try {
-      const result = await createOrder({
-        customer,
-        paymentMethod,
-        items: items.map((item) => ({
-          ...item,
-          price:
-            item.product?.price ??
-            products.find(({ id }) => id === item.productId)?.price ??
-            0,
-        })),
-      });
-      const didClear = await clearCart();
-
-      if (!didClear) {
-        setErrorMessage(
-          "주문은 생성되었지만 장바구니를 비우지 못했어요. 다시 시도해주세요.",
-        );
-        setIsSubmitting(false);
-        return;
-      }
+      const request: CreateOrderRequest = {
+        addressId: selectedAddressId,
+        deliveryRequest: null,
+      };
+      const result = await createOrder(request);
+      markCartAsCleared();
 
       router.push(`/order/complete?orderId=${encodeURIComponent(result.id)}`);
     } catch (error) {
@@ -313,7 +324,6 @@ export default function CheckoutPage() {
                     onChange={(event) => selectAddress(event.target.value)}
                     variant="standard"
                   >
-                    <MenuItem value="manual">직접 입력</MenuItem>
                     {addresses.map((address) => (
                       <MenuItem value={address.id} key={address.id}>
                         {address.isDefault && "기본 · "}
@@ -323,7 +333,8 @@ export default function CheckoutPage() {
                   </TextField>
                 ) : (
                   <p className={styles.addressNote}>
-                    저장된 배송지가 없어요. 아래에서 직접 입력해주세요.
+                    저장된 배송지가 없어요. 배송지 관리에서 주소를 저장한 뒤
+                    주문해주세요.
                   </p>
                 )}
                 {addressError && (
@@ -393,28 +404,9 @@ export default function CheckoutPage() {
 
             <section className={styles.formSection} aria-labelledby="payment-title">
               <h2 id="payment-title">결제 방법</h2>
-              <div className={styles.paymentOptions}>
-                <label className={paymentMethod === "card" ? styles.paymentSelected : ""}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={paymentMethod === "card"}
-                    onChange={() => setPaymentMethod("card")}
-                  />
-                  <span>신용카드</span>
-                  <small>목업 결제</small>
-                </label>
-                <label className={paymentMethod === "bank" ? styles.paymentSelected : ""}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={paymentMethod === "bank"}
-                    onChange={() => setPaymentMethod("bank")}
-                  />
-                  <span>무통장 입금</span>
-                  <small>목업 결제</small>
-                </label>
-              </div>
+              <p className={styles.addressNote}>
+                현재 결제 승인은 서버의 목업 결제로 처리됩니다.
+              </p>
             </section>
 
             {(errorMessage || cartError) && (
@@ -463,10 +455,10 @@ export default function CheckoutPage() {
               disabled={isSubmitting || hasUnavailableItems}
               endIcon={!isSubmitting && <ArrowForward />}
             >
-              {isSubmitting ? "주문 처리 중..." : "목업 결제하기"}
+              {isSubmitting ? "주문 처리 중..." : "주문하기"}
             </Button>
             <p className={styles.mockNote}>
-              실제 결제·배송 처리는 서버 연결 후 활성화됩니다.
+              결제 승인은 현재 서버의 목업 결제로 처리됩니다.
             </p>
           </aside>
         </form>

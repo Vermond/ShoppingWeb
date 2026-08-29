@@ -52,7 +52,7 @@ function OrderCompleteContent() {
           </Button>
         </div>
         <p className={styles.mockNote}>
-          주문·배송 상태는 서버 연결 전 목업으로 표시됩니다.
+          결제 승인은 현재 서버의 목업 결제로 처리됩니다.
         </p>
       </main>
     </div>
