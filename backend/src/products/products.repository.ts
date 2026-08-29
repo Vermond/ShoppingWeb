@@ -14,7 +14,8 @@ const COUNT_PRODUCTS_QUERY = `
 `;
 
 const FIND_PRODUCTS_PAGE_QUERY = `
-  SELECT id, category_id, name, description, price, stock, status,
+  SELECT id, category_id, name, description, price, stock, max_order_quantity,
+         status,
          created_at, updated_at
   FROM catalog.products
   WHERE status = 'active'
@@ -24,7 +25,7 @@ const FIND_PRODUCTS_PAGE_QUERY = `
 
 const FIND_PRODUCT_QUERY = `
   SELECT p.id, p.category_id, p.name, p.description, p.price, p.stock,
-         p.status, p.created_at, p.updated_at,
+         p.max_order_quantity, p.status, p.created_at, p.updated_at,
          pi.id AS image_id, pi.image_url,
          pi.sort_order AS image_sort_order,
          pi.created_at AS image_created_at
@@ -92,6 +93,7 @@ export class ProductsRepository {
       description: firstRow.description,
       price: firstRow.price,
       stock: firstRow.stock,
+      max_order_quantity: firstRow.max_order_quantity,
       status: firstRow.status,
       created_at: firstRow.created_at,
       updated_at: firstRow.updated_at,

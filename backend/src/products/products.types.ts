@@ -16,6 +16,7 @@ export type ProductRow = {
   description: string | null;
   price: string;
   stock: number;
+  max_order_quantity: number;
   status: string;
   created_at: Date;
   updated_at: Date;

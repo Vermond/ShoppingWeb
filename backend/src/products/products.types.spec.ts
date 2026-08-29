@@ -12,6 +12,7 @@ const baseProductRow: ProductRow = {
   description: null,
   price: '12900.00',
   stock: 3,
+  max_order_quantity: 2,
   status: 'active',
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),

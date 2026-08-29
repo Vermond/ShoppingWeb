@@ -43,6 +43,11 @@ export class ProductResponseDto {
   @ApiProperty({ description: '재고 수량' })
   stock!: number;
 
+  @ApiProperty({
+    description: '한 번의 주문에서 구매 가능한 최대 수량',
+  })
+  max_order_quantity!: number;
+
   @ApiProperty({ enum: [...PRODUCT_STATUSES], description: '상품 상태' })
   status!: ProductStatus;
 

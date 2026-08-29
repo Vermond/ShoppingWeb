@@ -14,6 +14,7 @@ describe('ProductsRepository', () => {
       description: null,
       price: '12900.00',
       stock: 3,
+      max_order_quantity: 2,
       status: 'active',
       created_at: new Date('2026-01-01T00:00:00.000Z'),
       updated_at: new Date('2026-01-01T00:00:00.000Z'),
@@ -39,7 +40,7 @@ describe('ProductsRepository', () => {
     expect(countQuery).toContain('SELECT COUNT(*)::int AS total_items');
     expect(countQuery).toContain("WHERE status = 'active'");
     expect(productsQuery).toContain(
-      'SELECT id, category_id, name, description, price, stock, status',
+      'SELECT id, category_id, name, description, price, stock, max_order_quantity',
     );
     expect(productsQuery).toContain('created_at, updated_at');
     expect(productsQuery).toContain("WHERE status = 'active'");
@@ -62,6 +63,7 @@ describe('ProductsRepository', () => {
       description: null,
       price: '12900.00',
       stock: 3,
+      max_order_quantity: 2,
       status: 'active',
       created_at: new Date('2026-01-01T00:00:00.000Z'),
       updated_at: new Date('2026-01-01T00:00:00.000Z'),
@@ -82,6 +84,7 @@ describe('ProductsRepository', () => {
       description: null,
       price: '12900.00',
       stock: 3,
+      max_order_quantity: 2,
       status: 'active',
       created_at: queryRow.created_at,
       updated_at: queryRow.updated_at,
@@ -100,6 +103,7 @@ describe('ProductsRepository', () => {
     expect(query).toContain(
       'SELECT p.id, p.category_id, p.name, p.description, p.price, p.stock',
     );
+    expect(query).toContain('p.max_order_quantity, p.status');
     expect(query).toContain('LEFT JOIN catalog.product_images AS pi');
     expect(query).toContain("p.status = 'active'");
     expect(query).toContain('ORDER BY pi.sort_order ASC NULLS LAST, pi.id ASC');

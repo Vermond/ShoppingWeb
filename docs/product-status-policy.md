@@ -33,6 +33,7 @@
     "description": "상품 설명",
     "price": "12900.00",
     "stock": 3,
+    "max_order_quantity": 2,
     "status": "active",
     "created_at": "2026-01-01T00:00:00.000Z",
     "updated_at": "2026-01-01T00:00:00.000Z",
@@ -85,4 +86,5 @@ ON catalog.product_images (product_id, sort_order ASC, id ASC);
 
 - `id`, `category_id`는 API에서 문자열로 반환한다. PostgreSQL `int8`인 `category_id`는 `pg`에서 문자열로 반환될 수 있다.
 - `price`는 PostgreSQL `numeric(12,2)`의 정밀도를 보존하기 위해 `Decimal`로 처리한 뒤 API에서 항상 소수 둘째 자리까지의 문자열로 반환한다. 예: `"12900.00"`.
+- `max_order_quantity`는 한 번의 주문에서 동일 상품에 구매할 수 있는 최대 수량을 나타내는 정수다.
 - `status`는 위 네 값 중 하나로 반환한다.
