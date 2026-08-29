@@ -343,6 +343,10 @@ describe('API contracts (e2e)', () => {
       .set('Cookie', 'refresh_token=invalid-refresh-token')
       .expect(401);
 
+    expect(response.body).toEqual({
+      code: 'UNAUTHORIZED',
+      message: 'invalid refresh token',
+    });
     expect(response.headers['set-cookie']).toEqual(
       expect.arrayContaining([
         expect.stringContaining('access_token=;'),
@@ -431,10 +435,14 @@ describe('API contracts (e2e)', () => {
   });
 
   it('returns 400 for malformed request bodies', async () => {
-    await client
+    const validationResponse = await client
       .post('/api/auth/login')
       .send({ email: 'user@example.com', password: 'short', extra: true })
       .expect(400);
+    expect(validationResponse.body).toEqual({
+      code: 'VALIDATION_ERROR',
+      message: '지원하지 않는 필드입니다: extra',
+    });
     await client
       .post('/api/users')
       .send({ email: 'not-an-email', password: 'password123', name: 'User' })

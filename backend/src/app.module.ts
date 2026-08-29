@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { resolve } from 'node:path';
@@ -17,6 +18,7 @@ import {
   type EnvironmentVariables,
 } from './config/environment.validation';
 import { HealthController } from './health/health.controller';
+import { ApiExceptionFilter } from './http/api-exception.filter';
 
 @Module({
   imports: [
@@ -54,6 +56,12 @@ import { HealthController } from './health/health.controller';
     AuthModule,
   ],
   controllers: [HealthController],
-  providers: [RateLimitGuard],
+  providers: [
+    RateLimitGuard,
+    {
+      provide: APP_FILTER,
+      useClass: ApiExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

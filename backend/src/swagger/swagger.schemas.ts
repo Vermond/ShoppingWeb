@@ -1,5 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ApiErrorResponseDto {
+  @ApiProperty({ example: 'VALIDATION_ERROR' })
+  code!: string;
+
+  @ApiProperty({ example: '요청값이 올바르지 않습니다.' })
+  message!: string;
+
+  @ApiPropertyOptional({
+    example: 60,
+    description: '다음 요청까지 대기해야 하는 시간(초)',
+  })
+  retryAfterSeconds?: number;
+}
+
 export class ProductResponseDto {
   @ApiProperty({ description: '상품 ID' })
   id!: string;

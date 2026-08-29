@@ -28,6 +28,7 @@ import {
 import {
   LoginBodyDto,
   LogoutResponseDto,
+  ApiErrorResponseDto,
   UserEnvelopeResponseDto,
 } from '../swagger/swagger.schemas';
 import { AccessTokenGuard } from './access-token.guard';
@@ -63,13 +64,27 @@ export class AuthController {
     type: UserEnvelopeResponseDto,
     description: 'Access Token과 Refresh Token을 HttpOnly Cookie로 설정함',
   })
-  @ApiResponse({ status: 400, description: '입력값이 유효하지 않음' })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: '입력값이 유효하지 않음',
+  })
   @ApiResponse({
     status: 401,
+    type: ApiErrorResponseDto,
     description: '이메일 또는 비밀번호가 올바르지 않음',
   })
-  @ApiResponse({ status: 403, description: '미인증 또는 비활성 계정' })
-  @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
+  @ApiResponse({
+    status: 403,
+    type: ApiErrorResponseDto,
+    description: '미인증 또는 비활성 계정',
+  })
+  @ApiResponse({
+    status: 429,
+    type: ApiErrorResponseDto,
+    description: '요청 횟수 제한 초과',
+  })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async login(
     @Body() body: unknown,
     @Res({ passthrough: true }) response: Response,
@@ -101,8 +116,17 @@ export class AuthController {
     type: UserEnvelopeResponseDto,
     description: '기존 Refresh Token을 폐기하고 새 토큰 Cookie를 설정함',
   })
-  @ApiResponse({ status: 401, description: 'Refresh Token이 유효하지 않음' })
-  @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: 'Refresh Token이 유효하지 않음',
+  })
+  @ApiResponse({
+    status: 429,
+    type: ApiErrorResponseDto,
+    description: '요청 횟수 제한 초과',
+  })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -125,6 +149,7 @@ export class AuthController {
   @ApiOperation({ summary: '현재 기기 로그아웃' })
   @ApiCookieAuth('refresh_token')
   @ApiResponse({ status: 200, type: LogoutResponseDto })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async logout(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -145,6 +170,7 @@ export class AuthController {
   @ApiResponse({ status: 200, type: UserEnvelopeResponseDto })
   @ApiResponse({
     status: 401,
+    type: ApiErrorResponseDto,
     description: '로그인이 필요하거나 Access Token이 유효하지 않음',
   })
   getMe(@CurrentUser() user: UserRecord): { user: UserResponse } {

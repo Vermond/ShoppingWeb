@@ -33,6 +33,7 @@ import { CurrentUser } from '../auth/auth.decorators';
 import {
   CreateUserBodyDto,
   UpdateUserBodyDto,
+  ApiErrorResponseDto,
   UserEnvelopeResponseDto,
 } from '../swagger/swagger.schemas';
 import { RateLimitGuard } from '../rate-limit/rate-limit.guard';
@@ -55,10 +56,27 @@ export class UsersController {
   @ApiOperation({ summary: '신규 사용자 등록' })
   @ApiBody({ type: CreateUserBodyDto })
   @ApiCreatedResponse({ type: UserEnvelopeResponseDto })
-  @ApiResponse({ status: 400, description: '입력값이 유효하지 않음' })
-  @ApiResponse({ status: 409, description: '이미 사용 중인 이메일' })
-  @ApiResponse({ status: 503, description: '인증 메일 발송 실패' })
-  @ApiResponse({ status: 429, description: '요청 횟수 제한 초과' })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: '입력값이 유효하지 않음',
+  })
+  @ApiResponse({
+    status: 409,
+    type: ApiErrorResponseDto,
+    description: '이미 사용 중인 이메일',
+  })
+  @ApiResponse({
+    status: 503,
+    type: ApiErrorResponseDto,
+    description: '인증 메일 발송 실패',
+  })
+  @ApiResponse({
+    status: 429,
+    type: ApiErrorResponseDto,
+    description: '요청 횟수 제한 초과',
+  })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async create(@Body() body: unknown): Promise<{ user: UserResponse }> {
     const user = await this.usersService.create(parseCreateUserInput(body));
 
@@ -72,15 +90,37 @@ export class UsersController {
   @ApiParam({ name: 'id', format: 'uuid', description: '사용자 ID' })
   @ApiBody({ type: UpdateUserBodyDto })
   @ApiResponse({ status: 200, type: UserEnvelopeResponseDto })
-  @ApiResponse({ status: 400, description: '입력값이 유효하지 않음' })
-  @ApiResponse({ status: 401, description: '로그인이 필요함' })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: '입력값이 유효하지 않음',
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: '로그인이 필요함',
+  })
   @ApiResponse({
     status: 403,
+    type: ApiErrorResponseDto,
     description: '본인 사용자 정보만 수정할 수 있음',
   })
-  @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
-  @ApiResponse({ status: 409, description: '이미 사용 중인 이메일' })
-  @ApiResponse({ status: 503, description: '인증 메일 발송 실패' })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: '사용자를 찾을 수 없음',
+  })
+  @ApiResponse({
+    status: 409,
+    type: ApiErrorResponseDto,
+    description: '이미 사용 중인 이메일',
+  })
+  @ApiResponse({
+    status: 503,
+    type: ApiErrorResponseDto,
+    description: '인증 메일 발송 실패',
+  })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() body: unknown,
@@ -98,9 +138,22 @@ export class UsersController {
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', format: 'uuid', description: '사용자 ID' })
   @ApiResponse({ status: 200, type: UserEnvelopeResponseDto })
-  @ApiResponse({ status: 401, description: '로그인이 필요함' })
-  @ApiResponse({ status: 403, description: '본인 계정만 탈퇴할 수 있음' })
-  @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: '로그인이 필요함',
+  })
+  @ApiResponse({
+    status: 403,
+    type: ApiErrorResponseDto,
+    description: '본인 계정만 탈퇴할 수 있음',
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: '사용자를 찾을 수 없음',
+  })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async withdraw(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @CurrentUser() currentUser: UserRecord,
