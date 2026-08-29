@@ -45,6 +45,11 @@ Rate Limit 응답처럼 추가 정보가 필요한 경우에만 허용된 메타
 - `USER_INACTIVE`
 - `EMAIL_ALREADY_VERIFIED`는 이메일 인증 성공 응답의 결과 코드로 사용한다.
 - `EMAIL_VERIFICATION_SENT`는 이메일 재전송 성공 응답의 결과 코드로 사용한다.
+- `PRODUCT_NOT_FOUND`
+- `PRODUCT_UNAVAILABLE`
+- `INSUFFICIENT_STOCK`
+- `MAX_ORDER_QUANTITY_EXCEEDED`
+- `CART_ITEM_NOT_FOUND`
 
 ## 메시지 규칙
 
@@ -87,4 +92,3 @@ Rate Limit 응답처럼 추가 정보가 필요한 경우에만 허용된 메타
   "database": "unavailable"
 }
 ```
-

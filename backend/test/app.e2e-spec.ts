@@ -6,6 +6,7 @@ import { AppModule } from './../src/app.module';
 
 describe('HealthController (e2e)', () => {
   let app: INestApplication<App>;
+  let baseUrl: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -14,30 +15,38 @@ describe('HealthController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    await app.listen(0, '127.0.0.1');
+    baseUrl = await app.getUrl();
   });
 
   it('/health/live (GET)', () => {
-    return request(app.getHttpServer())
+    return request(baseUrl)
       .get('/health/live')
+      .retry(2, retryOnConnectionReset)
       .expect(200)
       .expect({ status: 'ok' });
   });
 
   it('/ (GET) is not a public application route', () => {
-    return request(app.getHttpServer()).get('/').expect(404);
+    return request(baseUrl)
+      .get('/')
+      .retry(2, retryOnConnectionReset)
+      .expect(404);
   });
 
   it('/api/auth/login rate limits repeated requests', async () => {
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      await request(app.getHttpServer())
+      await request(baseUrl)
         .post('/api/auth/login')
         .send({})
+        .retry(2, retryOnConnectionReset)
         .expect(400);
     }
 
-    const response = await request(app.getHttpServer())
+    const response = await request(baseUrl)
       .post('/api/auth/login')
-      .send({});
+      .send({})
+      .retry(2, retryOnConnectionReset);
 
     expect(response.status).toBe(429);
     expect(response.headers['retry-after']).toBe('60');
@@ -52,3 +61,12 @@ describe('HealthController (e2e)', () => {
     await app.close();
   });
 });
+
+function retryOnConnectionReset(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'ECONNRESET'
+  );
+}

@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  CART_ITEM_UNAVAILABLE_REASONS,
+  type CartItemUnavailableReason,
+} from '../cart/cart.types';
+import {
   PRODUCT_STATUSES,
   type ProductStatus,
 } from '../products/products.types';
@@ -56,6 +60,88 @@ export class ProductResponseDto {
 
   @ApiProperty({ format: 'date-time', description: '수정 시각' })
   updated_at!: string;
+}
+
+export class CartProductResponseDto extends ProductResponseDto {
+  @ApiPropertyOptional({
+    format: 'uri',
+    nullable: true,
+    description: '대표 이미지 URL',
+  })
+  image_url!: string | null;
+}
+
+export class CartItemResponseDto {
+  @ApiProperty({ description: '장바구니 항목 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ description: '장바구니 수량' })
+  quantity!: number;
+
+  @ApiProperty({ type: CartProductResponseDto, nullable: true })
+  product!: CartProductResponseDto | null;
+
+  @ApiProperty({ description: '현재 구매 가능 여부' })
+  available!: boolean;
+
+  @ApiProperty({
+    enum: [...CART_ITEM_UNAVAILABLE_REASONS],
+    nullable: true,
+    description: '구매 불가 사유',
+  })
+  unavailable_reason!: CartItemUnavailableReason | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '상품 소계',
+  })
+  subtotal!: string | null;
+}
+
+export class CartResponseDto {
+  @ApiProperty({ format: 'uuid', description: '장바구니 ID' })
+  id!: string;
+
+  @ApiProperty({ type: [CartItemResponseDto] })
+  items!: CartItemResponseDto[];
+
+  @ApiProperty({ description: '전체 상품 수량' })
+  total_quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '장바구니 전체 금액',
+  })
+  total_price!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class CartEnvelopeResponseDto {
+  @ApiProperty({ type: CartResponseDto })
+  cart!: CartResponseDto;
+}
+
+export class AddCartItemBodyDto {
+  @ApiProperty({ format: 'uuid', description: '추가할 상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ minimum: 1, description: '추가할 수량' })
+  quantity!: number;
+}
+
+export class UpdateCartItemBodyDto {
+  @ApiProperty({ minimum: 1, description: '변경할 수량' })
+  quantity!: number;
 }
 
 export class ProductImageResponseDto {

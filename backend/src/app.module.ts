@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { resolve } from 'node:path';
 import { AuthModule } from './auth/auth.module';
+import { CartModule } from './cart/cart.module';
 import { CategoriesModule } from './categories/categories.module';
 import { DatabaseModule } from './database/database.module';
 import { ProductsModule } from './products/products.module';
@@ -52,6 +53,7 @@ import { ApiExceptionFilter } from './http/api-exception.filter';
     DatabaseModule,
     ProductsModule,
     CategoriesModule,
+    CartModule,
     UsersModule,
     AuthModule,
   ],
