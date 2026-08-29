@@ -53,6 +53,25 @@ export class ProductResponseDto {
   updated_at!: string;
 }
 
+export class ProductImageResponseDto {
+  @ApiProperty({ description: '이미지 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uri', description: '이미지 URL' })
+  image_url!: string;
+
+  @ApiProperty({ description: '이미지 정렬 순서' })
+  sort_order!: number;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+}
+
+export class ProductDetailResponseDto extends ProductResponseDto {
+  @ApiProperty({ type: [ProductImageResponseDto] })
+  images!: ProductImageResponseDto[];
+}
+
 export class CategoryResponseDto {
   @ApiProperty({
     type: String,
@@ -123,6 +142,11 @@ export class ProductsResponseDto {
 
   @ApiProperty({ type: ProductPaginationDto })
   pagination!: ProductPaginationDto;
+}
+
+export class ProductEnvelopeResponseDto {
+  @ApiProperty({ type: ProductDetailResponseDto })
+  product!: ProductDetailResponseDto;
 }
 
 export class CategoriesResponseDto {

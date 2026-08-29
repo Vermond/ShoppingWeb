@@ -21,9 +21,27 @@ export type ProductRow = {
   updated_at: Date;
 };
 
+export type ProductImageRow = {
+  id: string;
+  product_id: string;
+  image_url: string;
+  sort_order: number;
+  created_at: Date;
+};
+
 export type ProductRecord = Omit<ProductRow, 'price' | 'status'> & {
   price: Decimal;
   status: ProductStatus;
+};
+
+export type ProductImageRecord = ProductImageRow;
+
+export type ProductDetailRow = ProductRow & {
+  images: ProductImageRow[];
+};
+
+export type ProductDetailRecord = ProductRecord & {
+  images: ProductImageRecord[];
 };
 
 export type ProductResponse = Omit<
@@ -33,6 +51,17 @@ export type ProductResponse = Omit<
   price: string;
   created_at: string;
   updated_at: string;
+};
+
+export type ProductImageResponse = Omit<
+  ProductImageRecord,
+  'product_id' | 'created_at'
+> & {
+  created_at: string;
+};
+
+export type ProductDetailResponse = ProductResponse & {
+  images: ProductImageResponse[];
 };
 
 export type ProductPageRow = {
@@ -75,11 +104,38 @@ export function toProductRecord(row: ProductRow): ProductRecord {
   };
 }
 
+export function toProductDetailRecord(
+  row: ProductDetailRow,
+): ProductDetailRecord {
+  return {
+    ...toProductRecord(row),
+    images: row.images.map(toProductImageRecord),
+  };
+}
+
+export function toProductImageRecord(row: ProductImageRow): ProductImageRecord {
+  return row;
+}
+
 export function serializeProduct(product: ProductRecord): ProductResponse {
   return {
     ...product,
     price: product.price.toFixed(2),
     created_at: product.created_at.toISOString(),
     updated_at: product.updated_at.toISOString(),
+  };
+}
+
+export function serializeProductDetail(
+  product: ProductDetailRecord,
+): ProductDetailResponse {
+  return {
+    ...serializeProduct(product),
+    images: product.images.map((image) => ({
+      id: image.id,
+      image_url: image.image_url,
+      sort_order: image.sort_order,
+      created_at: image.created_at.toISOString(),
+    })),
   };
 }

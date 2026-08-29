@@ -15,7 +15,10 @@ import { RateLimitGuard } from './../src/rate-limit/rate-limit.guard';
 import type { UserRecord } from './../src/users/users.types';
 import { UsersService } from './../src/users/users.service';
 import Decimal from 'decimal.js';
-import type { ProductRecord } from './../src/products/products.types';
+import type {
+  ProductDetailRecord,
+  ProductRecord,
+} from './../src/products/products.types';
 import type { CategoryRow } from './../src/categories/categories.types';
 
 const user: UserRecord = {
@@ -54,6 +57,31 @@ const serializedProduct = {
   updated_at: product.updated_at.toISOString(),
 };
 
+const productDetail: ProductDetailRecord = {
+  ...product,
+  images: [
+    {
+      id: '1',
+      product_id: product.id,
+      image_url: 'https://example.com/product.png',
+      sort_order: 0,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+    },
+  ],
+};
+
+const serializedProductDetail = {
+  ...serializedProduct,
+  images: [
+    {
+      id: '1',
+      image_url: 'https://example.com/product.png',
+      sort_order: 0,
+      created_at: '2026-01-01T00:00:00.000Z',
+    },
+  ],
+};
+
 const category: CategoryRow = {
   id: '1',
   name: 'Category',
@@ -72,7 +100,7 @@ describe('API contracts (e2e)', () => {
   let baseUrl: string;
   let client: ReturnType<typeof createClient>;
   let databaseService: { checkConnection: jest.Mock };
-  let productsService: { findPage: jest.Mock };
+  let productsService: { findPage: jest.Mock; findById: jest.Mock };
   let categoriesService: { findAll: jest.Mock };
   let usersService: {
     create: jest.Mock;
@@ -104,6 +132,7 @@ describe('API contracts (e2e)', () => {
           hasPreviousPage: false,
         },
       }),
+      findById: jest.fn().mockResolvedValue(productDetail),
     };
     categoriesService = { findAll: jest.fn().mockResolvedValue([]) };
     usersService = {
@@ -243,6 +272,27 @@ describe('API contracts (e2e)', () => {
       page: 3,
       limit: 5,
     });
+  });
+
+  it('returns an active product detail with ordered images', async () => {
+    await client
+      .get(`/api/products/${product.id}`)
+      .expect(200)
+      .expect({ product: serializedProductDetail });
+
+    expect(productsService.findById).toHaveBeenCalledWith(product.id);
+  });
+
+  it('rejects an invalid product detail id', async () => {
+    const callCount = productsService.findById.mock.calls.length;
+
+    const response = await client.get('/api/products/not-a-uuid').expect(400);
+
+    expect(response.body).toEqual({
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed (uuid v 4 is expected)',
+    });
+    expect(productsService.findById.mock.calls).toHaveLength(callCount);
   });
 
   it('rejects invalid product pagination parameters', async () => {

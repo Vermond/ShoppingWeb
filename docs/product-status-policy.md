@@ -22,6 +22,34 @@
 - 재고가 0인 `active` 상품은 목록에서 제외하지 않고 재고 수량을 0으로 반환한다. 품절 표시와 판매 가능 여부는 이후 주문 정책에서 별도로 결정한다.
 - 정렬은 `created_at DESC, id DESC`를 유지한다.
 
+공개 상품 상세 API `GET /api/products/:id`도 `active` 상태인 상품만 반환한다. 존재하지 않거나 공개 대상이 아닌 상품은 `404`로 처리한다.
+
+```json
+{
+  "product": {
+    "id": "상품 UUID",
+    "category_id": "1",
+    "name": "상품명",
+    "description": "상품 설명",
+    "price": "12900.00",
+    "stock": 3,
+    "status": "active",
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "images": [
+      {
+        "id": "1",
+        "image_url": "https://example.com/product.png",
+        "sort_order": 0,
+        "created_at": "2026-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+이미지는 `sort_order ASC, id ASC` 순서로 반환하며, 이미지의 `product_id`는 부모 상품 ID와 중복되므로 응답에서 생략한다.
+
 관리자용 전체 상태 조회나 상태 변경 API는 이후 관리자 기능 범위에서 별도로 정의한다.
 
 ## 서버와 데이터베이스의 책임
@@ -44,6 +72,13 @@ CHECK (status IN ('active', 'inactive', 'draft', 'archived'));
 CREATE INDEX products_active_created_at_id_idx
 ON catalog.products (created_at DESC, id DESC)
 WHERE status = 'active';
+```
+
+상세 조회에서 이미지가 많아지면 다음 인덱스도 검토한다.
+
+```sql
+CREATE INDEX product_images_product_id_sort_order_id_idx
+ON catalog.product_images (product_id, sort_order ASC, id ASC);
 ```
 
 ## API 응답 타입

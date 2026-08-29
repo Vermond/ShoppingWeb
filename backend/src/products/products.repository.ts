@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import type { ProductPageRow, ProductRow } from './products.types';
+import type {
+  ProductDetailRow,
+  ProductImageRow,
+  ProductPageRow,
+  ProductRow,
+} from './products.types';
 
 const COUNT_PRODUCTS_QUERY = `
   SELECT COUNT(*)::int AS total_items
@@ -17,8 +22,36 @@ const FIND_PRODUCTS_PAGE_QUERY = `
   LIMIT $1 OFFSET $2
 `;
 
+const FIND_PRODUCT_QUERY = `
+  SELECT p.id, p.category_id, p.name, p.description, p.price, p.stock,
+         p.status, p.created_at, p.updated_at,
+         pi.id AS image_id, pi.image_url,
+         pi.sort_order AS image_sort_order,
+         pi.created_at AS image_created_at
+  FROM catalog.products AS p
+  LEFT JOIN catalog.product_images AS pi
+    ON pi.product_id = p.id
+  WHERE p.id = $1
+    AND p.status = 'active'
+  ORDER BY pi.sort_order ASC NULLS LAST, pi.id ASC NULLS LAST
+`;
+
 type ProductCountRow = {
   total_items: number;
+};
+
+type ProductDetailQueryRow = ProductRow & {
+  image_id: string | null;
+  image_url: string | null;
+  image_sort_order: number | null;
+  image_created_at: Date | null;
+};
+
+type ProductImageQueryRow = ProductDetailQueryRow & {
+  image_id: string;
+  image_url: string;
+  image_sort_order: number;
+  image_created_at: Date;
 };
 
 @Injectable()
@@ -40,4 +73,51 @@ export class ProductsRepository {
       };
     });
   }
+
+  async findById(id: string): Promise<ProductDetailRow | null> {
+    const result = await this.databaseService.query<ProductDetailQueryRow>(
+      FIND_PRODUCT_QUERY,
+      [id],
+    );
+    const firstRow = result.rows[0];
+
+    if (!firstRow) {
+      return null;
+    }
+
+    const product: ProductRow = {
+      id: firstRow.id,
+      category_id: firstRow.category_id,
+      name: firstRow.name,
+      description: firstRow.description,
+      price: firstRow.price,
+      stock: firstRow.stock,
+      status: firstRow.status,
+      created_at: firstRow.created_at,
+      updated_at: firstRow.updated_at,
+    };
+
+    const images: ProductImageRow[] = result.rows
+      .filter(hasProductImage)
+      .map((row) => ({
+        id: row.image_id,
+        product_id: product.id,
+        image_url: row.image_url,
+        sort_order: row.image_sort_order,
+        created_at: row.image_created_at,
+      }));
+
+    return { ...product, images };
+  }
+}
+
+function hasProductImage(
+  row: ProductDetailQueryRow,
+): row is ProductImageQueryRow {
+  return (
+    row.image_id !== null &&
+    row.image_url !== null &&
+    row.image_sort_order !== null &&
+    row.image_created_at !== null
+  );
 }
