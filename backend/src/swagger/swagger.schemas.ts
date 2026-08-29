@@ -255,6 +255,119 @@ export class CategoriesResponseDto {
   categories!: CategoryResponseDto[];
 }
 
+export class UserProfileResponseDto {
+  @ApiProperty({ format: 'uuid', description: '사용자 ID' })
+  user_id!: string;
+
+  @ApiProperty({
+    description: '전화번호. 서버에는 정규화된 숫자 형식으로 저장됩니다.',
+  })
+  phone_number!: string;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class UserProfileEnvelopeResponseDto {
+  @ApiProperty({ type: UserProfileResponseDto })
+  profile!: UserProfileResponseDto;
+}
+
+export class UpdateUserProfileBodyDto {
+  @ApiProperty({ description: '전화번호' })
+  phone_number!: string;
+}
+
+export class UserAddressResponseDto {
+  @ApiProperty({ format: 'uuid', description: '배송지 ID' })
+  id!: string;
+
+  @ApiProperty({ description: '수령인 이름' })
+  recipient_name!: string;
+
+  @ApiProperty({ description: '배송 연락처' })
+  phone_number!: string;
+
+  @ApiProperty({ description: '우편번호' })
+  postal_code!: string;
+
+  @ApiProperty({ description: '기본 주소' })
+  address_line1!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상세 주소' })
+  address_line2!: string | null;
+
+  @ApiProperty({ description: '기본 배송지 여부' })
+  is_default!: boolean;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class UserAddressEnvelopeResponseDto {
+  @ApiProperty({ type: UserAddressResponseDto })
+  address!: UserAddressResponseDto;
+}
+
+export class UserAddressesResponseDto {
+  @ApiProperty({ type: [UserAddressResponseDto] })
+  addresses!: UserAddressResponseDto[];
+}
+
+export class CreateUserAddressBodyDto {
+  @ApiProperty({ description: '수령인 이름' })
+  recipient_name!: string;
+
+  @ApiProperty({ description: '배송 연락처' })
+  phone_number!: string;
+
+  @ApiProperty({ description: '우편번호' })
+  postal_code!: string;
+
+  @ApiProperty({ description: '기본 주소' })
+  address_line1!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상세 주소' })
+  address_line2?: string | null;
+
+  @ApiPropertyOptional({ default: false, description: '기본 배송지 여부' })
+  is_default?: boolean;
+}
+
+export class UpdateUserAddressBodyDto {
+  @ApiPropertyOptional({ description: '수령인 이름' })
+  recipient_name?: string;
+
+  @ApiPropertyOptional({ description: '배송 연락처' })
+  phone_number?: string;
+
+  @ApiPropertyOptional({ description: '우편번호' })
+  postal_code?: string;
+
+  @ApiPropertyOptional({ description: '기본 주소' })
+  address_line1?: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: '상세 주소. null이면 삭제',
+  })
+  address_line2?: string | null;
+
+  @ApiPropertyOptional({ description: '기본 배송지 여부' })
+  is_default?: boolean;
+}
+
+export class DeleteUserAddressResponseDto {
+  @ApiProperty({ example: '배송지를 삭제했습니다.' })
+  message!: string;
+}
+
 export class UserEnvelopeResponseDto {
   @ApiProperty({ type: UserResponseDto })
   user!: UserResponseDto;

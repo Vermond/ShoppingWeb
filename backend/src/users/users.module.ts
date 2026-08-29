@@ -8,17 +8,26 @@ import { EmailVerificationController } from './email-verification.controller';
 import { EmailVerificationRepository } from './email-verification.repository';
 import { EmailVerificationService } from './email-verification.service';
 import { PasswordService } from './password.service';
+import { UserDetailsController } from './user-details.controller';
+import { UserDetailsRepository } from './user-details.repository';
+import { UserDetailsService } from './user-details.service';
 import { UsersController } from './users.controller';
 import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
 
 @Module({
   imports: [DatabaseModule, EmailModule, JwtModule.register({})],
-  controllers: [UsersController, EmailVerificationController],
+  controllers: [
+    UserDetailsController,
+    UsersController,
+    EmailVerificationController,
+  ],
   providers: [
     PasswordService,
     UsersRepository,
     UsersService,
+    UserDetailsRepository,
+    UserDetailsService,
     EmailVerificationRepository,
     EmailVerificationService,
     RefreshTokenRepository,
