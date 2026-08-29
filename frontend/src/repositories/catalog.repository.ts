@@ -147,6 +147,12 @@ function toProduct(
   const stock = Number.isFinite(stockValue)
     ? Math.max(0, Math.floor(stockValue))
     : 0;
+  const maxOrderQuantityValue = Number(
+    record.max_order_quantity ?? record.maxOrderQuantity,
+  );
+  const maxOrderQuantity = Number.isFinite(maxOrderQuantityValue)
+    ? Math.max(0, Math.floor(maxOrderQuantityValue))
+    : stock;
 
   if (!id || !name || !Number.isFinite(price)) {
     return null;
@@ -167,6 +173,7 @@ function toProduct(
     category,
     price,
     stock,
+    maxOrderQuantity,
     tag: tag || undefined,
     description,
     color:

@@ -33,6 +33,7 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
             name: "무선 스피커",
             price: "49000",
             stock: 0,
+            max_order_quantity: 2,
             description: null,
             category_id: "cat-electronics",
             art: "glass",
@@ -42,6 +43,7 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
             name: "리넨 쿠션",
             price: 18000,
             stock: 4,
+            max_order_quantity: 2,
             description: "부드러운 쿠션",
             categoryId: "cat-living",
             art: "linen",
@@ -65,6 +67,7 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
     assert.equal(catalog.products[0].category, "전자제품");
     assert.equal(catalog.products[0].description, "");
     assert.equal(catalog.products[0].stock, 0);
+    assert.equal(catalog.products[1].maxOrderQuantity, 2);
     assert.deepEqual(
       catalog.categories.map(({ id, name, count }) => ({ id, name, count })),
       [
@@ -93,6 +96,7 @@ test("상품 상세 조회는 상세 API의 이미지와 재고를 매핑한다"
           description: null,
           price: "49000.00",
           stock: 0,
+          max_order_quantity: 1,
           status: "active",
           images: [
             {
@@ -117,6 +121,7 @@ test("상품 상세 조회는 상세 API의 이미지와 재고를 매핑한다"
 
     assert.equal(requestPath, "/api/products/product-detail");
     assert.equal(product.stock, 0);
+    assert.equal(product.maxOrderQuantity, 1);
     assert.equal(product.categoryId, "cat-electronics");
     assert.deepEqual(
       product.images.map(({ id }) => id),

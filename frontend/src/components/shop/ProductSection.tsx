@@ -19,7 +19,7 @@ type ProductSectionProps = {
   activeFilter: ProductFilter;
   query: string;
   onFilterChange: (filter: ProductFilter) => void;
-  onAddToCart: (productId: string) => void;
+  onAddToCart: (productId: string) => boolean;
 };
 
 export function ProductSection({
@@ -68,7 +68,12 @@ export function ProductSection({
     : visibleProducts;
 
   const addToCart = (productId: string) => {
-    onAddToCart(productId);
+    const didAdd = onAddToCart(productId);
+
+    if (!didAdd) {
+      return;
+    }
+
     setAddedProduct(productId);
     window.setTimeout(() => setAddedProduct(null), 1600);
   };

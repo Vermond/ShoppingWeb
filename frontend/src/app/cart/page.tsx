@@ -6,13 +6,25 @@ import {
   Delete,
   Remove,
 } from "@mui/icons-material";
-import { Button, IconButton } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
 import { useState } from "react";
 import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductArt } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { formatPrice } from "../../utils/format";
+import {
+  getMaxPurchasableQuantity,
+  isCartQuantityAvailable,
+} from "../../utils/cart";
 import {
   calculateShipping,
   FREE_SHIPPING_THRESHOLD,
@@ -21,14 +33,49 @@ import styles from "./page.module.css";
 
 export default function CartPage() {
   const [query, setQuery] = useState("");
+  const [isRemovalDialogOpen, setIsRemovalDialogOpen] = useState(false);
+  const [pendingRemoval, setPendingRemoval] = useState<{
+    productId: string;
+    productName: string;
+  } | null>(null);
   const { items, totalItems, subtotal, updateQuantity, removeItem } = useCart();
   const { products } = useCatalog();
   const hasUnavailableItems = items.some((item) => {
     const product = products.find(({ id }) => id === item.productId);
-    return !product || product.stock <= 0;
+    return !product || !isCartQuantityAvailable(product, item.quantity);
   });
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
+
+  const requestRemoval = (productId: string, productName: string) => {
+    setPendingRemoval({ productId, productName });
+    setIsRemovalDialogOpen(true);
+  };
+
+  const decreaseQuantity = (
+    productId: string,
+    productName: string,
+    quantity: number,
+  ) => {
+    if (quantity === 1) {
+      requestRemoval(productId, productName);
+      return;
+    }
+
+    updateQuantity(productId, quantity - 1);
+  };
+
+  const closeRemovalDialog = () => {
+    setIsRemovalDialogOpen(false);
+  };
+
+  const confirmRemoval = () => {
+    if (pendingRemoval) {
+      removeItem(pendingRemoval.productId);
+    }
+
+    closeRemovalDialog();
+  };
 
   return (
     <div className={styles.cartPage}>
@@ -88,6 +135,7 @@ export default function CartPage() {
                 }
 
                 const isOutOfStock = product.stock <= 0;
+                const maximumQuantity = getMaxPurchasableQuantity(product);
 
                 return (
                   <article className={styles.cartItem} key={item.productId}>
@@ -113,7 +161,9 @@ export default function CartPage() {
                           type="button"
                           size="small"
                           disableRipple
-                          onClick={() => removeItem(item.productId)}
+                          onClick={() =>
+                            requestRemoval(item.productId, product.name)
+                          }
                           aria-label={`${product.name} 삭제`}
                         >
                           <Delete />
@@ -128,7 +178,11 @@ export default function CartPage() {
                             disableRipple
                             disabled={isOutOfStock}
                             onClick={() =>
-                              updateQuantity(item.productId, item.quantity - 1)
+                              decreaseQuantity(
+                                item.productId,
+                                product.name,
+                                item.quantity,
+                              )
                             }
                             aria-label={`${product.name} 수량 줄이기`}
                           >
@@ -139,7 +193,9 @@ export default function CartPage() {
                             type="button"
                             size="small"
                             disableRipple
-                            disabled={isOutOfStock}
+                            disabled={
+                              isOutOfStock || item.quantity >= maximumQuantity
+                            }
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity + 1)
                             }
@@ -198,6 +254,29 @@ export default function CartPage() {
           </div>
         )}
       </main>
+
+      <Dialog
+        open={isRemovalDialogOpen}
+        onClose={closeRemovalDialog}
+        disableScrollLock
+        aria-labelledby="remove-cart-item-title"
+        aria-describedby="remove-cart-item-description"
+      >
+        <DialogTitle id="remove-cart-item-title">
+          상품을 삭제하시겠습니까?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="remove-cart-item-description">
+            {pendingRemoval?.productName} 상품을 장바구니에서 삭제합니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeRemovalDialog}>취소</Button>
+          <Button onClick={confirmRemoval} color="error" variant="contained">
+            삭제
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <footer className={styles.cartFooter}>
         <span>Make room for good things.</span>

@@ -7,6 +7,7 @@ export type Product = {
   category: ProductCategory;
   price: number;
   stock: number;
+  maxOrderQuantity: number;
   tag?: string;
   description: string;
   color: string;

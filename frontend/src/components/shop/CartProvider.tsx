@@ -8,6 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { Product } from "../../types/catalog";
+import { getMaxPurchasableQuantity } from "../../utils/cart";
 import { useCatalog } from "./CatalogProvider";
 
 export type CartItem = {
@@ -19,7 +21,7 @@ type CartContextValue = {
   items: CartItem[];
   totalItems: number;
   subtotal: number;
-  addItem: (productId: string) => void;
+  addItem: (productId: string) => boolean;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
@@ -30,7 +32,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 function normalizeCart(
   value: unknown,
-  productIds?: ReadonlySet<string>,
+  products?: ReadonlyMap<string, Product>,
 ): CartItem[] {
   if (!Array.isArray(value)) {
     return [];
@@ -44,11 +46,23 @@ function normalizeCart(
       "quantity" in item &&
       typeof item.productId === "string" &&
       typeof item.quantity === "number" &&
-      (!productIds || productIds.has(item.productId)) &&
       Number.isInteger(item.quantity) &&
       item.quantity > 0
     ) {
-      cart.push({ productId: item.productId, quantity: item.quantity });
+      const product = products?.get(item.productId);
+
+      if (products && !product) {
+        return cart;
+      }
+
+      const quantity =
+        product && product.stock > 0
+          ? Math.min(item.quantity, getMaxPurchasableQuantity(product))
+          : item.quantity;
+
+      if (quantity > 0) {
+        cart.push({ productId: item.productId, quantity });
+      }
     }
 
     return cart;
@@ -63,10 +77,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isLoading: isCatalogLoading,
     errorMessage: catalogError,
   } = useCatalog();
-  const productIds = useMemo(
-    () => new Set(products.map((product) => product.id)),
+  const productsById = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
+  const isCatalogReady = !isCatalogLoading && !catalogError;
 
   useEffect(() => {
     const loadCart = () => {
@@ -89,9 +104,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     () =>
       normalizeCart(
         items,
-        !isCatalogLoading && !catalogError ? productIds : undefined,
+        isCatalogReady ? productsById : undefined,
       ),
-    [catalogError, isCatalogLoading, items, productIds],
+    [isCatalogReady, items, productsById],
   );
 
   useEffect(() => {
@@ -124,49 +139,100 @@ export function CartProvider({ children }: { children: ReactNode }) {
       totalItems,
       subtotal,
       addItem: (productId) => {
+        const product = isCatalogReady
+          ? productsById.get(productId)
+          : undefined;
+        const maximumQuantity = product
+          ? getMaxPurchasableQuantity(product)
+          : 0;
+        const existingItem = availableItems.find(
+          (item) => item.productId === productId,
+        );
+
+        if (
+          !product ||
+          maximumQuantity <= 0 ||
+          (existingItem && existingItem.quantity >= maximumQuantity)
+        ) {
+          return false;
+        }
+
         setItems((currentItems) => {
-          const normalizedItems = normalizeCart(currentItems, productIds);
+          const normalizedItems = normalizeCart(
+            currentItems,
+            isCatalogReady ? productsById : undefined,
+          );
+          const currentProduct = productsById.get(productId);
 
-          if (!productIds.has(productId)) {
-            return currentItems;
+          if (!currentProduct) {
+            return normalizedItems;
           }
 
-          const product = products.find(({ id }) => id === productId);
+          const currentMaximumQuantity =
+            getMaxPurchasableQuantity(currentProduct);
 
-          if (!product || product.stock <= 0) {
-            return currentItems;
+          if (currentMaximumQuantity <= 0) {
+            return normalizedItems;
           }
 
-          const existingItem = normalizedItems.find(
+          const currentExistingItem = normalizedItems.find(
             (item) => item.productId === productId,
           );
 
-          if (existingItem) {
+          if (currentExistingItem) {
+            if (currentExistingItem.quantity >= currentMaximumQuantity) {
+              return normalizedItems;
+            }
+
             return normalizedItems.map((item) =>
               item.productId === productId
-                ? { ...item, quantity: item.quantity + 1 }
+                ? {
+                    ...item,
+                    quantity: Math.min(
+                      item.quantity + 1,
+                      currentMaximumQuantity,
+                    ),
+                  }
                 : item,
             );
           }
 
           return [...normalizedItems, { productId, quantity: 1 }];
         });
+
+        return true;
       },
       updateQuantity: (productId, quantity) => {
         setItems((currentItems) => {
+          const normalizedItems = normalizeCart(
+            currentItems,
+            isCatalogReady ? productsById : undefined,
+          );
+
           if (quantity <= 0) {
-            return currentItems.filter((item) => item.productId !== productId);
+            return normalizedItems.filter(
+              (item) => item.productId !== productId,
+            );
           }
 
-          const product = products.find(({ id }) => id === productId);
+          const product = productsById.get(productId);
 
           if (!product || product.stock <= 0) {
-            return currentItems;
+            return normalizedItems;
           }
 
-          return currentItems.map((item) =>
+          const maximumQuantity = getMaxPurchasableQuantity(product);
+
+          if (maximumQuantity <= 0) {
+            return normalizedItems;
+          }
+
+          return normalizedItems.map((item) =>
             item.productId === productId
-              ? { ...item, quantity: Math.min(quantity, product.stock) }
+              ? {
+                  ...item,
+                  quantity: Math.min(quantity, maximumQuantity),
+                }
               : item,
           );
         });
@@ -178,7 +244,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       clearCart: () => setItems([]),
     };
-  }, [availableItems, productIds, products]);
+  }, [availableItems, isCatalogReady, products, productsById]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

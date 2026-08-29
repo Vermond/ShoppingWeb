@@ -117,7 +117,12 @@ export default function ProductDetailPage() {
       return;
     }
 
-    addItem(product.id);
+    const didAdd = addItem(product.id);
+
+    if (!didAdd) {
+      return;
+    }
+
     setIsAdded(true);
     window.setTimeout(() => setIsAdded(false), 1600);
   };

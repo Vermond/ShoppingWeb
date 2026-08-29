@@ -9,6 +9,7 @@ import { useCatalog } from "../../components/shop/CatalogProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { createOrder, type CheckoutRequest } from "../../repositories/orders.repository";
 import { formatPrice } from "../../utils/format";
+import { isCartQuantityAvailable } from "../../utils/cart";
 import { calculateShipping } from "../../utils/order";
 import styles from "./page.module.css";
 
@@ -31,7 +32,7 @@ export default function CheckoutPage() {
   const { products } = useCatalog();
   const hasUnavailableItems = items.some((item) => {
     const product = products.find(({ id }) => id === item.productId);
-    return !product || product.stock <= 0;
+    return !product || !isCartQuantityAvailable(product, item.quantity);
   });
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
@@ -44,7 +45,9 @@ export default function CheckoutPage() {
     event.preventDefault();
 
     if (hasUnavailableItems) {
-      setErrorMessage("재고가 없는 상품을 먼저 장바구니에서 삭제해주세요.");
+      setErrorMessage(
+        "재고 또는 최대 구매 가능 수량을 먼저 확인해주세요.",
+      );
       return;
     }
 
