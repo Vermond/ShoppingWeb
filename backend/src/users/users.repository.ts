@@ -39,7 +39,7 @@ const FIND_USER_BY_ID_QUERY = `
 const FIND_USER_BY_EMAIL_QUERY = `
   SELECT ${USER_COLUMNS_WITH_PASSWORD}
   FROM auth.users
-  WHERE email = $1
+  WHERE lower(email) = lower($1)
 `;
 
 const VERIFY_USER_EMAIL_QUERY = `

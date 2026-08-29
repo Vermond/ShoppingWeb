@@ -67,10 +67,10 @@ describe('UsersRepository', () => {
     expect(query.mock.calls[0]?.[0]).not.toContain('password_hash');
 
     query.mockResolvedValueOnce({ rows: [{ ...user, password_hash: 'hash' }] });
-    await repository.findByEmail(user.email);
+    await repository.findByEmail('USER@example.com');
     expect(query).toHaveBeenLastCalledWith(
-      expect.stringContaining('WHERE email = $1'),
-      [user.email],
+      expect.stringContaining('WHERE lower(email) = lower($1)'),
+      ['USER@example.com'],
     );
     expect(query.mock.calls[1]?.[0]).toContain('password_hash');
   });
