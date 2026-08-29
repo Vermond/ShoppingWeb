@@ -112,12 +112,12 @@ export default function ProductDetailPage() {
   };
   const isOutOfStock = product.stock <= 0;
 
-  const addToCart = () => {
+  const addToCart = async () => {
     if (isOutOfStock) {
       return;
     }
 
-    const didAdd = addItem(product.id);
+    const didAdd = await addItem(product.id);
 
     if (!didAdd) {
       return;

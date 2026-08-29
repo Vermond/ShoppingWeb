@@ -28,11 +28,24 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<CheckoutRequest["paymentMethod"]>("card");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { items, totalItems, subtotal, clearCart } = useCart();
+  const {
+    items,
+    totalItems,
+    subtotal,
+    clearCart,
+    isLoading: isCartLoading,
+    errorMessage: cartError,
+  } = useCart();
   const { products } = useCatalog();
   const hasUnavailableItems = items.some((item) => {
-    const product = products.find(({ id }) => id === item.productId);
-    return !product || !isCartQuantityAvailable(product, item.quantity);
+    const product =
+      item.product ?? products.find(({ id }) => id === item.productId);
+    return (
+      Boolean(cartError) ||
+      item.available === false ||
+      !product ||
+      !isCartQuantityAvailable(product, item.quantity)
+    );
   });
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
@@ -44,9 +57,9 @@ export default function CheckoutPage() {
   const submitOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (hasUnavailableItems) {
+    if (hasUnavailableItems || cartError) {
       setErrorMessage(
-        "재고 또는 최대 구매 가능 수량을 먼저 확인해주세요.",
+        cartError ?? "재고 또는 최대 구매 가능 수량을 먼저 확인해주세요.",
       );
       return;
     }
@@ -60,10 +73,22 @@ export default function CheckoutPage() {
         paymentMethod,
         items: items.map((item) => ({
           ...item,
-          price: products.find(({ id }) => id === item.productId)?.price ?? 0,
+          price:
+            item.product?.price ??
+            products.find(({ id }) => id === item.productId)?.price ??
+            0,
         })),
       });
-      clearCart();
+      const didClear = await clearCart();
+
+      if (!didClear) {
+        setErrorMessage(
+          "주문은 생성되었지만 장바구니를 비우지 못했어요. 다시 시도해주세요.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       router.push(`/order/complete?orderId=${encodeURIComponent(result.id)}`);
     } catch (error) {
       setErrorMessage(
@@ -72,6 +97,33 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (isCartLoading || (cartError && items.length === 0)) {
+    return (
+      <div className={styles.checkoutPage}>
+        <SiteHeader
+          activeSection={null}
+          cartCount={totalItems}
+          query={query}
+          onQueryChange={setQuery}
+        />
+        <main className={styles.emptyCheckout}>
+          <p className={styles.eyebrow}>
+            {isCartLoading ? "Checkout" : "Something went wrong"}
+          </p>
+          <h1>
+            {isCartLoading
+              ? "장바구니를 불러오는 중이에요."
+              : "장바구니를 확인하지 못했어요."}
+          </h1>
+          {cartError && <p>{cartError}</p>}
+          <Button component="a" href="/cart" endIcon={<ArrowForward />}>
+            장바구니로 돌아가기
+          </Button>
+        </main>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -194,7 +246,11 @@ export default function CheckoutPage() {
               </div>
             </section>
 
-            {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
+            {(errorMessage || cartError) && (
+              <p className={styles.errorMessage}>
+                {errorMessage || cartError}
+              </p>
+            )}
           </div>
 
           <aside className={styles.orderSummary} aria-labelledby="order-summary-title">
@@ -202,7 +258,8 @@ export default function CheckoutPage() {
             <h2 id="order-summary-title">주문 요약</h2>
             <div className={styles.summaryProducts}>
               {items.map((item) => {
-                const product = products.find(({ id }) => id === item.productId);
+                const product =
+                  item.product ?? products.find(({ id }) => id === item.productId);
 
                 return product ? (
                   <div key={item.productId}>

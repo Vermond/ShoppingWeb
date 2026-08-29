@@ -19,7 +19,7 @@ type ProductSectionProps = {
   activeFilter: ProductFilter;
   query: string;
   onFilterChange: (filter: ProductFilter) => void;
-  onAddToCart: (productId: string) => boolean;
+  onAddToCart: (productId: string) => boolean | Promise<boolean>;
 };
 
 export function ProductSection({
@@ -67,8 +67,8 @@ export function ProductSection({
     ? visibleProducts.slice(0, 7)
     : visibleProducts;
 
-  const addToCart = (productId: string) => {
-    const didAdd = onAddToCart(productId);
+  const addToCart = async (productId: string) => {
+    const didAdd = await onAddToCart(productId);
 
     if (!didAdd) {
       return;

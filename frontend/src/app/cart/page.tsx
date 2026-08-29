@@ -38,11 +38,24 @@ export default function CartPage() {
     productId: string;
     productName: string;
   } | null>(null);
-  const { items, totalItems, subtotal, updateQuantity, removeItem } = useCart();
+  const {
+    items,
+    totalItems,
+    subtotal,
+    updateQuantity,
+    removeItem,
+    isLoading: isCartLoading,
+    errorMessage: cartError,
+  } = useCart();
   const { products } = useCatalog();
   const hasUnavailableItems = items.some((item) => {
-    const product = products.find(({ id }) => id === item.productId);
-    return !product || !isCartQuantityAvailable(product, item.quantity);
+    const product =
+      item.product ?? products.find(({ id }) => id === item.productId);
+    return (
+      item.available === false ||
+      !product ||
+      !isCartQuantityAvailable(product, item.quantity)
+    );
   });
   const shipping = calculateShipping(subtotal);
   const total = subtotal + shipping;
@@ -103,7 +116,18 @@ export default function CartPage() {
           </Button>
         </section>
 
-        {items.length === 0 ? (
+        {isCartLoading ? (
+          <section className={styles.emptyCart} aria-live="polite">
+            <p className={styles.eyebrow}>Your selection</p>
+            <h2>장바구니를 불러오는 중이에요.</h2>
+          </section>
+        ) : cartError && items.length === 0 ? (
+          <section className={styles.emptyCart} aria-live="polite">
+            <p className={styles.eyebrow}>Something went wrong</p>
+            <h2>장바구니를 불러오지 못했어요.</h2>
+            <p>{cartError}</p>
+          </section>
+        ) : items.length === 0 ? (
           <section className={styles.emptyCart} aria-labelledby="empty-cart-title">
             <p className={styles.eyebrow}>A quiet beginning</p>
             <h2 id="empty-cart-title">아직 담은 물건이 없어요.</h2>
@@ -128,11 +152,19 @@ export default function CartPage() {
               </div>
 
               {items.map((item) => {
-                const product = products.find(({ id }) => id === item.productId);
-
-                if (!product) {
-                  return null;
-                }
+                const product =
+                  item.product ??
+                  products.find(({ id }) => id === item.productId) ?? {
+                    id: item.productId,
+                    name: "상품 정보를 확인할 수 없는 물건",
+                    category: "상품",
+                    price: 0,
+                    stock: 0,
+                    maxOrderQuantity: 0,
+                    description: "",
+                    color: "#ded9d2",
+                    art: "ceramic" as const,
+                  };
 
                 const isOutOfStock = product.stock <= 0;
                 const maximumQuantity = getMaxPurchasableQuantity(product);
@@ -151,9 +183,14 @@ export default function CartPage() {
                           <p>{product.category}</p>
                           <h3>{product.name}</h3>
                           <span>{product.description}</span>
-                          {isOutOfStock && (
+                          {(isOutOfStock || item.available === false) && (
                             <strong className={styles.outOfStockMessage}>
-                              재고 없음
+                              {isOutOfStock
+                                ? "재고 없음"
+                                : item.unavailableReason ===
+                                    "MAX_ORDER_QUANTITY_EXCEEDED"
+                                  ? "최대 구매 수량 초과"
+                                  : "구매할 수 없는 상품"}
                             </strong>
                           )}
                         </div>
@@ -176,7 +213,7 @@ export default function CartPage() {
                             type="button"
                             size="small"
                             disableRipple
-                            disabled={isOutOfStock}
+                            disabled={isOutOfStock || item.available === false}
                             onClick={() =>
                               decreaseQuantity(
                                 item.productId,
@@ -193,9 +230,11 @@ export default function CartPage() {
                             type="button"
                             size="small"
                             disableRipple
-                            disabled={
-                              isOutOfStock || item.quantity >= maximumQuantity
-                            }
+                              disabled={
+                                isOutOfStock ||
+                                item.available === false ||
+                                item.quantity >= maximumQuantity
+                              }
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity + 1)
                             }
@@ -242,8 +281,11 @@ export default function CartPage() {
               </Button>
               {hasUnavailableItems && (
                 <p className={styles.outOfStockNote}>
-                  재고가 없는 상품을 장바구니에서 삭제한 후 결제할 수 있어요.
+                  구매할 수 없는 상품을 장바구니에서 삭제한 후 결제할 수 있어요.
                 </p>
+              )}
+              {cartError && (
+                <p className={styles.outOfStockNote}>{cartError}</p>
               )}
               <p className={styles.shippingNote}>
                 {subtotal >= FREE_SHIPPING_THRESHOLD
