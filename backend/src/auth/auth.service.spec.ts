@@ -106,6 +106,10 @@ describe('AuthService', () => {
       expect.any(Date),
       mocks.executor,
     );
+    expect(mocks.getTransactionState()).toEqual({
+      committed: true,
+      rolledBack: false,
+    });
   });
 
   it('rejects invalid, missing, mismatched, and revoked refresh tokens', async () => {
@@ -195,6 +199,10 @@ describe('AuthService', () => {
       tokenRecord.id,
       mocks.executor,
     );
+    expect(mocks.getTransactionState()).toEqual({
+      committed: true,
+      rolledBack: false,
+    });
   });
 
   it('revokes all refresh tokens when the account is unusable', async () => {
@@ -218,6 +226,10 @@ describe('AuthService', () => {
     expect(
       inactiveMocks.refreshTokenRepository.revokeAllForUser,
     ).toHaveBeenCalledWith(user.id, inactiveMocks.executor);
+    expect(inactiveMocks.getTransactionState()).toEqual({
+      committed: true,
+      rolledBack: false,
+    });
 
     const unverifiedMocks = createMocks();
     unverifiedMocks.jwtService.verifyAsync.mockResolvedValue({
@@ -239,6 +251,41 @@ describe('AuthService', () => {
     expect(
       unverifiedMocks.refreshTokenRepository.revokeAllForUser,
     ).toHaveBeenCalledWith(user.id, unverifiedMocks.executor);
+    expect(unverifiedMocks.getTransactionState()).toEqual({
+      committed: true,
+      rolledBack: false,
+    });
+  });
+
+  it('rolls back rotation when storing the replacement token fails', async () => {
+    const mocks = createMocks();
+    const refreshToken = 'old-refresh-token';
+    mocks.jwtService.verifyAsync.mockResolvedValue({
+      sub: user.id,
+      jti: tokenRecord.id,
+      type: 'refresh',
+    });
+    mocks.refreshTokenRepository.findByIdAndHashForUpdate.mockResolvedValue({
+      ...tokenRecord,
+      token_hash: createHash('sha256')
+        .update(refreshToken, 'utf8')
+        .digest('hex'),
+    });
+    mocks.usersRepository.findById.mockResolvedValue(user);
+    mocks.jwtService.signAsync
+      .mockResolvedValueOnce('new-access-token')
+      .mockResolvedValueOnce('new-refresh-token');
+    mocks.refreshTokenRepository.create.mockRejectedValue(
+      new Error('storage failed'),
+    );
+
+    await expect(mocks.service.refresh(refreshToken)).rejects.toThrow(
+      'storage failed',
+    );
+    expect(mocks.getTransactionState()).toEqual({
+      committed: false,
+      rolledBack: true,
+    });
   });
 
   it('revokes only the supplied refresh token during logout', async () => {
@@ -276,9 +323,19 @@ describe('AuthService', () => {
 
 function createMocks() {
   const executor = { query: jest.fn() } as unknown as DatabaseQueryExecutor;
+  let transactionCommitted = false;
+  let transactionRolledBack = false;
   const transaction = jest.fn(
-    async (callback: (executor: DatabaseQueryExecutor) => Promise<unknown>) =>
-      callback(executor),
+    async (callback: (executor: DatabaseQueryExecutor) => Promise<unknown>) => {
+      try {
+        const result = await callback(executor);
+        transactionCommitted = true;
+        return result;
+      } catch (error) {
+        transactionRolledBack = true;
+        throw error;
+      }
+    },
   );
   const databaseService = {
     transaction,
@@ -326,6 +383,10 @@ function createMocks() {
     service,
     databaseService,
     executor,
+    getTransactionState: () => ({
+      committed: transactionCommitted,
+      rolledBack: transactionRolledBack,
+    }),
     usersService,
     usersRepository,
     jwtService,

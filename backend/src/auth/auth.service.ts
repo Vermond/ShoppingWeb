@@ -58,44 +58,67 @@ export class AuthService {
 
     const tokenHash = hashToken(refreshToken);
 
-    return this.databaseService.transaction(async (executor) => {
-      const storedToken =
-        await this.refreshTokenRepository.findByIdAndHashForUpdate(
-          payload.jti,
-          tokenHash,
-          executor,
-        );
+    const result = await this.databaseService.transaction<RefreshOutcome>(
+      async (executor) => {
+        const storedToken =
+          await this.refreshTokenRepository.findByIdAndHashForUpdate(
+            payload.jti,
+            tokenHash,
+            executor,
+          );
 
-      if (!storedToken || storedToken.user_id !== payload.sub) {
-        throw new UnauthorizedException('유효하지 않은 Refresh Token입니다.');
-      }
+        if (!storedToken || storedToken.user_id !== payload.sub) {
+          return { type: 'invalid' };
+        }
 
-      if (storedToken.revoked_at) {
-        throw new UnauthorizedException('이미 폐기된 Refresh Token입니다.');
-      }
+        if (storedToken.revoked_at) {
+          return { type: 'revoked' };
+        }
 
-      if (new Date(storedToken.expires_at).getTime() <= Date.now()) {
-        await this.refreshTokenRepository.revoke(storedToken.id, executor);
-        throw new UnauthorizedException('Refresh Token이 만료되었습니다.');
-      }
+        if (new Date(storedToken.expires_at).getTime() <= Date.now()) {
+          await this.refreshTokenRepository.revoke(storedToken.id, executor);
+          return { type: 'expired' };
+        }
 
-      const user = await this.usersRepository.findById(
-        storedToken.user_id,
-        executor,
-      );
-
-      if (!user || user.status !== 'active' || !user.email_verified) {
-        await this.refreshTokenRepository.revokeAllForUser(
+        const user = await this.usersRepository.findById(
           storedToken.user_id,
           executor,
         );
-        throw new ForbiddenException('사용할 수 없는 계정입니다.');
-      }
 
-      await this.refreshTokenRepository.revoke(storedToken.id, executor);
+        if (!user || user.status !== 'active' || !user.email_verified) {
+          await this.refreshTokenRepository.revokeAllForUser(
+            storedToken.user_id,
+            executor,
+          );
+          return { type: 'unavailable_user' };
+        }
 
-      return this.issueTokenPair(user, executor);
-    });
+        await this.refreshTokenRepository.revoke(storedToken.id, executor);
+
+        return {
+          type: 'success',
+          tokenPair: await this.issueTokenPair(user, executor),
+        };
+      },
+    );
+
+    if (result.type === 'success') {
+      return result.tokenPair;
+    }
+
+    if (result.type === 'expired') {
+      throw new UnauthorizedException('Refresh Token이 만료되었습니다.');
+    }
+
+    if (result.type === 'unavailable_user') {
+      throw new ForbiddenException('사용할 수 없는 계정입니다.');
+    }
+
+    if (result.type === 'revoked') {
+      throw new UnauthorizedException('이미 폐기된 Refresh Token입니다.');
+    }
+
+    throw new UnauthorizedException('유효하지 않은 Refresh Token입니다.');
   }
 
   async logout(refreshToken: string | undefined): Promise<void> {
@@ -154,6 +177,10 @@ export class AuthService {
     return { accessToken, refreshToken, user };
   }
 }
+
+type RefreshOutcome =
+  | { type: 'success'; tokenPair: AuthTokenPair }
+  | { type: 'invalid' | 'revoked' | 'expired' | 'unavailable_user' };
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token, 'utf8').digest('hex');
