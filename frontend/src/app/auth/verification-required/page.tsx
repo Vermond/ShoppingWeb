@@ -1,6 +1,7 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Button } from "@mui/material";
 import Link from "next/link";
+import { getLoginPath, getSafeReturnTo } from "../../../utils/auth-redirect";
 import VerifyEmailActions from "../verify-email/verify-email-actions";
 import styles from "../../login/page.module.css";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
   email?: string | string[];
+  returnTo?: string | string[];
 }>;
 
 function getSearchParam(value: string | string[] | undefined) {
@@ -21,6 +23,7 @@ export default async function VerificationRequiredPage({
 }) {
   const params = await searchParams;
   const email = getSearchParam(params.email);
+  const returnTo = getSafeReturnTo(getSearchParam(params.returnTo));
 
   return (
     <div className={styles.loginPage}>
@@ -30,7 +33,7 @@ export default async function VerificationRequiredPage({
         </Link>
         <Button
           className={styles.homeLink}
-          href="/login"
+          href={getLoginPath(returnTo)}
           disableRipple
           startIcon={<ArrowBack />}
         >
@@ -59,6 +62,7 @@ export default async function VerificationRequiredPage({
             <VerifyEmailActions
               initialEmail={email ?? ""}
               showEmailInput={!email}
+              returnTo={returnTo}
             />
           </div>
         </section>

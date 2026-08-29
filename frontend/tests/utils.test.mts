@@ -7,6 +7,10 @@ import {
   SHIPPING_FEE,
   calculateShipping,
 } from "../src/utils/order.ts";
+import {
+  getLoginPath,
+  getSafeReturnTo,
+} from "../src/utils/auth-redirect.ts";
 import type { Product } from "../src/types/catalog.ts";
 
 const products: Product[] = [
@@ -86,4 +90,15 @@ test("배송비는 무료 배송 기준에 따라 계산된다", () => {
 
 test("가격은 한국 원화 표기로 표시된다", () => {
   assert.equal(formatPrice(1234567), "1,234,567원");
+});
+
+test("로그인 복귀 경로는 허용된 내부 페이지로만 제한한다", () => {
+  assert.equal(
+    getSafeReturnTo("/shop?categoryId=category-1#new-arrivals"),
+    "/shop?categoryId=category-1#new-arrivals",
+  );
+  assert.equal(getLoginPath("/checkout"), "/login?returnTo=%2Fcheckout");
+  assert.equal(getSafeReturnTo("/login"), "/");
+  assert.equal(getSafeReturnTo("/admin"), "/");
+  assert.equal(getSafeReturnTo("https://example.com"), "/");
 });

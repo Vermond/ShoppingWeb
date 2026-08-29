@@ -1,4 +1,8 @@
 import { proxyAuthRequest } from "../proxy";
+import {
+  getLoginPath,
+  getSafeReturnTo,
+} from "../../../../utils/auth-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -8,19 +12,8 @@ type HeadersWithSetCookie = Headers & {
 
 function getReturnPath(request: Request) {
   const requestUrl = new URL(request.url);
-  const returnTo = requestUrl.searchParams.get("returnTo");
 
-  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
-    return "/";
-  }
-
-  const targetUrl = new URL(returnTo, requestUrl);
-
-  if (targetUrl.origin !== requestUrl.origin) {
-    return "/";
-  }
-
-  return `${targetUrl.pathname}${targetUrl.search}`;
+  return getSafeReturnTo(requestUrl.searchParams.get("returnTo"));
 }
 
 function getSetCookies(headers: Headers): string[] {
@@ -50,7 +43,10 @@ export async function GET(request: Request) {
     return new Response(null, {
       status: 307,
       headers: {
-        Location: new URL("/login", request.url).toString(),
+        Location: new URL(
+          getLoginPath(getReturnPath(request)),
+          request.url,
+        ).toString(),
       },
     });
   }

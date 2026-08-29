@@ -2,6 +2,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AuthUser } from "../../repositories/auth.repository";
 import { requestCurrentUserOnServer } from "../../repositories/auth.server.repository";
+import {
+  getLoginPath,
+  getSafeReturnTo,
+} from "../../utils/auth-redirect";
 
 export async function requireAuthenticatedUser(
   returnTo = "/",
@@ -10,7 +14,7 @@ export async function requireAuthenticatedUser(
   const cookieHeader = cookieStore.toString();
 
   if (!cookieHeader) {
-    redirect("/login");
+    redirect(getLoginPath(returnTo));
   }
 
   try {
@@ -24,6 +28,8 @@ export async function requireAuthenticatedUser(
   }
 
   redirect(
-    `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}`,
+    `/api/auth/refresh?returnTo=${encodeURIComponent(
+      getSafeReturnTo(returnTo),
+    )}`,
   );
 }

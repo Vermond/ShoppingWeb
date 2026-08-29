@@ -4,11 +4,13 @@ import { Button, TextField } from "@mui/material";
 import Link from "next/link";
 import { useState } from "react";
 import { requestResendVerification } from "../../../repositories/auth.repository";
+import { getLoginPath } from "../../../utils/auth-redirect";
 import styles from "../../login/page.module.css";
 
 type VerifyEmailActionsProps = {
   initialEmail: string;
   showEmailInput: boolean;
+  returnTo?: string;
 };
 
 type Feedback = {
@@ -19,6 +21,7 @@ type Feedback = {
 export default function VerifyEmailActions({
   initialEmail,
   showEmailInput,
+  returnTo,
 }: VerifyEmailActionsProps) {
   const [email, setEmail] = useState(initialEmail);
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -82,7 +85,7 @@ export default function VerifyEmailActions({
       <Button
         className={styles.homeLink}
         component={Link}
-        href="/login"
+        href={getLoginPath(returnTo)}
         disableRipple
       >
         로그인으로 이동

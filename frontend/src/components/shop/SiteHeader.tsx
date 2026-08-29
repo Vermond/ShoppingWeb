@@ -4,6 +4,7 @@ import {
   AccountCircle,
   Close,
   FavoriteBorder,
+  LoginOutlined,
   Search,
   ShoppingBagOutlined,
 } from "@mui/icons-material";
@@ -12,10 +13,12 @@ import {
   IconButton,
   InputAdornment,
   InputBase,
+  Tooltip,
 } from "@mui/material";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAuth } from "../auth/AuthProvider";
+import { getCurrentReturnTo, getLoginPath } from "../../utils/auth-redirect";
 import styles from "../../app/page.module.css";
 
 const navSections = [
@@ -84,8 +87,24 @@ export function SiteHeader({
 
   const selectedSection = activeSection === undefined ? scrollSection : activeSection;
   const isHome = pathname === "/";
-  const accountHref = status === "authenticated" ? "/account" : "/login";
+  const accountHref =
+    status === "authenticated" ? "/account" : getLoginPath(pathname);
   const accountLabel = status === "authenticated" ? "내 계정" : "로그인";
+
+  const handleAccountClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (
+      status === "authenticated" ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    window.location.assign(getLoginPath(getCurrentReturnTo(pathname)));
+  };
 
   const closeSearch = () => {
     onQueryChange("");
@@ -117,16 +136,23 @@ export function SiteHeader({
         </nav>
 
         <div className={styles.headerActions}>
-          <IconButton
-            className={styles.iconButton}
-            component="a"
-            href={accountHref}
-            type="button"
-            disableRipple
-            aria-label={accountLabel}
-          >
-            <AccountCircle />
-          </IconButton>
+          <Tooltip title={accountLabel} placement="bottom">
+            <IconButton
+              className={styles.iconButton}
+              component="a"
+              href={accountHref}
+              type="button"
+              disableRipple
+              aria-label={accountLabel}
+              onClick={handleAccountClick}
+            >
+              {status === "authenticated" ? (
+                <AccountCircle />
+              ) : (
+                <LoginOutlined />
+              )}
+            </IconButton>
+          </Tooltip>
           <IconButton
             className={styles.iconButton}
             type="button"

@@ -20,8 +20,15 @@ import {
   TextField,
 } from "@mui/material";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+} from "react";
 import { AddressSearchDialog } from "../../../components/address/AddressSearchDialog";
 import type { AddressSearchResult } from "../../../components/address/address-search.provider";
 import { useAuth } from "../../../components/auth/AuthProvider";
@@ -34,6 +41,10 @@ import {
   updateUserAddress,
   type UserAddress,
 } from "../../../repositories/user-details.repository";
+import {
+  getCurrentReturnTo,
+  getLoginPath,
+} from "../../../utils/auth-redirect";
 import accountStyles from "../page.module.css";
 import styles from "./page.module.css";
 
@@ -75,10 +86,20 @@ function formatAddress(address: UserAddress) {
   return `(${address.postalCode}) ${address.addressLine1}`;
 }
 
-export default function AddressesPage() {
+function getSafeReturnTo(value: string | null): string | null {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+
+  return value;
+}
+
+function AddressesPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { status } = useAuth();
   const { totalItems } = useCart();
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
   const [query, setQuery] = useState("");
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,7 +119,9 @@ export default function AddressesPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/login");
+      router.replace(
+        getLoginPath(getCurrentReturnTo("/account/addresses")),
+      );
     }
   }, [router, status]);
 
@@ -316,11 +339,11 @@ export default function AddressesPage() {
           <Button
             className={accountStyles.continueButton}
             component={Link}
-            href="/account"
+            href={returnTo ?? "/account"}
             startIcon={<ArrowBack />}
             disableRipple
           >
-            계정으로 돌아가기
+            {returnTo ? "주문으로 돌아가기" : "계정으로 돌아가기"}
           </Button>
           <Button
             className={styles.addAddressButton}
@@ -573,5 +596,13 @@ export default function AddressesPage() {
         </DialogActions>
       </Dialog>
     </div>
+  );
+}
+
+export default function AddressesPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddressesPageContent />
+    </Suspense>
   );
 }

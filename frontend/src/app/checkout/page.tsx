@@ -4,7 +4,13 @@ import {
   ArrowBack,
   ArrowForward,
 } from "@mui/icons-material";
-import { Button, MenuItem, TextField } from "@mui/material";
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  MenuItem,
+  TextField,
+} from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -21,6 +27,7 @@ import {
 } from "../../repositories/orders.repository";
 import {
   requestUserAddresses,
+  createUserAddress,
   type UserAddress,
 } from "../../repositories/user-details.repository";
 import { formatPrice } from "../../utils/format";
@@ -30,19 +37,24 @@ import styles from "./page.module.css";
 
 type CheckoutCustomer = {
   name: string;
-  email: string;
   phone: string;
   address: string;
   detailAddress: string;
 };
 
+type ManualAddress = {
+  postalCode: string;
+  addressLine1: string;
+};
+
 const initialCustomer: CheckoutCustomer = {
   name: "",
-  email: "",
   phone: "",
   address: "",
   detailAddress: "",
 };
+
+const NEW_ADDRESS_ID = "new";
 
 function getCustomerAddress(address: UserAddress) {
   return {
@@ -59,11 +71,16 @@ function getAddressLabel(address: UserAddress) {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { status: authStatus, user } = useAuth();
+  const { status: authStatus } = useAuth();
   const [query, setQuery] = useState("");
   const [customer, setCustomer] = useState(initialCustomer);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState("manual");
+  const [selectedAddressId, setSelectedAddressId] =
+    useState(NEW_ADDRESS_ID);
+  const [manualAddress, setManualAddress] = useState<ManualAddress | null>(
+    null,
+  );
+  const [isNewAddressDefault, setIsNewAddressDefault] = useState(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [addressError, setAddressError] = useState("");
   const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
@@ -78,6 +95,7 @@ export default function CheckoutPage() {
     errorMessage: cartError,
   } = useCart();
   const { products } = useCatalog();
+  const isNewAddress = selectedAddressId === NEW_ADDRESS_ID;
   const hasUnavailableItems = items.some((item) => {
     const product =
       item.product ?? products.find(({ id }) => id === item.productId);
@@ -110,20 +128,21 @@ export default function CheckoutPage() {
         }
 
         setAddresses(result);
-        setCustomer((current) => ({
-          ...current,
-          email: current.email || user?.email || "",
-        }));
 
         const preferredAddress =
           result.find((address) => address.isDefault) ?? result[0];
 
         if (preferredAddress) {
           setSelectedAddressId(preferredAddress.id);
+          setManualAddress(null);
+          setIsNewAddressDefault(false);
           setCustomer((current) => ({
             ...current,
             ...getCustomerAddress(preferredAddress),
           }));
+        } else {
+          setSelectedAddressId(NEW_ADDRESS_ID);
+          setIsNewAddressDefault(true);
         }
       } catch (error) {
         if (active) {
@@ -145,18 +164,34 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
-  }, [authStatus, user?.email]);
+  }, [authStatus]);
+
+  const startNewAddress = () => {
+    setSelectedAddressId(NEW_ADDRESS_ID);
+    setManualAddress(null);
+    setIsNewAddressDefault(addresses.length === 0);
+    setCustomer((current) => ({
+      ...current,
+      name: "",
+      phone: "",
+      address: "",
+      detailAddress: "",
+    }));
+    setErrorMessage("");
+  };
 
   const selectAddress = (addressId: string) => {
-    setSelectedAddressId(addressId);
-
-    if (addressId === "manual") {
+    if (addressId === NEW_ADDRESS_ID) {
+      startNewAddress();
       return;
     }
 
     const address = addresses.find((item) => item.id === addressId);
 
     if (address) {
+      setSelectedAddressId(addressId);
+      setManualAddress(null);
+      setIsNewAddressDefault(false);
       setCustomer((current) => ({
         ...current,
         ...getCustomerAddress(address),
@@ -166,19 +201,22 @@ export default function CheckoutPage() {
 
   const updateCustomer = (key: keyof typeof customer, value: string) => {
     setCustomer((current) => ({ ...current, [key]: value }));
-
-    if (key === "address" || key === "detailAddress") {
-      setSelectedAddressId("manual");
-    }
   };
 
   const handleAddressSearchComplete = (result: AddressSearchResult) => {
+    setManualAddress({
+      postalCode: result.postalCode,
+      addressLine1: result.addressLine1,
+    });
     setCustomer((current) => ({
       ...current,
       address: `(${result.postalCode}) ${result.addressLine1}`,
       detailAddress: "",
     }));
-    setSelectedAddressId("manual");
+    setSelectedAddressId(NEW_ADDRESS_ID);
+    setIsNewAddressDefault((current) =>
+      addresses.length === 0 ? true : current,
+    );
     setIsAddressSearchOpen(false);
   };
 
@@ -187,13 +225,6 @@ export default function CheckoutPage() {
 
     if (authStatus !== "authenticated") {
       setErrorMessage("로그인 후 주문할 수 있어요.");
-      return;
-    }
-
-    if (selectedAddressId === "manual") {
-      setErrorMessage(
-        "주문하려면 배송지 관리에서 주소를 저장한 뒤 선택해주세요.",
-      );
       return;
     }
 
@@ -208,8 +239,50 @@ export default function CheckoutPage() {
     setErrorMessage("");
 
     try {
+      let addressId = selectedAddressId;
+
+      if (isNewAddress) {
+        if (!manualAddress) {
+          setErrorMessage("주소 검색으로 배송지를 먼저 입력해주세요.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const savedAddress = await createUserAddress({
+          recipientName: customer.name.trim(),
+          phoneNumber: customer.phone.trim(),
+          postalCode: manualAddress.postalCode,
+          addressLine1: manualAddress.addressLine1,
+          addressLine2: customer.detailAddress.trim() || null,
+          isDefault: isNewAddressDefault,
+        });
+        addressId = savedAddress.id;
+        setAddresses((current) => {
+          const withoutSavedAddress = current.filter(
+            (address) => address.id !== savedAddress.id,
+          );
+          const nextAddresses = savedAddress.isDefault
+            ? withoutSavedAddress.map((address) => ({
+                ...address,
+                isDefault: false,
+              }))
+            : withoutSavedAddress;
+
+          return [...nextAddresses, savedAddress];
+        });
+        setSelectedAddressId(savedAddress.id);
+        setManualAddress(null);
+        setIsNewAddressDefault(false);
+      }
+
+      if (!addressId || addressId === NEW_ADDRESS_ID) {
+        setErrorMessage("배송지를 선택해주세요.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const request: CreateOrderRequest = {
-        addressId: selectedAddressId,
+        addressId,
         deliveryRequest: null,
       };
       const result = await createOrder(request);
@@ -299,12 +372,15 @@ export default function CheckoutPage() {
         <form className={styles.checkoutLayout} onSubmit={submitOrder}>
           <div className={styles.formColumn}>
             {authStatus === "authenticated" && (
-              <section className={styles.formSection} aria-labelledby="address-title">
+              <section
+                className={styles.formSection}
+                aria-labelledby="address-title"
+              >
                 <div className={styles.addressHeading}>
                   <h2 id="address-title">배송지 선택</h2>
                   <Button
                     component={Link}
-                    href="/account/addresses"
+                    href="/account/addresses?returnTo=%2Fcheckout"
                     size="small"
                     disableRipple
                   >
@@ -324,6 +400,7 @@ export default function CheckoutPage() {
                     onChange={(event) => selectAddress(event.target.value)}
                     variant="standard"
                   >
+                    <MenuItem value={NEW_ADDRESS_ID}>새 배송지 입력</MenuItem>
                     {addresses.map((address) => (
                       <MenuItem value={address.id} key={address.id}>
                         {address.isDefault && "기본 · "}
@@ -333,8 +410,7 @@ export default function CheckoutPage() {
                   </TextField>
                 ) : (
                   <p className={styles.addressNote}>
-                    저장된 배송지가 없어요. 배송지 관리에서 주소를 저장한 뒤
-                    주문해주세요.
+                    저장된 배송지가 없어요. 아래에서 새 배송지를 입력해주세요.
                   </p>
                 )}
                 {addressError && (
@@ -347,26 +423,21 @@ export default function CheckoutPage() {
               <h2 id="customer-title">배송 정보</h2>
               <div className={styles.formGrid}>
                 <TextField
+                  className={!isNewAddress ? styles.readOnlyField : undefined}
                   label="받는 분"
                   value={customer.name}
                   onChange={(event) => updateCustomer("name", event.target.value)}
+                  disabled={!isNewAddress}
                   required
                   fullWidth
                   variant="standard"
                 />
                 <TextField
-                  label="이메일"
-                  type="email"
-                  value={customer.email}
-                  onChange={(event) => updateCustomer("email", event.target.value)}
-                  required
-                  fullWidth
-                  variant="standard"
-                />
-                <TextField
+                  className={!isNewAddress ? styles.readOnlyField : undefined}
                   label="연락처"
                   value={customer.phone}
                   onChange={(event) => updateCustomer("phone", event.target.value)}
+                  disabled={!isNewAddress}
                   required
                   fullWidth
                   variant="standard"
@@ -387,19 +458,37 @@ export default function CheckoutPage() {
                     variant="outlined"
                     disableRipple
                     onClick={() => setIsAddressSearchOpen(true)}
+                    disabled={!isNewAddress}
                   >
                     주소 검색
                   </Button>
                 </div>
                 <TextField
-                  className={styles.fullField}
+                  className={`${styles.fullField} ${
+                    !isNewAddress ? styles.readOnlyField : ""
+                  }`}
                   label="상세 주소"
                   value={customer.detailAddress}
                   onChange={(event) => updateCustomer("detailAddress", event.target.value)}
+                  disabled={!isNewAddress}
                   fullWidth
                   variant="standard"
                 />
               </div>
+              {isNewAddress && (
+                <FormControlLabel
+                  className={styles.defaultAddressOption}
+                  control={
+                    <Checkbox
+                      checked={isNewAddressDefault}
+                      onChange={(event) =>
+                        setIsNewAddressDefault(event.target.checked)
+                      }
+                    />
+                  }
+                  label="기본 배송지로 설정"
+                />
+              )}
             </section>
 
             <section className={styles.formSection} aria-labelledby="payment-title">

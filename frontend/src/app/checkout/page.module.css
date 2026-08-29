@@ -51,14 +51,22 @@
 
 .checkoutLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
-  gap: 9vw;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.6fr);
+  gap: 3vw;
   padding-top: 58px;
+  min-width: 0;
 }
 
 .formColumn {
   display: grid;
   gap: 56px;
+  min-width: 0;
+  width: 100%;
+}
+
+.formSection {
+  min-width: 0;
+  width: 100%;
 }
 
 .formSection h2,
@@ -96,8 +104,14 @@
 
 .formGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 27px 22px;
+  min-width: 0;
+  width: 100%;
+}
+
+.formGrid > * {
+  min-width: 0;
 }
 
 .fullField {
@@ -108,6 +122,8 @@
   display: flex;
   align-items: flex-end;
   gap: 16px;
+  min-width: 0;
+  width: 100%;
 }
 
 .addressInput {
@@ -136,6 +152,24 @@
 
 .addressLockedField :global(.MuiInputBase-input.Mui-disabled) {
   cursor: not-allowed;
+}
+
+.readOnlyField :global(.MuiInputBase-root.Mui-disabled) {
+  cursor: not-allowed;
+  background: rgb(31 33 30 / 3%);
+}
+
+.readOnlyField :global(.MuiInputBase-input.Mui-disabled) {
+  cursor: not-allowed;
+}
+
+.defaultAddressOption {
+  margin: 18px 0 0;
+  color: var(--muted);
+}
+
+.defaultAddressOption :global(.MuiFormControlLabel-label) {
+  font-size: 11px;
 }
 
 .paymentOptions {

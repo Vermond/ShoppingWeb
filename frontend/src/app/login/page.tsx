@@ -12,6 +12,7 @@ import {
   socialProviders,
   type SocialProvider,
 } from "../../repositories/auth.repository";
+import { getLoginReturnTo } from "../../utils/auth-redirect";
 import styles from "./page.module.css";
 
 type Feedback = {
@@ -30,13 +31,14 @@ export default function LoginPage() {
   const submitLogin = async (payload: Parameters<typeof requestLogin>[0]) => {
     setIsSubmitting(true);
     setFeedback(null);
+    const returnTo = getLoginReturnTo();
 
     try {
       const result = await requestLogin(payload);
 
       if (payload.method === "email") {
         signIn(result.user);
-        router.replace("/");
+        router.replace(returnTo);
         return;
       }
 
@@ -47,10 +49,16 @@ export default function LoginPage() {
         error.code === "EMAIL_NOT_VERIFIED" &&
         payload.method === "email"
       ) {
+        const verificationParams = new URLSearchParams({
+          email: payload.email,
+        });
+
+        if (returnTo !== "/") {
+          verificationParams.set("returnTo", returnTo);
+        }
+
         router.replace(
-          `/auth/verification-required?email=${encodeURIComponent(
-            payload.email,
-          )}`,
+          `/auth/verification-required?${verificationParams.toString()}`,
         );
         return;
       }

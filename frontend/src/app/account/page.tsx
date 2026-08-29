@@ -9,6 +9,10 @@ import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { requestUpdateProfile } from "../../repositories/auth.repository";
+import {
+  getCurrentReturnTo,
+  getLoginPath,
+} from "../../utils/auth-redirect";
 import styles from "./page.module.css";
 
 type Feedback = {
@@ -31,7 +35,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/login");
+      router.replace(getLoginPath(getCurrentReturnTo("/account")));
     }
   }, [router, status]);
 
