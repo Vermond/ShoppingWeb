@@ -208,10 +208,12 @@ describe('UsersService', () => {
   it('revokes refresh tokens when the password changes', async () => {
     const mocks = createMocks();
     const updatedUser = { ...user, name: 'User' };
-    mocks.usersRepository.findById.mockResolvedValue({
+    mocks.usersRepository.findByIdWithPassword.mockResolvedValue({
       ...user,
       email_verified: true,
+      password_hash: 'old-password-hash',
     });
+    mocks.passwordService.verify.mockResolvedValue(false);
     mocks.passwordService.hash.mockResolvedValue('new-password-hash');
     mocks.usersRepository.update.mockResolvedValue(updatedUser);
 
@@ -233,6 +235,29 @@ describe('UsersService', () => {
       user.id,
       mocks.executor,
     );
+  });
+
+  it('rejects reusing the current password without changing user data', async () => {
+    const mocks = createMocks();
+    mocks.usersRepository.findByIdWithPassword.mockResolvedValue({
+      ...user,
+      password_hash: 'old-password-hash',
+    });
+    mocks.passwordService.verify.mockResolvedValue(true);
+
+    await expect(
+      mocks.service.update(user.id, { password: 'old-password' }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'PASSWORD_REUSE_NOT_ALLOWED',
+      },
+    });
+
+    expect(mocks.passwordService.hash).not.toHaveBeenCalled();
+    expect(mocks.usersRepository.update).not.toHaveBeenCalled();
+    expect(
+      mocks.refreshTokenRepository.revokeAllForUser,
+    ).not.toHaveBeenCalled();
   });
 
   it('maps unexpected create, update, withdraw, and login failures to 500', async () => {
@@ -371,6 +396,7 @@ function createMocks() {
     create: jest.fn(),
     update: jest.fn(),
     findById: jest.fn(),
+    findByIdWithPassword: jest.fn(),
     findByEmail: jest.fn(),
     withdraw: jest.fn(),
   } as unknown as UsersRepository;

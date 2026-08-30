@@ -14,7 +14,7 @@ import { EmailVerificationRepository } from './email-verification.repository';
 import { EmailVerificationService } from './email-verification.service';
 import { PasswordService } from './password.service';
 import { UsersRepository } from './users.repository';
-import type { UserRecord } from './users.types';
+import type { StoredUserRecord, UserRecord } from './users.types';
 import type {
   CreateUserInput,
   LoginInput,
@@ -27,6 +27,12 @@ function isUniqueViolation(error: unknown): boolean {
   }
 
   return error.code === '23505';
+}
+
+function isStoredUserRecord(
+  user: UserRecord | StoredUserRecord,
+): user is StoredUserRecord {
+  return 'password_hash' in user;
 }
 
 @Injectable()
@@ -85,15 +91,36 @@ export class UsersService {
 
   async update(id: string, input: UpdateUserInput): Promise<UserRecord> {
     try {
-      const passwordHash = input.password
-        ? await this.passwordService.hash(input.password)
-        : undefined;
       const { user, challenge } = await this.databaseService.transaction(
         async (executor) => {
-          const currentUser = await this.usersRepository.findById(id, executor);
+          const currentUser =
+            input.password !== undefined
+              ? await this.usersRepository.findByIdWithPassword(id, executor)
+              : await this.usersRepository.findById(id, executor);
 
           if (!currentUser) {
             throw new NotFoundException('사용자를 찾을 수 없습니다.');
+          }
+
+          let passwordHash: string | undefined;
+
+          if (input.password !== undefined) {
+            const currentPasswordHash = isStoredUserRecord(currentUser)
+              ? currentUser.password_hash
+              : null;
+            const isSamePassword = await this.passwordService.verify(
+              input.password,
+              currentPasswordHash,
+            );
+
+            if (isSamePassword) {
+              throw new ConflictException({
+                code: 'PASSWORD_REUSE_NOT_ALLOWED',
+                message: '기존 비밀번호와 다른 비밀번호를 사용해주세요.',
+              });
+            }
+
+            passwordHash = await this.passwordService.hash(input.password);
           }
 
           const emailChanged =

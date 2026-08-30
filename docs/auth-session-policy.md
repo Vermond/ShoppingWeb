@@ -56,7 +56,7 @@ Rotation으로 이미 폐기된 Refresh Token이 다시 사용되면 토큰 탈�
 | --- | --- |
 | 이름 변경 | 기존 세션 유지 |
 | 이메일 변경 | 모든 Refresh Token 폐기 및 이메일 재인증 요구 |
-| 비밀번호 변경 | 모든 Refresh Token 폐기 |
+| 비밀번호 변경 | 동일 비밀번호 재사용을 거부하고 모든 Refresh Token 폐기 |
 | 이메일 미인증 상태로 Refresh 요청 | 모든 Refresh Token 폐기 |
 | 탈퇴 | 모든 Refresh Token 폐기 |
 

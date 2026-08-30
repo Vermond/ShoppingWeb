@@ -113,7 +113,7 @@ export class UsersController {
   @ApiResponse({
     status: 409,
     type: ApiErrorResponseDto,
-    description: '이미 사용 중인 이메일',
+    description: '이미 사용 중인 이메일이거나 기존 비밀번호를 재사용함',
   })
   @ApiResponse({
     status: 503,
