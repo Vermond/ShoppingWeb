@@ -12,6 +12,7 @@ export interface EnvironmentVariables {
   RESEND_FROM_EMAIL: string;
   RESEND_FROM_NAME?: string;
   EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: number;
+  PASSWORD_RESET_TOKEN_TTL_MINUTES: number;
   AUTH_ACCESS_TOKEN_SECRET: string;
   AUTH_REFRESH_TOKEN_SECRET: string;
   AUTH_ACCESS_TOKEN_TTL: number;
@@ -33,6 +34,8 @@ export interface EnvironmentVariables {
   AUTH_RATE_LIMIT_VERIFY_TTL_SECONDS: number;
   AUTH_RATE_LIMIT_REFRESH_LIMIT: number;
   AUTH_RATE_LIMIT_REFRESH_TTL_SECONDS: number;
+  AUTH_RATE_LIMIT_PASSWORD_RESET_LIMIT: number;
+  AUTH_RATE_LIMIT_PASSWORD_RESET_TTL_SECONDS: number;
 }
 
 const DEFAULT_PORT = 3000;
@@ -42,6 +45,7 @@ const DEFAULT_RATE_LIMITS = {
   signup: { limit: 10, ttlSeconds: 3_600 },
   verify: { limit: 10, ttlSeconds: 60 },
   refresh: { limit: 30, ttlSeconds: 60 },
+  passwordReset: { limit: 3, ttlSeconds: 900 },
 };
 
 export function validateEnvironment(
@@ -64,6 +68,11 @@ export function validateEnvironment(
   const resendFromName = readOptionalString('RESEND_FROM_NAME', config);
   const emailVerificationTtl = readPositiveInteger(
     'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES',
+    config,
+    errors,
+  );
+  const passwordResetTtl = readPositiveInteger(
+    'PASSWORD_RESET_TOKEN_TTL_MINUTES',
     config,
     errors,
   );
@@ -153,6 +162,7 @@ export function validateEnvironment(
     RESEND_FROM_EMAIL: resendFromEmail,
     RESEND_FROM_NAME: resendFromName,
     EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: emailVerificationTtl,
+    PASSWORD_RESET_TOKEN_TTL_MINUTES: passwordResetTtl,
     AUTH_ACCESS_TOKEN_SECRET: accessTokenSecret,
     AUTH_REFRESH_TOKEN_SECRET: refreshTokenSecret,
     AUTH_ACCESS_TOKEN_TTL: accessTokenTtl,
@@ -171,6 +181,9 @@ export function validateEnvironment(
     AUTH_RATE_LIMIT_VERIFY_TTL_SECONDS: rateLimitValues.verify.ttlSeconds,
     AUTH_RATE_LIMIT_REFRESH_LIMIT: rateLimitValues.refresh.limit,
     AUTH_RATE_LIMIT_REFRESH_TTL_SECONDS: rateLimitValues.refresh.ttlSeconds,
+    AUTH_RATE_LIMIT_PASSWORD_RESET_LIMIT: rateLimitValues.passwordReset.limit,
+    AUTH_RATE_LIMIT_PASSWORD_RESET_TTL_SECONDS:
+      rateLimitValues.passwordReset.ttlSeconds,
   };
 }
 
@@ -398,6 +411,7 @@ function readRateLimitValues(
   signup: { limit: number; ttlSeconds: number };
   verify: { limit: number; ttlSeconds: number };
   refresh: { limit: number; ttlSeconds: number };
+  passwordReset: { limit: number; ttlSeconds: number };
 } {
   const allowDefaults = nodeEnvironment !== 'production';
 
@@ -407,16 +421,26 @@ function readRateLimitValues(
     signup: readRateLimitRule('SIGNUP', config, errors, allowDefaults),
     verify: readRateLimitRule('VERIFY', config, errors, allowDefaults),
     refresh: readRateLimitRule('REFRESH', config, errors, allowDefaults),
+    passwordReset: readRateLimitRule(
+      'PASSWORD_RESET',
+      config,
+      errors,
+      allowDefaults,
+    ),
   };
 }
 
 function readRateLimitRule(
-  suffix: 'LOGIN' | 'RESEND' | 'SIGNUP' | 'VERIFY' | 'REFRESH',
+  suffix:
+    'LOGIN' | 'RESEND' | 'SIGNUP' | 'VERIFY' | 'REFRESH' | 'PASSWORD_RESET',
   config: Record<string, unknown>,
   errors: string[],
   allowDefaults: boolean,
 ): { limit: number; ttlSeconds: number } {
-  const defaultKey = suffix.toLowerCase() as keyof typeof DEFAULT_RATE_LIMITS;
+  const defaultKey =
+    suffix === 'PASSWORD_RESET'
+      ? 'passwordReset'
+      : (suffix.toLowerCase() as keyof typeof DEFAULT_RATE_LIMITS);
   const defaults = DEFAULT_RATE_LIMITS[defaultKey];
   const limit = readPositiveInteger(
     `AUTH_RATE_LIMIT_${suffix}_LIMIT`,

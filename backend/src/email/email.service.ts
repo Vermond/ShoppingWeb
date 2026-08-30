@@ -9,6 +9,8 @@ type VerificationEmailInput = {
   token: string;
 };
 
+export type PasswordResetEmailInput = VerificationEmailInput;
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -23,7 +25,10 @@ export class EmailService {
     name,
     token,
   }: VerificationEmailInput): Promise<void> {
-    const verificationUrl = this.createVerificationUrl(token);
+    const verificationUrl = this.createFrontendActionUrl(
+      '/auth/verify-email',
+      token,
+    );
     const fromEmail =
       this.configService.getOrThrow<string>('RESEND_FROM_EMAIL');
     const fromName = this.configService.get<string>('RESEND_FROM_NAME');
@@ -60,6 +65,54 @@ export class EmailService {
     }
   }
 
+  async sendPasswordResetEmail({
+    email,
+    name,
+    token,
+  }: PasswordResetEmailInput): Promise<void> {
+    const resetUrl = this.createFrontendActionUrl(
+      '/auth/reset-password',
+      token,
+    );
+    const fromEmail =
+      this.configService.getOrThrow<string>('RESEND_FROM_EMAIL');
+    const fromName = this.configService.get<string>('RESEND_FROM_NAME');
+    const validityText = formatDuration(
+      this.configService.getOrThrow<number>('PASSWORD_RESET_TOKEN_TTL_MINUTES'),
+    );
+    const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+    const safeName = escapeHtml(name);
+    const safeResetUrl = escapeHtml(resetUrl);
+
+    const { error } = await this.getResend().emails.send({
+      from,
+      to: [email],
+      subject: '비밀번호 재설정을 진행해주세요',
+      html: `
+        <p>${safeName}님, 안녕하세요.</p>
+        <p>아래 링크를 클릭하면 비밀번호를 재설정할 수 있습니다.</p>
+        <p><a href="${safeResetUrl}">비밀번호 재설정하기</a></p>
+        <p>이 링크는 ${validityText} 동안 유효합니다.</p>
+        <p>본인이 요청하지 않았다면 이 이메일을 무시해주세요.</p>
+      `,
+      text: [
+        `${name}님, 안녕하세요.`,
+        '아래 링크를 클릭하면 비밀번호를 재설정할 수 있습니다.',
+        resetUrl,
+        `이 링크는 ${validityText} 동안 유효합니다.`,
+        '본인이 요청하지 않았다면 이 이메일을 무시해주세요.',
+      ].join('\n\n'),
+    });
+
+    if (error) {
+      this.logger.error(
+        'Resend 비밀번호 재설정 이메일 발송에 실패했습니다.',
+        error.message,
+      );
+      throw new Error('비밀번호 재설정 이메일 발송에 실패했습니다.');
+    }
+  }
+
   private getResend(): Resend {
     if (this.resend) {
       return this.resend;
@@ -71,9 +124,9 @@ export class EmailService {
     return this.resend;
   }
 
-  private createVerificationUrl(token: string): string {
+  private createFrontendActionUrl(path: string, token: string): string {
     const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
-    const url = new URL('/auth/verify-email', frontendUrl);
+    const url = new URL(path, frontendUrl);
 
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new Error('FRONTEND_URL은 http 또는 https URL이어야 합니다.');

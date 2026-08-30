@@ -6,6 +6,7 @@ process.env.RESEND_API_KEY = 're_test_key';
 process.env.RESEND_FROM_EMAIL = 'onboarding@resend.dev';
 process.env.RESEND_FROM_NAME = 'ShoppingWeb Test';
 process.env.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES = '1440';
+process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES = '30';
 process.env.AUTH_ACCESS_TOKEN_SECRET =
   'test_access_secret_123456789012345678901234';
 process.env.AUTH_REFRESH_TOKEN_SECRET =
@@ -26,3 +27,5 @@ process.env.AUTH_RATE_LIMIT_VERIFY_LIMIT = '10';
 process.env.AUTH_RATE_LIMIT_VERIFY_TTL_SECONDS = '60';
 process.env.AUTH_RATE_LIMIT_REFRESH_LIMIT = '30';
 process.env.AUTH_RATE_LIMIT_REFRESH_TTL_SECONDS = '60';
+process.env.AUTH_RATE_LIMIT_PASSWORD_RESET_LIMIT = '3';
+process.env.AUTH_RATE_LIMIT_PASSWORD_RESET_TTL_SECONDS = '900';

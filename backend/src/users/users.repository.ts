@@ -30,6 +30,14 @@ const UPDATE_USER_QUERY = `
   RETURNING ${USER_COLUMNS}
 `;
 
+const UPDATE_PASSWORD_QUERY = `
+  UPDATE auth.users
+  SET password_hash = $2,
+      updated_at = now()
+  WHERE id = $1
+  RETURNING ${USER_COLUMNS}
+`;
+
 const FIND_USER_BY_ID_QUERY = `
   SELECT ${USER_COLUMNS}
   FROM auth.users
@@ -100,6 +108,19 @@ export class UsersRepository {
       input.name ?? null,
       input.passwordHash ?? null,
       input.emailChanged ?? false,
+    ]);
+
+    return result.rows[0] ?? null;
+  }
+
+  async updatePassword(
+    id: string,
+    passwordHash: string,
+    executor: DatabaseQueryExecutor = this.databaseService,
+  ): Promise<UserRecord | null> {
+    const result = await executor.query<UserRecord>(UPDATE_PASSWORD_QUERY, [
+      id,
+      passwordHash,
     ]);
 
     return result.rows[0] ?? null;

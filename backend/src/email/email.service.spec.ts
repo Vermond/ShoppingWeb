@@ -15,6 +15,7 @@ describe('EmailService', () => {
     RESEND_FROM_NAME: 'ShoppingWeb',
     FRONTEND_URL: 'http://localhost:3000',
     EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: 1_440,
+    PASSWORD_RESET_TOKEN_TTL_MINUTES: 30,
   };
   const configService = {
     getOrThrow: jest.fn((name: string) => configValues[name]),
@@ -92,6 +93,36 @@ describe('EmailService', () => {
         token: 'raw-token',
       }),
     ).rejects.toThrow('인증 이메일 발송에 실패했습니다.');
+  });
+
+  it('sends a password reset email with the configured frontend URL', async () => {
+    const service = new EmailService(configService);
+
+    await expect(
+      service.sendPasswordResetEmail({
+        email: 'user@example.com',
+        name: '<User & Friend>',
+        token: 'raw-reset-token',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: 'ShoppingWeb <onboarding@resend.dev>',
+        to: ['user@example.com'],
+        subject: '비밀번호 재설정을 진행해주세요',
+        html: expect.stringContaining('&lt;User &amp; Friend&gt;'),
+        text: expect.stringContaining(
+          'http://localhost:3000/auth/reset-password?token=raw-reset-token',
+        ),
+      }),
+    );
+    expect(send.mock.calls[0]?.[0].html).toContain(
+      '이 링크는 30분 동안 유효합니다.',
+    );
+    expect(send.mock.calls[0]?.[0].html).toContain(
+      '본인이 요청하지 않았다면 이 이메일을 무시해주세요.',
+    );
   });
 
   it('rejects a transport error and an invalid verification URL', async () => {

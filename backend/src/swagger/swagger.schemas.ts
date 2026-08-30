@@ -595,6 +595,24 @@ export class LoginBodyDto {
   password!: string;
 }
 
+export class PasswordResetRequestBodyDto {
+  @ApiProperty({ format: 'email', description: '비밀번호를 재설정할 이메일' })
+  email!: string;
+}
+
+export class PasswordResetConfirmBodyDto {
+  @ApiProperty({ description: '비밀번호 재설정 링크의 원본 토큰' })
+  token!: string;
+
+  @ApiProperty({ format: 'password', minLength: 8, description: '새 비밀번호' })
+  new_password!: string;
+}
+
+export class PasswordResetResponseDto {
+  @ApiProperty({ example: '비밀번호가 변경되었습니다. 다시 로그인해주세요.' })
+  message!: string;
+}
+
 export class EmailVerificationBodyDto {
   @ApiProperty({ description: '이메일 인증 링크에 포함된 원본 토큰' })
   token!: string;

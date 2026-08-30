@@ -19,6 +19,8 @@ describe('rate limit configuration', () => {
       AUTH_RATE_LIMIT_VERIFY_TTL_SECONDS: 60,
       AUTH_RATE_LIMIT_REFRESH_LIMIT: 30,
       AUTH_RATE_LIMIT_REFRESH_TTL_SECONDS: 60,
+      AUTH_RATE_LIMIT_PASSWORD_RESET_LIMIT: 3,
+      AUTH_RATE_LIMIT_PASSWORD_RESET_TTL_SECONDS: 900,
     };
     const configService = {
       getOrThrow: jest.fn((name: string) => values[name]),
@@ -30,6 +32,7 @@ describe('rate limit configuration', () => {
       signup: { limit: 10, ttlMilliseconds: 3_600_000 },
       verify: { limit: 10, ttlMilliseconds: 60_000 },
       refresh: { limit: 30, ttlMilliseconds: 60_000 },
+      passwordReset: { limit: 3, ttlMilliseconds: 900_000 },
     });
   });
 
@@ -40,6 +43,7 @@ describe('rate limit configuration', () => {
       signup: { limit: 1, ttlMilliseconds: 1_000 },
       verify: { limit: 1, ttlMilliseconds: 1_000 },
       refresh: { limit: 1, ttlMilliseconds: 1_000 },
+      passwordReset: { limit: 1, ttlMilliseconds: 1_000 },
     };
 
     setRateLimitConfig(config);

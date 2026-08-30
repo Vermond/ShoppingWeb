@@ -7,7 +7,7 @@ export type RateLimitRule = {
 };
 
 export type RateLimitName =
-  'login' | 'resend' | 'signup' | 'verify' | 'refresh';
+  'login' | 'resend' | 'signup' | 'verify' | 'refresh' | 'passwordReset';
 
 export type RateLimitConfig = Record<RateLimitName, RateLimitRule>;
 
@@ -22,6 +22,7 @@ export function createRateLimitConfig(
     signup: createRule(configService, 'SIGNUP'),
     verify: createRule(configService, 'VERIFY'),
     refresh: createRule(configService, 'REFRESH'),
+    passwordReset: createRule(configService, 'PASSWORD_RESET'),
   };
 }
 
@@ -39,7 +40,8 @@ export function getRateLimitConfig(): RateLimitConfig {
 
 function createRule(
   configService: ConfigService<EnvironmentVariables>,
-  suffix: Uppercase<RateLimitName>,
+  suffix:
+    'LOGIN' | 'RESEND' | 'SIGNUP' | 'VERIFY' | 'REFRESH' | 'PASSWORD_RESET',
 ): RateLimitRule {
   const limitName =
     `AUTH_RATE_LIMIT_${suffix}_LIMIT` as keyof EnvironmentVariables;

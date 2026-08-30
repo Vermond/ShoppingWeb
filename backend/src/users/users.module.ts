@@ -14,6 +14,9 @@ import { UserDetailsService } from './user-details.service';
 import { UsersController } from './users.controller';
 import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
+import { PasswordResetController } from './password-reset.controller';
+import { PasswordResetRepository } from './password-reset.repository';
+import { PasswordResetService } from './password-reset.service';
 
 @Module({
   imports: [DatabaseModule, EmailModule, JwtModule.register({})],
@@ -21,6 +24,7 @@ import { UsersService } from './users.service';
     UserDetailsController,
     UsersController,
     EmailVerificationController,
+    PasswordResetController,
   ],
   providers: [
     PasswordService,
@@ -32,6 +36,8 @@ import { UsersService } from './users.service';
     EmailVerificationService,
     RefreshTokenRepository,
     AccessTokenGuard,
+    PasswordResetRepository,
+    PasswordResetService,
   ],
   exports: [
     PasswordService,

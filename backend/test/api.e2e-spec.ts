@@ -15,6 +15,7 @@ import { RateLimitGuard } from './../src/rate-limit/rate-limit.guard';
 import type { UserRecord } from './../src/users/users.types';
 import { UsersService } from './../src/users/users.service';
 import { WishlistService } from './../src/wishlist/wishlist.service';
+import { PasswordResetService } from './../src/users/password-reset.service';
 import Decimal from 'decimal.js';
 import type {
   ProductDetailRecord,
@@ -141,6 +142,10 @@ describe('API contracts (e2e)', () => {
     addItem: jest.Mock;
     removeItem: jest.Mock;
   };
+  let passwordResetService: {
+    request: jest.Mock;
+    confirm: jest.Mock;
+  };
   let databaseReady = true;
 
   beforeAll(async () => {
@@ -187,6 +192,10 @@ describe('API contracts (e2e)', () => {
       addItem: jest.fn().mockResolvedValue(wishlistItem),
       removeItem: jest.fn().mockResolvedValue(undefined),
     };
+    passwordResetService = {
+      request: jest.fn().mockResolvedValue({ status: 'sent' }),
+      confirm: jest.fn().mockResolvedValue(undefined),
+    };
 
     const accessTokenGuard = {
       canActivate: (context: ExecutionContext): boolean => {
@@ -216,6 +225,8 @@ describe('API contracts (e2e)', () => {
       .useValue(emailVerificationService)
       .overrideProvider(WishlistService)
       .useValue(wishlistService)
+      .overrideProvider(PasswordResetService)
+      .useValue(passwordResetService)
       .overrideGuard(AccessTokenGuard)
       .useValue(accessTokenGuard)
       .overrideGuard(RateLimitGuard)
@@ -520,6 +531,30 @@ describe('API contracts (e2e)', () => {
         code: 'EMAIL_VERIFICATION_SENT',
         message: '인증 메일을 전송했습니다.',
       });
+  });
+
+  it('requests and confirms a password reset through the HTTP contract', async () => {
+    await client
+      .post('/api/auth/password-reset/request')
+      .send({ email: 'USER@example.com' })
+      .expect(200)
+      .expect({
+        message: '입력한 이메일로 비밀번호 재설정 안내를 전송했습니다.',
+      });
+
+    await client
+      .post('/api/auth/password-reset/confirm')
+      .send({ token: 'raw-token', new_password: 'new-password123' })
+      .expect(200)
+      .expect({ message: '비밀번호가 변경되었습니다. 다시 로그인해주세요.' });
+
+    expect(passwordResetService.request).toHaveBeenCalledWith(
+      'user@example.com',
+    );
+    expect(passwordResetService.confirm).toHaveBeenCalledWith({
+      token: 'raw-token',
+      new_password: 'new-password123',
+    });
   });
 
   it('preserves authentication and validation error status codes', async () => {

@@ -10,6 +10,7 @@ const validEnvironment = {
   RESEND_FROM_EMAIL: 'onboarding@resend.dev',
   RESEND_FROM_NAME: 'ShoppingWeb Test',
   EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: '1440',
+  PASSWORD_RESET_TOKEN_TTL_MINUTES: '30',
   AUTH_ACCESS_TOKEN_SECRET: 'test_access_secret_123456789012345678901234',
   AUTH_REFRESH_TOKEN_SECRET: 'test_refresh_secret_123456789012345678901234',
   AUTH_ACCESS_TOKEN_TTL: '15m',
@@ -28,6 +29,8 @@ const validEnvironment = {
   AUTH_RATE_LIMIT_VERIFY_TTL_SECONDS: '60',
   AUTH_RATE_LIMIT_REFRESH_LIMIT: '30',
   AUTH_RATE_LIMIT_REFRESH_TTL_SECONDS: '60',
+  AUTH_RATE_LIMIT_PASSWORD_RESET_LIMIT: '3',
+  AUTH_RATE_LIMIT_PASSWORD_RESET_TTL_SECONDS: '900',
 };
 
 describe('validateEnvironment', () => {
@@ -40,6 +43,8 @@ describe('validateEnvironment', () => {
     expect(environment.AUTH_REFRESH_TOKEN_TTL).toBe(2_592_000);
     expect(environment.AUTH_COOKIE_SECURE).toBe(false);
     expect(environment.AUTH_RATE_LIMIT_RESEND_TTL_SECONDS).toBe(900);
+    expect(environment.PASSWORD_RESET_TOKEN_TTL_MINUTES).toBe(30);
+    expect(environment.AUTH_RATE_LIMIT_PASSWORD_RESET_LIMIT).toBe(3);
 
     expect(
       validateEnvironment({ ...validEnvironment, SWAGGER_ENABLED: 'false' })
@@ -143,6 +148,7 @@ describe('validateEnvironment', () => {
     'RESEND_API_KEY',
     'RESEND_FROM_EMAIL',
     'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES',
+    'PASSWORD_RESET_TOKEN_TTL_MINUTES',
     'AUTH_ACCESS_TOKEN_SECRET',
     'AUTH_REFRESH_TOKEN_SECRET',
     'AUTH_ACCESS_TOKEN_TTL',
