@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronRight,
   DownloadOutlined,
   Search,
 } from "@mui/icons-material";
@@ -14,6 +15,7 @@ import {
   InputAdornment,
   InputLabel,
   MenuItem,
+  Pagination,
   Paper,
   Select,
   Snackbar,
@@ -27,8 +29,17 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
-import type { AdminOrderRecord } from "../../data/admin-pages";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, type FormEvent } from "react";
+import {
+  adminOrderStatusLabels,
+  adminPaymentStatusLabels,
+  adminShippingStatusLabels,
+  type AdminOrderListItem,
+  type AdminOrderStatus,
+  type AdminOrdersData,
+} from "../../data/admin-orders";
 import { AdminSectionHeader } from "./AdminSectionHeader";
 import { AdminShell, adminTextSizes } from "./AdminShell";
 
@@ -39,32 +50,71 @@ const currencyFormatter = new Intl.NumberFormat("ko-KR", {
 });
 
 const statusStyles: Record<
-  AdminOrderRecord["status"],
+  AdminOrderStatus,
   { color: string; backgroundColor: string }
 > = {
-  "결제 완료": { color: "#426348", backgroundColor: "#e6f0e4" },
-  "상품 준비중": { color: "#8a5d2d", backgroundColor: "#f8eddc" },
-  배송중: { color: "#416b7d", backgroundColor: "#e3f0f4" },
-  "배송 완료": { color: "#6b6d66", backgroundColor: "#ecece7" },
+  pending: { color: "#806b3b", backgroundColor: "#f6f0db" },
+  paid: { color: "#426348", backgroundColor: "#e6f0e4" },
+  shipped: { color: "#416b7d", backgroundColor: "#e3f0f4" },
+  completed: { color: "#6b6d66", backgroundColor: "#ecece7" },
+  cancelled: { color: "#8c5142", backgroundColor: "#f8e8df" },
 };
 
-const orderStatuses = [
-  "전체",
-  "결제 완료",
-  "상품 준비중",
-  "배송중",
-  "배송 완료",
-] as const;
+const orderStatuses: Array<{ value: AdminOrderStatus | ""; label: string }> = [
+  { value: "", label: "전체" },
+  { value: "pending", label: "결제 대기" },
+  { value: "paid", label: "결제 완료" },
+  { value: "shipped", label: "배송중" },
+  { value: "completed", label: "배송 완료" },
+  { value: "cancelled", label: "취소" },
+];
 
 type AdminOrdersPageProps = {
-  orders: AdminOrderRecord[];
+  initialData: AdminOrdersData;
 };
 
-function SummaryCard({ label, value, description }: { label: string; value: string; description: string }) {
+function buildOrdersUrl(
+  search: string,
+  status: AdminOrderStatus | "",
+  page: number,
+): string {
+  const params = new URLSearchParams();
+  const normalizedSearch = search.trim();
+
+  if (normalizedSearch) {
+    params.set("search", normalizedSearch);
+  }
+
+  if (status) {
+    params.set("status", status);
+  }
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/admin/orders?${queryString}` : "/admin/orders";
+}
+
+function SummaryCard({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: string;
+  description: string;
+}) {
   return (
     <Paper
       variant="outlined"
-      sx={{ minWidth: 0, p: { xs: 2.5, md: 3 }, borderRadius: 0, borderColor: "divider" }}
+      sx={{
+        minWidth: 0,
+        p: { xs: 2.5, md: 3 },
+        borderRadius: 0,
+        borderColor: "divider",
+      }}
     >
       <Typography color="text.secondary" sx={{ fontSize: adminTextSizes.label }}>
         {label}
@@ -79,25 +129,68 @@ function SummaryCard({ label, value, description }: { label: string; value: stri
   );
 }
 
-export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<(typeof orderStatuses)[number]>("전체");
+function PaymentInfo({ order }: { order: AdminOrderListItem }) {
+  return (
+    <Box>
+      <Typography sx={{ fontSize: adminTextSizes.label, whiteSpace: "nowrap" }}>
+        {order.paymentMethod ?? "결제수단 미기록"}
+      </Typography>
+      <Typography color="text.secondary" sx={{ mt: 0.25, fontSize: adminTextSizes.meta }}>
+        {adminPaymentStatusLabels[order.paymentStatus]}
+      </Typography>
+    </Box>
+  );
+}
+
+function ShippingInfo({ order }: { order: AdminOrderListItem }) {
+  const tracking = order.carrier && order.trackingNumber
+    ? `${order.carrier} ${order.trackingNumber}`
+    : null;
+
+  return (
+    <Box>
+      <Typography sx={{ fontSize: adminTextSizes.label, whiteSpace: "nowrap" }}>
+        {adminShippingStatusLabels[order.shippingStatus]}
+      </Typography>
+      <Typography color="text.secondary" sx={{ mt: 0.25, fontSize: adminTextSizes.meta }}>
+        {tracking ?? "배송정보 미기록"}
+      </Typography>
+    </Box>
+  );
+}
+
+export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
+  const router = useRouter();
+  const [query, setQuery] = useState(initialData.search);
+  const [status, setStatus] = useState<AdminOrderStatus | "">(
+    initialData.status ?? "",
+  );
   const [notice, setNotice] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const filteredOrders = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return orders.filter((order) => {
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        order.id.toLowerCase().includes(normalizedQuery) ||
-        order.customer.toLowerCase().includes(normalizedQuery) ||
-        order.product.toLowerCase().includes(normalizedQuery);
-      const matchesStatus = status === "전체" || order.status === status;
-
-      return matchesQuery && matchesStatus;
+  const navigateToOrders = (
+    nextSearch: string,
+    nextStatus: AdminOrderStatus | "",
+    nextPage: number,
+  ) => {
+    startTransition(() => {
+      router.push(buildOrdersUrl(nextSearch, nextStatus, nextPage));
     });
-  }, [orders, query, status]);
+  };
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    navigateToOrders(query, status, 1);
+  };
+
+  const handleStatusChange = (nextStatus: AdminOrderStatus | "") => {
+    setStatus(nextStatus);
+    navigateToOrders(query, nextStatus, 1);
+  };
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    navigateToOrders(query, status, page);
+  };
 
   return (
     <AdminShell activePath="/admin/orders" pageLabel="주문 관리">
@@ -109,8 +202,12 @@ export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
           <Button
             variant="contained"
             startIcon={<DownloadOutlined sx={{ fontSize: 17 }} />}
-            onClick={() => setNotice("주문 내보내기는 API 연결 후 활성화됩니다.")}
-            sx={{ bgcolor: "primary.main", fontSize: adminTextSizes.control, "&:hover": { bgcolor: "secondary.main" } }}
+            onClick={() => setNotice("주문 내보내기는 아직 준비 중입니다.")}
+            sx={{
+              bgcolor: "primary.main",
+              fontSize: adminTextSizes.control,
+              "&:hover": { bgcolor: "secondary.main" },
+            }}
           >
             주문 내보내기
           </Button>
@@ -125,12 +222,33 @@ export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
           mb: 3,
         }}
       >
-        <SummaryCard label="전체 주문" value="184건" description="이번 달 누적 주문" />
-        <SummaryCard label="상품 준비중" value="12건" description="오늘 처리할 주문" />
-        <SummaryCard label="배송중" value="8건" description="고객에게 이동 중" />
+        <SummaryCard
+          label="조회 주문"
+          value={`${initialData.totalCount.toLocaleString("ko-KR")}건`}
+          description="현재 검색 조건 기준"
+        />
+        <SummaryCard
+          label="결제 대기"
+          value={`${initialData.statusCounts.pending.toLocaleString("ko-KR")}건`}
+          description="결제 확인이 필요한 주문"
+        />
+        <SummaryCard
+          label="배송중"
+          value={`${initialData.statusCounts.shipped.toLocaleString("ko-KR")}건`}
+          description="고객에게 이동 중인 주문"
+        />
       </Box>
 
-      <Paper variant="outlined" sx={{ minWidth: 0, borderRadius: 0, borderColor: "divider" }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          minWidth: 0,
+          borderRadius: 0,
+          borderColor: "divider",
+          opacity: isPending ? 0.65 : 1,
+          transition: "opacity .2s ease",
+        }}
+      >
         <Box sx={{ p: { xs: 2.5, md: 3 } }}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -142,41 +260,45 @@ export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
                 주문 목록
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: adminTextSizes.meta }}>
-                최근 주문부터 정렬되어 있습니다.
+                최신 주문부터 정렬되어 있습니다.
               </Typography>
             </Box>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} useFlexGap>
-              <TextField
-                size="small"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="주문번호·고객·상품 검색"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search sx={{ color: "text.secondary", fontSize: 18 }} />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                sx={{
-                  minWidth: { sm: 240 },
-                  "& .MuiOutlinedInput-root": { borderRadius: 0 },
-                  "& input": { fontSize: adminTextSizes.control },
-                }}
-              />
+              <Box component="form" onSubmit={handleSearchSubmit}>
+                <TextField
+                  size="small"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="주문번호·고객·상품 검색"
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search sx={{ color: "text.secondary", fontSize: 18 }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                  sx={{
+                    minWidth: { sm: 240 },
+                    "& .MuiOutlinedInput-root": { borderRadius: 0 },
+                    "& input": { fontSize: adminTextSizes.control },
+                  }}
+                />
+              </Box>
               <FormControl size="small" sx={{ minWidth: { sm: 140 } }}>
                 <InputLabel sx={{ fontSize: adminTextSizes.control }}>상태</InputLabel>
                 <Select
                   value={status}
                   label="상태"
-                  onChange={(event) => setStatus(event.target.value as (typeof orderStatuses)[number])}
+                  onChange={(event) =>
+                    handleStatusChange(event.target.value as AdminOrderStatus | "")
+                  }
                   sx={{ borderRadius: 0, fontSize: adminTextSizes.control }}
                 >
                   {orderStatuses.map((item) => (
-                    <MenuItem key={item} value={item} sx={{ fontSize: adminTextSizes.control }}>
-                      {item}
+                    <MenuItem key={item.value || "all"} value={item.value} sx={{ fontSize: adminTextSizes.control }}>
+                      {item.label}
                     </MenuItem>
                   ))}
                 </Select>
@@ -186,26 +308,49 @@ export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
         </Box>
 
         <TableContainer sx={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
-          <Table sx={{ minWidth: 840 }} size="small">
+          <Table sx={{ minWidth: 980 }} size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: "#f8f8f4" }}>
-                {["주문번호", "고객", "상품", "결제 금액", "결제 수단", "상태", "주문일"].map((heading) => (
-                  <TableCell key={heading} sx={{ borderColor: "divider", color: "text.secondary", fontSize: adminTextSizes.meta, whiteSpace: "nowrap" }}>
-                    {heading}
-                  </TableCell>
-                ))}
+                {["주문번호", "고객", "상품", "결제 금액", "결제 정보", "배송", "상태", "주문일"].map(
+                  (heading) => (
+                    <TableCell
+                      key={heading}
+                      sx={{
+                        borderColor: "divider",
+                        color: "text.secondary",
+                        fontSize: adminTextSizes.meta,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {heading}
+                    </TableCell>
+                  ),
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => (
+              {initialData.orders.length > 0 ? (
+                initialData.orders.map((order) => (
                   <TableRow key={order.id} hover>
-                    <TableCell sx={{ borderColor: "divider", fontSize: adminTextSizes.meta, whiteSpace: "nowrap" }}>
-                      {order.id}
+                    <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
+                      <Typography
+                        component={Link}
+                        href={`/admin/orders/${order.id}`}
+                        sx={{
+                          color: "primary.main",
+                          fontSize: adminTextSizes.meta,
+                          textDecoration: "underline",
+                          textUnderlineOffset: 3,
+                        }}
+                      >
+                        {order.id}
+                      </Typography>
                     </TableCell>
                     <TableCell sx={{ borderColor: "divider" }}>
                       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                        <Avatar sx={{ width: 28, height: 28, bgcolor: "#d8e1d6", color: "#426348", fontSize: 10 }}>
+                        <Avatar
+                          sx={{ width: 28, height: 28, bgcolor: "#d8e1d6", color: "#426348", fontSize: 10 }}
+                        >
                           {order.customer.slice(0, 1)}
                         </Avatar>
                         <Typography sx={{ fontSize: adminTextSizes.label, whiteSpace: "nowrap" }}>
@@ -213,30 +358,48 @@ export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
                         </Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell sx={{ maxWidth: 230, borderColor: "divider", fontSize: adminTextSizes.label }}>
-                      {order.product}
+                    <TableCell sx={{ maxWidth: 230, borderColor: "divider" }}>
+                      <Typography sx={{ fontSize: adminTextSizes.label }}>{order.product}</Typography>
+                      <Typography color="text.secondary" sx={{ mt: 0.25, fontSize: adminTextSizes.meta }}>
+                        총 {order.productCount}개
+                      </Typography>
                     </TableCell>
                     <TableCell sx={{ borderColor: "divider", fontSize: adminTextSizes.label, whiteSpace: "nowrap" }}>
                       {currencyFormatter.format(order.amount)}
                     </TableCell>
-                    <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontSize: adminTextSizes.meta, whiteSpace: "nowrap" }}>
-                      {order.payment}
+                    <TableCell sx={{ borderColor: "divider" }}>
+                      <PaymentInfo order={order} />
+                    </TableCell>
+                    <TableCell sx={{ borderColor: "divider" }}>
+                      <ShippingInfo order={order} />
                     </TableCell>
                     <TableCell sx={{ borderColor: "divider" }}>
                       <Chip
-                        label={order.status}
+                        label={adminOrderStatusLabels[order.status]}
                         size="small"
-                        sx={{ height: 24, bgcolor: statusStyles[order.status].backgroundColor, color: statusStyles[order.status].color, fontSize: adminTextSizes.meta }}
+                        sx={{
+                          height: 24,
+                          bgcolor: statusStyles[order.status].backgroundColor,
+                          color: statusStyles[order.status].color,
+                          fontSize: adminTextSizes.meta,
+                        }}
                       />
                     </TableCell>
-                    <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontSize: adminTextSizes.meta, whiteSpace: "nowrap" }}>
+                    <TableCell
+                      sx={{
+                        borderColor: "divider",
+                        color: "text.secondary",
+                        fontSize: adminTextSizes.meta,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {order.orderedAt}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ py: 6, borderColor: "divider", textAlign: "center" }}>
+                  <TableCell colSpan={8} sx={{ py: 6, borderColor: "divider", textAlign: "center" }}>
                     <Typography color="text.secondary" sx={{ fontSize: adminTextSizes.body }}>
                       조건에 맞는 주문이 없습니다.
                     </Typography>
@@ -246,7 +409,29 @@ export function AdminOrdersPage({ orders }: AdminOrdersPageProps) {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {initialData.pagination.total_pages > 1 ? (
+          <Stack sx={{ alignItems: "center", p: 3 }}>
+            <Pagination
+              page={initialData.pagination.page}
+              count={initialData.pagination.total_pages}
+              onChange={handlePageChange}
+              disabled={isPending}
+              shape="rounded"
+              color="primary"
+            />
+          </Stack>
+        ) : null}
       </Paper>
+
+      <Button
+        component={Link}
+        href="/admin"
+        startIcon={<ChevronRight sx={{ transform: "rotate(180deg)", fontSize: 16 }} />}
+        sx={{ mt: 2, color: "text.secondary", fontSize: adminTextSizes.meta }}
+      >
+        대시보드로 돌아가기
+      </Button>
 
       <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice(null)}>
         <Alert onClose={() => setNotice(null)} severity="info" variant="filled" sx={{ fontSize: adminTextSizes.control }}>

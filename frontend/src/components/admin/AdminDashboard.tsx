@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  AssessmentOutlined,
   ChevronRight,
   Close,
   DownloadOutlined,
@@ -11,6 +10,7 @@ import {
   Search,
   ShoppingBagOutlined,
   TrendingDown,
+  TrendingFlat,
   TrendingUp,
 } from "@mui/icons-material";
 import {
@@ -50,10 +50,11 @@ import type {
 
 const orderStatuses: Array<"전체" | AdminOrderStatus> = [
   "전체",
+  "결제 대기",
   "결제 완료",
-  "상품 준비중",
   "배송중",
   "배송 완료",
+  "취소",
 ];
 
 const currencyFormatter = new Intl.NumberFormat("ko-KR", {
@@ -66,17 +67,17 @@ const metricIcons: Record<AdminMetric["icon"], typeof TrendingUp> = {
   sales: TrendingUp,
   orders: ShoppingBagOutlined,
   customers: PeopleAltOutlined,
-  conversion: AssessmentOutlined,
 };
 
 const statusStyles: Record<
   AdminOrderStatus,
   { color: string; backgroundColor: string }
 > = {
+  "결제 대기": { color: "#806b3b", backgroundColor: "#f6f0db" },
   "결제 완료": { color: "#426348", backgroundColor: "#e6f0e4" },
-  "상품 준비중": { color: "#8a5d2d", backgroundColor: "#f8eddc" },
   배송중: { color: "#416b7d", backgroundColor: "#e3f0f4" },
   "배송 완료": { color: "#6b6d66", backgroundColor: "#ecece7" },
+  취소: { color: "#8c5142", backgroundColor: "#f8e8df" },
 };
 
 type AdminDashboardProps = {
@@ -86,6 +87,14 @@ type AdminDashboardProps = {
 function MetricCard({ metric }: { metric: AdminMetric }) {
   const MetricIcon = metricIcons[metric.icon];
   const isPositive = metric.changeType === "positive";
+  const isNegative = metric.changeType === "negative";
+
+  const ChangeIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : TrendingFlat;
+  const changeColor = isPositive
+    ? "#527455"
+    : isNegative
+      ? "secondary.main"
+      : "text.secondary";
 
   return (
     <Card
@@ -108,8 +117,8 @@ function MetricCard({ metric }: { metric: AdminMetric }) {
               width: 32,
               height: 32,
               placeItems: "center",
-              bgcolor: isPositive ? "#e6f0e4" : "#f8e8df",
-              color: isPositive ? "#426348" : "secondary.main",
+              bgcolor: isPositive ? "#e6f0e4" : isNegative ? "#f8e8df" : "#eeeee8",
+              color: isPositive ? "#426348" : isNegative ? "secondary.main" : "text.secondary",
             }}
           >
             <MetricIcon sx={{ fontSize: 18 }} />
@@ -126,14 +135,10 @@ function MetricCard({ metric }: { metric: AdminMetric }) {
           {metric.value}
         </Typography>
         <Stack direction="row" spacing={0.75} sx={{ mt: 1, alignItems: "center" }}>
-          {isPositive ? (
-            <TrendingUp sx={{ color: "#527455", fontSize: 15 }} />
-          ) : (
-            <TrendingDown sx={{ color: "secondary.main", fontSize: 15 }} />
-          )}
+          <ChangeIcon sx={{ color: changeColor, fontSize: 15 }} />
           <Typography
             sx={{
-              color: isPositive ? "#527455" : "secondary.main",
+              color: changeColor,
               fontSize: adminTextSizes.meta,
               fontWeight: 500,
             }}
@@ -150,7 +155,7 @@ function MetricCard({ metric }: { metric: AdminMetric }) {
 }
 
 function SalesChart({ sales }: { sales: AdminDashboardData["sales"] }) {
-  const maxValue = Math.max(...sales.map((point) => point.value));
+  const maxValue = Math.max(...sales.map((point) => point.value), 1);
 
   return (
     <Paper
@@ -169,11 +174,11 @@ function SalesChart({ sales }: { sales: AdminDashboardData["sales"] }) {
               주간 매출 흐름
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: adminTextSizes.meta }}>
-              이번 주 주문 금액을 기준으로 집계했어요.
+              조회 기간의 최근 7일 매출을 기준으로 집계했어요.
             </Typography>
           </Box>
           <Chip
-            label="이번 주"
+            label="최근 7일"
             size="small"
             variant="outlined"
             sx={{
@@ -249,7 +254,7 @@ function CategoryPerformance({
           카테고리별 매출
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: adminTextSizes.meta }}>
-          이번 달 매출 비중이에요.
+          조회 기간의 매출 비중이에요.
         </Typography>
         <Stack spacing={2.25} sx={{ mt: 3.5 }}>
           {categories.map((category) => (
@@ -462,6 +467,11 @@ function InventorySummary({
 }: {
   inventory: AdminDashboardData["inventory"];
 }) {
+  const maxPeriodSoldQuantity = Math.max(
+    ...inventory.map((item) => item.periodSoldQuantity),
+    1,
+  );
+
   return (
     <Paper
       variant="outlined"
@@ -479,7 +489,7 @@ function InventorySummary({
               재고 현황
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: adminTextSizes.meta }}>
-              판매 속도가 빠른 상품부터 보여드려요.
+              조회 기간의 판매량과 현재 재고를 함께 보여드려요.
             </Typography>
           </Box>
           <Inventory2Outlined sx={{ color: "secondary.main", fontSize: 20 }} />
@@ -507,7 +517,7 @@ function InventorySummary({
                 </Box>
                 <Typography
                   sx={{
-                    color: item.stock < 10 ? "secondary.main" : "text.primary",
+                    color: item.lowStock ? "secondary.main" : "text.primary",
                     fontSize: adminTextSizes.label,
                     fontWeight: 500,
                     whiteSpace: "nowrap",
@@ -516,16 +526,29 @@ function InventorySummary({
                   {item.stock}개
                 </Typography>
               </Stack>
+              <Stack
+                direction="row"
+                sx={{ mt: 1, alignItems: "center", justifyContent: "space-between" }}
+              >
+                <Typography color="text.secondary" sx={{ fontSize: adminTextSizes.meta }}>
+                  기간 판매량 {item.periodSoldQuantity}개
+                </Typography>
+                {item.lowStock ? (
+                  <Typography sx={{ color: "secondary.main", fontSize: adminTextSizes.meta }}>
+                    재고 부족
+                  </Typography>
+                ) : null}
+              </Stack>
               <LinearProgress
                 variant="determinate"
-                value={(item.stock / item.targetStock) * 100}
+                value={(item.periodSoldQuantity / maxPeriodSoldQuantity) * 100}
                 sx={{
-                  mt: 1,
+                  mt: 0.75,
                   height: 4,
                   borderRadius: 0,
                   bgcolor: "#eeeee8",
                   "& .MuiLinearProgress-bar": {
-                    bgcolor: item.stock < 10 ? "secondary.main" : "#9db29b",
+                    bgcolor: item.lowStock ? "secondary.main" : "#9db29b",
                   },
                 }}
               />
@@ -535,6 +558,21 @@ function InventorySummary({
       </Box>
     </Paper>
   );
+}
+
+function formatPeriodEnd(value: string): string {
+  const date = new Date(`${value}T00:00:00+09:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return "조회 기간";
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  }).format(date);
 }
 
 export function AdminDashboard({ initialData }: AdminDashboardProps) {
@@ -579,7 +617,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
                 오늘의 스토어
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 1.5, fontSize: adminTextSizes.body }}>
-                8월 26일 수요일, 운영 현황을 한눈에 확인하세요.
+                {formatPeriodEnd(initialData.period.to)}, 운영 현황을 한눈에 확인하세요.
               </Typography>
             </Box>
             <Stack
@@ -615,7 +653,7 @@ export function AdminDashboard({ initialData }: AdminDashboardProps) {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", xl: "repeat(4, minmax(0, 1fr))" },
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", xl: "repeat(3, minmax(0, 1fr))" },
               gap: 3,
             }}
           >

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { AdminDashboard } from "../../components/admin/AdminDashboard";
 import { getAdminDashboardData } from "../../data/admin";
 
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const dashboardData = await getAdminDashboardData();
+  const cookieHeader = (await cookies()).toString();
+  const dashboardData = await getAdminDashboardData(cookieHeader);
 
   return <AdminDashboard initialData={dashboardData} />;
 }

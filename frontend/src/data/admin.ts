@@ -1,19 +1,20 @@
-import type { ProductCategory } from "../types/catalog";
+import type { AdminDashboardResponse } from "../repositories/admin.server.repository";
 
 export type AdminOrderStatus =
+  | "결제 대기"
   | "결제 완료"
-  | "상품 준비중"
   | "배송중"
-  | "배송 완료";
+  | "배송 완료"
+  | "취소";
 
 export type AdminMetric = {
   id: string;
   label: string;
   value: string;
   change: string;
-  changeType: "positive" | "negative";
+  changeType: "positive" | "negative" | "neutral";
   helper: string;
-  icon: "sales" | "orders" | "customers" | "conversion";
+  icon: "sales" | "orders" | "customers";
 };
 
 export type AdminOrder = {
@@ -27,7 +28,7 @@ export type AdminOrder = {
 };
 
 export type AdminCategoryPerformance = {
-  category: ProductCategory;
+  category: string;
   sales: number;
   share: number;
   color: string;
@@ -36,10 +37,10 @@ export type AdminCategoryPerformance = {
 export type AdminInventoryItem = {
   id: string;
   name: string;
-  category: ProductCategory;
+  category: string;
   stock: number;
-  targetStock: number;
-  salesRate: number;
+  lowStock: boolean;
+  periodSoldQuantity: number;
   color: string;
 };
 
@@ -49,6 +50,10 @@ export type AdminSalesPoint = {
 };
 
 export type AdminDashboardData = {
+  period: {
+    from: string;
+    to: string;
+  };
   metrics: AdminMetric[];
   sales: AdminSalesPoint[];
   categoryPerformance: AdminCategoryPerformance[];
@@ -56,148 +61,192 @@ export type AdminDashboardData = {
   inventory: AdminInventoryItem[];
 };
 
-const adminDashboardData: AdminDashboardData = {
-  metrics: [
-    {
-      id: "sales",
-      label: "이번 달 매출",
-      value: "₩12,480,000",
-      change: "+18.4%",
-      changeType: "positive",
-      helper: "지난달 대비",
-      icon: "sales",
-    },
-    {
-      id: "orders",
-      label: "신규 주문",
-      value: "184",
-      change: "+12.8%",
-      changeType: "positive",
-      helper: "지난달 대비",
-      icon: "orders",
-    },
-    {
-      id: "customers",
-      label: "신규 고객",
-      value: "96",
-      change: "+8.2%",
-      changeType: "positive",
-      helper: "지난달 대비",
-      icon: "customers",
-    },
-    {
-      id: "conversion",
-      label: "구매 전환율",
-      value: "4.8%",
-      change: "-0.6%",
-      changeType: "negative",
-      helper: "지난달 대비",
-      icon: "conversion",
-    },
-  ],
-  sales: [
-    { label: "월", value: 32 },
-    { label: "화", value: 47 },
-    { label: "수", value: 41 },
-    { label: "목", value: 59 },
-    { label: "금", value: 72 },
-    { label: "토", value: 64 },
-    { label: "일", value: 86 },
-  ],
-  categoryPerformance: [
-    { category: "리빙", sales: 4860000, share: 39, color: "#b7c6b5" },
-    { category: "패션", sales: 3120000, share: 25, color: "#d8b69f" },
-    { category: "액세서리", sales: 2710000, share: 22, color: "#df8a67" },
-    { category: "뷰티", sales: 1790000, share: 14, color: "#d9d0bf" },
-  ],
-  orders: [
-    {
-      id: "MR-20250826-184",
-      customer: "김서윤",
-      initials: "서윤",
-      product: "모리 세라믹 머그 외 1건",
-      amount: 56000,
-      status: "결제 완료",
-      orderedAt: "오늘 14:32",
-    },
-    {
-      id: "MR-20250826-183",
-      customer: "이도현",
-      initials: "도현",
-      product: "데일리 오버 셔츠",
-      amount: 89000,
-      status: "상품 준비중",
-      orderedAt: "오늘 13:18",
-    },
-    {
-      id: "MR-20250826-182",
-      customer: "박하린",
-      initials: "하린",
-      product: "소프트 버킷 백",
-      amount: 119000,
-      status: "배송중",
-      orderedAt: "오늘 11:46",
-    },
-    {
-      id: "MR-20250825-181",
-      customer: "최민준",
-      initials: "민준",
-      product: "클라우드 핸드 밤 외 2건",
-      amount: 92000,
-      status: "배송 완료",
-      orderedAt: "어제 17:03",
-    },
-    {
-      id: "MR-20250825-180",
-      customer: "정유진",
-      initials: "유진",
-      product: "오크 데스크 트레이",
-      amount: 42000,
-      status: "상품 준비중",
-      orderedAt: "어제 15:27",
-    },
-  ],
-  inventory: [
-    {
-      id: "mori-mug",
-      name: "모리 세라믹 머그",
-      category: "리빙",
-      stock: 8,
-      targetStock: 40,
-      salesRate: 82,
-      color: "#d9cbb7",
-    },
-    {
-      id: "daily-shirt",
-      name: "데일리 오버 셔츠",
-      category: "패션",
-      stock: 24,
-      targetStock: 40,
-      salesRate: 64,
-      color: "#aebcae",
-    },
-    {
-      id: "soft-bucket",
-      name: "소프트 버킷 백",
-      category: "액세서리",
-      stock: 31,
-      targetStock: 40,
-      salesRate: 51,
-      color: "#d58f70",
-    },
-    {
-      id: "cloud-balm",
-      name: "클라우드 핸드 밤",
-      category: "뷰티",
-      stock: 36,
-      targetStock: 40,
-      salesRate: 38,
-      color: "#ded9d2",
-    },
-  ],
+const categoryColors = ["#b7c6b5", "#d8b69f", "#df8a67", "#d9d0bf"];
+const inventoryColors = ["#d8b69f", "#b7c6b5", "#df8a67", "#d9d0bf"];
+
+const orderStatusLabels: Record<
+  AdminDashboardResponse["recent_orders"][number]["status"],
+  AdminOrderStatus
+> = {
+  pending: "결제 대기",
+  paid: "결제 완료",
+  shipped: "배송중",
+  completed: "배송 완료",
+  cancelled: "취소",
 };
 
-// Replace this function with a fetch to the admin API when the backend contract is ready.
-export async function getAdminDashboardData(): Promise<AdminDashboardData> {
-  return adminDashboardData;
+function toFiniteNumber(value: string | number, fieldName: string): number {
+  const numberValue = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    throw new Error(`관리자 대시보드의 ${fieldName} 값을 표시할 수 없습니다.`);
+  }
+
+  return numberValue;
+}
+
+function formatWon(value: string | number): string {
+  return `₩${Math.round(toFiniteNumber(value, "매출")).toLocaleString("ko-KR")}`;
+}
+
+function formatCount(value: string | number, unit: string): string {
+  return `${toFiniteNumber(value, unit).toLocaleString("ko-KR")}${unit}`;
+}
+
+function formatChangeRate(changeRate: number | null): {
+  change: string;
+  changeType: AdminMetric["changeType"];
+} {
+  if (changeRate === null) {
+    return { change: "비교 불가", changeType: "neutral" };
+  }
+
+  const sign = changeRate > 0 ? "+" : "";
+  return {
+    change: `${sign}${changeRate.toFixed(1)}%`,
+    changeType: changeRate < 0 ? "negative" : "positive",
+  };
+}
+
+function formatSalesLabel(date: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  return match ? `${match[2]}.${match[3]}` : date;
+}
+
+function formatOrderDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "시간 정보 없음";
+  }
+
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })
+    .formatToParts(date)
+    .reduce<Record<string, string>>((result, part) => {
+      result[part.type] = part.value;
+      return result;
+    }, {});
+
+  return `${parts.month}.${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+function formatProductSummary(
+  products: AdminDashboardResponse["recent_orders"][number]["product_summary"],
+): string {
+  const firstProduct = products[0]?.product_name ?? "상품 정보 없음";
+
+  if (products.length <= 1) {
+    return firstProduct;
+  }
+
+  return `${firstProduct} 외 ${products.length - 1}건`;
+}
+
+function getInitials(name: string): string {
+  return name.slice(0, 2) || "?";
+}
+
+function mapMetric(
+  id: string,
+  label: string,
+  value: string | number,
+  changeRate: number | null,
+  formatter: (metricValue: string | number) => string,
+  icon: AdminMetric["icon"],
+  helper: string,
+): AdminMetric {
+  const change = formatChangeRate(changeRate);
+
+  return {
+    id,
+    label,
+    value: formatter(value),
+    change: change.change,
+    changeType: change.changeType,
+    helper,
+    icon,
+  };
+}
+
+export function mapAdminDashboardResponse(
+  response: AdminDashboardResponse,
+): AdminDashboardData {
+  return {
+    period: response.period,
+    metrics: [
+      mapMetric(
+        "sales",
+        "기간 매출",
+        response.summary.revenue.value,
+        response.summary.revenue.change_rate_percent,
+        formatWon,
+        "sales",
+        "직전 동일 기간 대비",
+      ),
+      mapMetric(
+        "orders",
+        "주문 수",
+        response.summary.order_count.value,
+        response.summary.order_count.change_rate_percent,
+        (value) => formatCount(value, "건"),
+        "orders",
+        "직전 동일 기간 대비",
+      ),
+      mapMetric(
+        "customers",
+        "신규 고객",
+        response.summary.new_customer_count.value,
+        response.summary.new_customer_count.change_rate_percent,
+        (value) => formatCount(value, "명"),
+        "customers",
+        "직전 동일 기간 대비",
+      ),
+    ],
+    sales: response.daily_sales.slice(-7).map((point) => ({
+      label: formatSalesLabel(point.date),
+      value: toFiniteNumber(point.revenue, "일별 매출") / 10_000,
+    })),
+    categoryPerformance: response.category_sales.map((category, index) => ({
+      category: category.category_name,
+      sales: toFiniteNumber(category.revenue, "카테고리 매출"),
+      share: category.sales_ratio_percent,
+      color: categoryColors[index % categoryColors.length],
+    })),
+    orders: response.recent_orders.map((order) => ({
+      id: order.order_id,
+      customer: order.customer_name,
+      initials: getInitials(order.customer_name),
+      product: formatProductSummary(order.product_summary),
+      amount: toFiniteNumber(order.payment_amount, "주문 결제 금액"),
+      status: orderStatusLabels[order.status],
+      orderedAt: formatOrderDate(order.ordered_at),
+    })),
+    inventory: response.inventory.map((item, index) => ({
+      id: item.product_id,
+      name: item.product_name,
+      category: item.category_name,
+      stock: item.stock,
+      lowStock: item.low_stock,
+      periodSoldQuantity: item.period_sold_quantity,
+      color: inventoryColors[index % inventoryColors.length],
+    })),
+  };
+}
+
+export async function getAdminDashboardData(
+  cookieHeader: string,
+): Promise<AdminDashboardData> {
+  const { requestAdminDashboardOnServer } = await import(
+    "../repositories/admin.server.repository"
+  );
+  const response = await requestAdminDashboardOnServer(cookieHeader);
+
+  return mapAdminDashboardResponse(response);
 }
