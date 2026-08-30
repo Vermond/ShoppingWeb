@@ -1535,3 +1535,139 @@ export class AdminCustomerDetailEnvelopeResponseDto {
   @ApiProperty({ type: AdminCustomerDetailDto })
   customer!: AdminCustomerDetailDto;
 }
+
+export class AdminReportPeriodDto {
+  @ApiProperty({ example: '2026-08-01', format: 'date' })
+  from!: string;
+
+  @ApiProperty({ example: '2026-08-30', format: 'date' })
+  to!: string;
+}
+
+export class AdminReportMoneyMetricDto {
+  @ApiProperty({
+    type: String,
+    example: '128000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  value!: string;
+
+  @ApiProperty({ type: Number, nullable: true, example: 12.5 })
+  change_rate_percent!: number | null;
+}
+
+export class AdminReportNumberMetricDto {
+  @ApiProperty({ example: 12 })
+  value!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: -4.17 })
+  change_rate_percent!: number | null;
+}
+
+export class AdminReportPercentMetricDto {
+  @ApiProperty({ example: 28.6, description: '퍼센트 값' })
+  value!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 5.2 })
+  change_rate_percent!: number | null;
+}
+
+export class AdminReportSummaryDto {
+  @ApiProperty({ type: AdminReportMoneyMetricDto, description: '총 매출' })
+  revenue!: AdminReportMoneyMetricDto;
+
+  @ApiProperty({ type: AdminReportNumberMetricDto, description: '총 주문 수' })
+  order_count!: AdminReportNumberMetricDto;
+
+  @ApiProperty({
+    type: AdminReportMoneyMetricDto,
+    description: '평균 주문 금액',
+  })
+  average_order_amount!: AdminReportMoneyMetricDto;
+
+  @ApiProperty({
+    type: AdminReportNumberMetricDto,
+    description: '신규 고객 수',
+  })
+  new_customer_count!: AdminReportNumberMetricDto;
+
+  @ApiProperty({ type: AdminReportPercentMetricDto, description: '재구매율' })
+  repurchase_rate_percent!: AdminReportPercentMetricDto;
+}
+
+export class AdminReportDailySalesDto {
+  @ApiProperty({ example: '2026-08-01', format: 'date' })
+  date!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+
+  @ApiProperty({ example: 2 })
+  order_count!: number;
+}
+
+export class AdminReportCategorySalesDto {
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '92000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+
+  @ApiProperty({ example: 8 })
+  sales_quantity!: number;
+
+  @ApiProperty({ example: 62.16 })
+  sales_ratio_percent!: number;
+}
+
+export class AdminReportTopProductDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  product_name!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({ example: 14 })
+  sales_quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '196000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+}
+
+export class AdminReportResponseDto {
+  @ApiProperty({ type: AdminReportPeriodDto })
+  period!: AdminReportPeriodDto;
+
+  @ApiProperty({ type: AdminReportPeriodDto })
+  comparison_period!: AdminReportPeriodDto;
+
+  @ApiProperty({ type: AdminReportSummaryDto })
+  summary!: AdminReportSummaryDto;
+
+  @ApiProperty({ type: [AdminReportDailySalesDto] })
+  daily_sales!: AdminReportDailySalesDto[];
+
+  @ApiProperty({ type: [AdminReportCategorySalesDto] })
+  category_sales!: AdminReportCategorySalesDto[];
+
+  @ApiProperty({ type: [AdminReportTopProductDto] })
+  top_products!: AdminReportTopProductDto[];
+}
