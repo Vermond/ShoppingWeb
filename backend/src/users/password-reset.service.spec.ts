@@ -46,6 +46,7 @@ function createMocks() {
   const usersRepository = {
     findByEmail: jest.fn().mockResolvedValue(storedUser),
     findById: jest.fn().mockResolvedValue(user),
+    findByIdWithPassword: jest.fn().mockResolvedValue(storedUser),
     updatePassword: jest.fn().mockResolvedValue(user),
   } as unknown as jest.Mocked<UsersRepository>;
   const passwordResetRepository = {
@@ -56,6 +57,7 @@ function createMocks() {
   } as unknown as jest.Mocked<PasswordResetRepository>;
   const passwordService = {
     hash: jest.fn().mockResolvedValue('new-password-hash'),
+    verify: jest.fn().mockResolvedValue(false),
   } as unknown as jest.Mocked<PasswordService>;
   const refreshTokenRepository = {
     revokeAllForUser: jest.fn().mockResolvedValue(undefined),
@@ -134,6 +136,10 @@ describe('PasswordResetService', () => {
 
     await expect(mocks.service.confirm(input)).resolves.toBeUndefined();
     expect(mocks.passwordService.hash).toHaveBeenCalledWith(input.new_password);
+    expect(mocks.passwordService.verify).toHaveBeenCalledWith(
+      input.new_password,
+      storedUser.password_hash,
+    );
     expect(mocks.usersRepository.updatePassword).toHaveBeenCalledWith(
       user.id,
       'new-password-hash',
@@ -193,5 +199,31 @@ describe('PasswordResetService', () => {
     await expect(mocks.service.request(user.email)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
+  });
+
+  it('rejects reusing the current password without consuming the reset token', async () => {
+    const mocks = createMocks();
+    mocks.passwordService.verify.mockResolvedValue(true);
+
+    await expect(
+      mocks.service.confirm({
+        token: 'same-password',
+        new_password: 'old-password',
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'PASSWORD_REUSE_NOT_ALLOWED',
+      },
+    });
+
+    expect(mocks.passwordService.hash).not.toHaveBeenCalled();
+    expect(mocks.usersRepository.updatePassword).not.toHaveBeenCalled();
+    expect(mocks.passwordResetRepository.markUsed).not.toHaveBeenCalled();
+    expect(
+      mocks.passwordResetRepository.invalidateForUser,
+    ).not.toHaveBeenCalled();
+    expect(
+      mocks.refreshTokenRepository.revokeAllForUser,
+    ).not.toHaveBeenCalled();
   });
 });

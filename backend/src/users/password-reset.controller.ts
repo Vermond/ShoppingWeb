@@ -81,6 +81,7 @@ export class PasswordResetController {
   @ApiBody({ type: PasswordResetConfirmBodyDto })
   @ApiOkResponse({ type: PasswordResetResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 409, type: ApiErrorResponseDto })
   @ApiResponse({ status: 410, type: ApiErrorResponseDto })
   @ApiResponse({ status: 429, type: ApiErrorResponseDto })
   @ApiResponse({ status: 500, type: ApiErrorResponseDto })

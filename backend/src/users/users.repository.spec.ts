@@ -1,6 +1,6 @@
 import type { DatabaseService } from '../database/database.service';
 import { UsersRepository } from './users.repository';
-import type { UserRecord } from './users.types';
+import type { StoredUserRecord, UserRecord } from './users.types';
 
 const user: UserRecord = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -54,6 +54,7 @@ describe('UsersRepository', () => {
     const { repository } = createRepository([{ rows: [] }]);
 
     await expect(repository.findById(user.id)).resolves.toBeNull();
+    await expect(repository.findByIdWithPassword(user.id)).resolves.toBeNull();
     await expect(repository.findByEmail(user.email)).resolves.toBeNull();
     await expect(repository.update(user.id, {})).resolves.toBeNull();
     await expect(repository.markEmailVerified(user.id)).resolves.toBeNull();
@@ -77,6 +78,23 @@ describe('UsersRepository', () => {
       ['USER@example.com'],
     );
     expect(query.mock.calls[1]?.[0]).toContain('password_hash');
+  });
+
+  it('loads the password only for internal password comparisons', async () => {
+    const storedUser: StoredUserRecord = {
+      ...user,
+      password_hash: 'password-hash',
+    };
+    const { repository, query } = createRepository([{ rows: [storedUser] }]);
+
+    await expect(repository.findByIdWithPassword(user.id)).resolves.toBe(
+      storedUser,
+    );
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE id = $1'),
+      [user.id],
+    );
+    expect(query.mock.calls[0]?.[0]).toContain('password_hash');
   });
 
   it('passes the executor through transactional operations', async () => {

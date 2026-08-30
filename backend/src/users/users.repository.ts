@@ -44,6 +44,12 @@ const FIND_USER_BY_ID_QUERY = `
   WHERE id = $1
 `;
 
+const FIND_USER_BY_ID_WITH_PASSWORD_QUERY = `
+  SELECT ${USER_COLUMNS_WITH_PASSWORD}
+  FROM auth.users
+  WHERE id = $1
+`;
+
 const FIND_USER_BY_EMAIL_QUERY = `
   SELECT ${USER_COLUMNS_WITH_PASSWORD}
   FROM auth.users
@@ -133,6 +139,18 @@ export class UsersRepository {
     const result = await executor.query<UserRecord>(FIND_USER_BY_ID_QUERY, [
       id,
     ]);
+
+    return result.rows[0] ?? null;
+  }
+
+  async findByIdWithPassword(
+    id: string,
+    executor: DatabaseQueryExecutor = this.databaseService,
+  ): Promise<StoredUserRecord | null> {
+    const result = await executor.query<StoredUserRecord>(
+      FIND_USER_BY_ID_WITH_PASSWORD_QUERY,
+      [id],
+    );
 
     return result.rows[0] ?? null;
   }

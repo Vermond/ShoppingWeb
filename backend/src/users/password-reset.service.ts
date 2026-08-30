@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   GoneException,
   HttpException,
   Injectable,
@@ -112,7 +113,7 @@ export class PasswordResetService {
           });
         }
 
-        const user = await this.usersRepository.findById(
+        const user = await this.usersRepository.findByIdWithPassword(
           tokenRecord.user_id,
           executor,
         );
@@ -121,6 +122,18 @@ export class PasswordResetService {
           throw new BadRequestException({
             code: 'PASSWORD_RESET_TOKEN_INVALID',
             message: '유효하지 않은 비밀번호 재설정 요청입니다.',
+          });
+        }
+
+        const isSamePassword = await this.passwordService.verify(
+          input.new_password,
+          user.password_hash,
+        );
+
+        if (isSamePassword) {
+          throw new ConflictException({
+            code: 'PASSWORD_REUSE_NOT_ALLOWED',
+            message: '기존 비밀번호와 다른 비밀번호를 사용해주세요.',
           });
         }
 

@@ -40,6 +40,10 @@ ${FRONTEND_URL}/auth/reset-password?token=...
 
 토큰 검증, 사용자 비밀번호 변경, 토큰 사용 처리, 기존 토큰 무효화, Refresh Token 전체 폐기는 하나의 트랜잭션으로 처리한다. 새 비밀번호는 기존 `PasswordService`의 `scrypt` 방식으로 해시한다.
 
+기존 비밀번호와 같은 비밀번호는 사용할 수 없다. 서버는 기존 해시를
+`PasswordService.verify()`로 비교하며, 동일한 경우 `PASSWORD_REUSE_NOT_ALLOWED`
+오류를 반환한다. 이 경우 토큰을 사용 처리하거나 세션을 폐기하지 않는다.
+
 성공하면 인증 쿠키를 삭제하고 다시 로그인하도록 안내한다. 비밀번호 변경으로 이메일 인증 상태는 변경하지 않는다.
 
 토큰은 한 번만 사용할 수 있으며, 만료된 토큰은 `PASSWORD_RESET_TOKEN_EXPIRED`, 사용된 토큰은 `PASSWORD_RESET_TOKEN_USED`, 존재하지 않는 토큰은 `PASSWORD_RESET_TOKEN_INVALID` 코드로 반환한다.
