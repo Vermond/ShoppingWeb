@@ -8,11 +8,13 @@ import { AuthService } from './../src/auth/auth.service';
 import {
   getRateLimitConfig,
   setRateLimitConfig,
+  type RateLimitConfig,
 } from './../src/rate-limit/rate-limit.config';
 
 describe('Rate limits (e2e)', () => {
   let app: INestApplication<App>;
   let baseUrl: string;
+  let originalRateLimitConfig: RateLimitConfig | undefined;
 
   beforeAll(async () => {
     const authService = {
@@ -27,6 +29,7 @@ describe('Rate limits (e2e)', () => {
       .useValue(authService)
       .compile();
 
+    originalRateLimitConfig = getRateLimitConfig();
     setRateLimitConfig({
       login: { limit: 2, ttlMilliseconds: 60_000 },
       resend: { limit: 2, ttlMilliseconds: 900_000 },
@@ -75,6 +78,10 @@ describe('Rate limits (e2e)', () => {
   });
 
   afterAll(async () => {
+    if (originalRateLimitConfig) {
+      setRateLimitConfig(originalRateLimitConfig);
+    }
+
     await app.close();
   });
 });
