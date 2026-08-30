@@ -17,6 +17,7 @@ import {
   toOrderSummaryRecord,
   type CheckoutCartItemRow,
   type OrderAddressRow,
+  type OrderAmountRecord,
   type OrderRecord,
   type OrderSummaryRecord,
 } from './orders.types';
@@ -70,14 +71,12 @@ export class OrdersService {
           });
         }
 
-        const shippingFee = calculateShippingFee(
+        const amounts = calculateOrderAmounts(
           subtotal,
           shippingPolicy.base_fee,
           shippingPolicy.free_threshold,
         );
-        const discountAmount = new Decimal(0);
-        const totalAmount = subtotal.add(shippingFee).sub(discountAmount);
-        const payment = this.mockPaymentService.authorize(totalAmount);
+        const payment = this.mockPaymentService.authorize(amounts.total_amount);
 
         if (!payment.approved) {
           throw new ConflictException({
@@ -90,10 +89,10 @@ export class OrdersService {
           userId,
           'paid',
           {
-            subtotal: subtotal.toFixed(2),
-            shipping_fee: shippingFee.toFixed(2),
-            discount_amount: discountAmount.toFixed(2),
-            total_amount: totalAmount.toFixed(2),
+            subtotal: amounts.subtotal.toFixed(2),
+            shipping_fee: amounts.shipping_fee.toFixed(2),
+            discount_amount: amounts.discount_amount.toFixed(2),
+            total_amount: amounts.total_amount.toFixed(2),
           },
           executor,
         );
@@ -141,6 +140,43 @@ export class OrdersService {
 
         return toOrderRecord(createdOrder);
       }),
+    );
+  }
+
+  async preview(userId: string): Promise<OrderAmountRecord> {
+    return this.withDatabaseError(
+      '주문 금액 미리보기에 실패했습니다.',
+      async () =>
+        this.databaseService.transaction(async (executor) => {
+          const cart = await this.ordersRepository.findCheckoutCart(
+            userId,
+            executor,
+          );
+
+          if (!cart || cart.items.length === 0) {
+            throw new ConflictException({
+              code: 'CART_EMPTY',
+              message: '장바구니에 주문할 상품이 없습니다.',
+            });
+          }
+
+          const subtotal = calculateOrderSubtotal(cart.items);
+          const shippingPolicy =
+            await this.ordersRepository.findActiveShippingPolicy(executor);
+
+          if (!shippingPolicy) {
+            throw new ServiceUnavailableException({
+              code: 'SHIPPING_POLICY_UNAVAILABLE',
+              message: '배송 정책을 확인할 수 없어 주문할 수 없습니다.',
+            });
+          }
+
+          return calculateOrderAmounts(
+            subtotal,
+            shippingPolicy.base_fee,
+            shippingPolicy.free_threshold,
+          );
+        }),
     );
   }
 
@@ -289,6 +325,22 @@ function calculateShippingFee(
   }
 
   return new Decimal(baseFee);
+}
+
+function calculateOrderAmounts(
+  subtotal: Decimal,
+  baseFee: string,
+  freeThreshold: string,
+): OrderAmountRecord {
+  const shippingFee = calculateShippingFee(subtotal, baseFee, freeThreshold);
+  const discountAmount = new Decimal(0);
+
+  return {
+    subtotal,
+    shipping_fee: shippingFee,
+    discount_amount: discountAmount,
+    total_amount: subtotal.add(shippingFee).sub(discountAmount),
+  };
 }
 
 function assertItemCanBeOrdered(item: CheckoutCartItemRow): void {

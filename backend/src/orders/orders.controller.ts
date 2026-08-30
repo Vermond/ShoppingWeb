@@ -26,13 +26,16 @@ import {
   ApiErrorResponseDto,
   CreateOrderBodyDto,
   OrderEnvelopeResponseDto,
+  OrderPreviewResponseDto,
   OrdersResponseDto,
 } from '../swagger/swagger.schemas';
 import { parseCreateOrderInput } from './orders.input';
 import { OrdersService } from './orders.service';
 import {
   serializeOrder,
+  serializeOrderAmounts,
   serializeOrderSummary,
+  type OrderAmountResponse,
   type OrderResponse,
   type OrderSummaryResponse,
 } from './orders.types';
@@ -43,6 +46,22 @@ import {
 @ApiCookieAuth('access_token')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Post('preview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '현재 장바구니 주문 금액 미리보기' })
+  @ApiOkResponse({ type: OrderPreviewResponseDto })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 409, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 503, type: ApiErrorResponseDto })
+  @ApiResponse({ status: 500, type: ApiErrorResponseDto })
+  async preview(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<OrderAmountResponse> {
+    const amounts = await this.ordersService.preview(user.id);
+
+    return serializeOrderAmounts(amounts);
+  }
 
   @Post()
   @ApiOperation({ summary: '장바구니 상품으로 주문 생성' })

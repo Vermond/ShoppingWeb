@@ -74,6 +74,7 @@ describe('Orders API (e2e)', () => {
   let baseUrl: string;
   let ordersService: {
     create: jest.Mock;
+    preview: jest.Mock;
     findAll: jest.Mock;
     findOne: jest.Mock;
     cancel: jest.Mock;
@@ -82,6 +83,12 @@ describe('Orders API (e2e)', () => {
   beforeAll(async () => {
     ordersService = {
       create: jest.fn().mockResolvedValue(order),
+      preview: jest.fn().mockResolvedValue({
+        subtotal: new Decimal('25800.00'),
+        shipping_fee: new Decimal('3000.00'),
+        discount_amount: new Decimal('0.00'),
+        total_amount: new Decimal('28800.00'),
+      }),
       findAll: jest.fn().mockResolvedValue([summary]),
       findOne: jest.fn().mockResolvedValue(order),
       cancel: jest.fn().mockResolvedValue({ ...order, status: 'cancelled' }),
@@ -126,6 +133,21 @@ describe('Orders API (e2e)', () => {
       address_id: '44444444-4444-4444-8444-444444444444',
       delivery_request: '문 앞에 놓아주세요',
     });
+  });
+
+  it('previews the current cart amount without an order body', async () => {
+    await request(baseUrl)
+      .post('/api/orders/preview')
+      .retry(2, retryOnConnectionReset)
+      .expect(200)
+      .expect({
+        subtotal: '25800.00',
+        shipping_fee: '3000.00',
+        discount_amount: '0.00',
+        total_amount: '28800.00',
+      });
+
+    expect(ordersService.preview).toHaveBeenCalledWith(user.id);
   });
 
   it('gets the order list and detail, then cancels an order', async () => {

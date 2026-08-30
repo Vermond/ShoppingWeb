@@ -69,6 +69,20 @@ export type ShippingPolicyRow = {
   free_threshold: string;
 };
 
+export type OrderAmountRecord = {
+  subtotal: Decimal;
+  shipping_fee: Decimal;
+  discount_amount: Decimal;
+  total_amount: Decimal;
+};
+
+export type OrderAmountResponse = {
+  subtotal: string;
+  shipping_fee: string;
+  discount_amount: string;
+  total_amount: string;
+};
+
 export type OrderRecord = Omit<
   OrderHeaderRow,
   | 'status'
@@ -250,6 +264,17 @@ export function serializeOrderSummary(
     total_amount: order.total_amount.toFixed(2),
     created_at: order.created_at.toISOString(),
     updated_at: order.updated_at.toISOString(),
+  };
+}
+
+export function serializeOrderAmounts(
+  amounts: OrderAmountRecord,
+): OrderAmountResponse {
+  return {
+    subtotal: amounts.subtotal.toFixed(2),
+    shipping_fee: amounts.shipping_fee.toFixed(2),
+    discount_amount: amounts.discount_amount.toFixed(2),
+    total_amount: amounts.total_amount.toFixed(2),
   };
 }
 

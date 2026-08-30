@@ -478,6 +478,40 @@ export class CreateOrderBodyDto {
   delivery_request?: string | null;
 }
 
+export class OrderPreviewResponseDto {
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '상품 금액 소계',
+  })
+  subtotal!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '3000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '배송비',
+  })
+  shipping_fee!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '할인 금액',
+  })
+  discount_amount!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '28800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '최종 결제 금액',
+  })
+  total_amount!: string;
+}
+
 export class UserEnvelopeResponseDto {
   @ApiProperty({ type: UserResponseDto })
   user!: UserResponseDto;
