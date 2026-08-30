@@ -15,6 +15,7 @@ import {
 } from './rate-limit/rate-limit.config';
 import { RateLimitGuard } from './rate-limit/rate-limit.guard';
 import { UsersModule } from './users/users.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 import {
   validateEnvironment,
   type EnvironmentVariables,
@@ -58,6 +59,7 @@ import { ApiExceptionFilter } from './http/api-exception.filter';
     OrdersModule,
     UsersModule,
     AuthModule,
+    WishlistModule,
   ],
   controllers: [HealthController],
   providers: [

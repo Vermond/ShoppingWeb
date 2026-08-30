@@ -14,12 +14,14 @@ import { ProductsService } from './../src/products/products.service';
 import { RateLimitGuard } from './../src/rate-limit/rate-limit.guard';
 import type { UserRecord } from './../src/users/users.types';
 import { UsersService } from './../src/users/users.service';
+import { WishlistService } from './../src/wishlist/wishlist.service';
 import Decimal from 'decimal.js';
 import type {
   ProductDetailRecord,
   ProductRecord,
 } from './../src/products/products.types';
 import type { CategoryRow } from './../src/categories/categories.types';
+import type { WishlistItemRecord } from './../src/wishlist/wishlist.types';
 
 const user: UserRecord = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -56,6 +58,23 @@ const serializedProduct = {
   price: '12900.00',
   created_at: product.created_at.toISOString(),
   updated_at: product.updated_at.toISOString(),
+};
+
+const wishlistItem: WishlistItemRecord = {
+  user_id: user.id,
+  product_id: product.id,
+  created_at: new Date('2026-01-02T00:00:00.000Z'),
+  product,
+  image_url: 'https://example.com/product.png',
+};
+
+const serializedWishlistItem = {
+  product_id: wishlistItem.product_id,
+  created_at: wishlistItem.created_at.toISOString(),
+  product: {
+    ...serializedProduct,
+    image_url: wishlistItem.image_url,
+  },
 };
 
 const productDetail: ProductDetailRecord = {
@@ -117,6 +136,11 @@ describe('API contracts (e2e)', () => {
     verify: jest.Mock;
     resend: jest.Mock;
   };
+  let wishlistService: {
+    findAllByUserId: jest.Mock;
+    addItem: jest.Mock;
+    removeItem: jest.Mock;
+  };
   let databaseReady = true;
 
   beforeAll(async () => {
@@ -158,6 +182,11 @@ describe('API contracts (e2e)', () => {
       verify: jest.fn().mockResolvedValue({ status: 'verified' }),
       resend: jest.fn().mockResolvedValue({ status: 'sent' }),
     };
+    wishlistService = {
+      findAllByUserId: jest.fn().mockResolvedValue([wishlistItem]),
+      addItem: jest.fn().mockResolvedValue(wishlistItem),
+      removeItem: jest.fn().mockResolvedValue(undefined),
+    };
 
     const accessTokenGuard = {
       canActivate: (context: ExecutionContext): boolean => {
@@ -185,6 +214,8 @@ describe('API contracts (e2e)', () => {
       .useValue(authService)
       .overrideProvider(EmailVerificationService)
       .useValue(emailVerificationService)
+      .overrideProvider(WishlistService)
+      .useValue(wishlistService)
       .overrideGuard(AccessTokenGuard)
       .useValue(accessTokenGuard)
       .overrideGuard(RateLimitGuard)
@@ -282,6 +313,33 @@ describe('API contracts (e2e)', () => {
       .expect({ product: serializedProductDetail });
 
     expect(productsService.findById).toHaveBeenCalledWith(product.id);
+  });
+
+  it('gets, adds, and removes wishlist items', async () => {
+    await client
+      .get('/api/wishlist/items')
+      .expect(200)
+      .expect({ items: [serializedWishlistItem] });
+
+    await client
+      .post('/api/wishlist/items')
+      .send({ product_id: product.id })
+      .expect(201)
+      .expect({ item: serializedWishlistItem });
+
+    await client
+      .delete(`/api/wishlist/items/${product.id}`)
+      .expect(200)
+      .expect({ message: '찜 목록에서 삭제했습니다.' });
+
+    expect(wishlistService.findAllByUserId).toHaveBeenCalledWith(user.id);
+    expect(wishlistService.addItem).toHaveBeenCalledWith(user.id, {
+      product_id: product.id,
+    });
+    expect(wishlistService.removeItem).toHaveBeenCalledWith(
+      user.id,
+      product.id,
+    );
   });
 
   it('rejects an invalid product detail id', async () => {

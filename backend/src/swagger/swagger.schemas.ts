@@ -155,6 +155,46 @@ export class MergeCartBodyDto {
   items!: AddCartItemBodyDto[];
 }
 
+export class WishlistProductResponseDto extends ProductResponseDto {
+  @ApiPropertyOptional({
+    format: 'uri',
+    nullable: true,
+    description: '대표 이미지 URL',
+  })
+  image_url!: string | null;
+}
+
+export class WishlistItemResponseDto {
+  @ApiProperty({ format: 'uuid', description: '상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ format: 'date-time', description: '찜 추가 시각' })
+  created_at!: string;
+
+  @ApiProperty({ type: WishlistProductResponseDto })
+  product!: WishlistProductResponseDto;
+}
+
+export class WishlistItemsResponseDto {
+  @ApiProperty({ type: [WishlistItemResponseDto] })
+  items!: WishlistItemResponseDto[];
+}
+
+export class WishlistItemEnvelopeResponseDto {
+  @ApiProperty({ type: WishlistItemResponseDto })
+  item!: WishlistItemResponseDto;
+}
+
+export class AddWishlistItemBodyDto {
+  @ApiProperty({ format: 'uuid', description: '찜할 상품 ID' })
+  product_id!: string;
+}
+
+export class DeleteWishlistItemResponseDto {
+  @ApiProperty({ example: '찜 목록에서 삭제했습니다.' })
+  message!: string;
+}
+
 export class ProductImageResponseDto {
   @ApiProperty({ description: '이미지 ID' })
   id!: string;
