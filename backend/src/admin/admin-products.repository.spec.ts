@@ -63,6 +63,8 @@ describe('AdminProductsRepository', () => {
       20,
     ]);
 
+    expect(query.mock.calls[2]?.[1]).toEqual(['머그', '1', 10]);
+
     const listSql = query.mock.calls[0]?.[0] as string;
     const statusCountSql = query.mock.calls[2]?.[0] as string;
     expect(listSql).toContain("p.name ILIKE '%' || $1 || '%'");
@@ -74,6 +76,7 @@ describe('AdminProductsRepository', () => {
       'ORDER BY COALESCE(sales.sales_quantity, 0) DESC',
     );
     expect(statusCountSql).not.toContain('p.status = $3');
+    expect(statusCountSql).toContain('p.stock <= $3');
   });
 
   it('loads all-state detail and images', async () => {

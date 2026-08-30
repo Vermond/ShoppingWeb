@@ -44,7 +44,7 @@ const PRODUCT_FILTERS = `
 const PRODUCT_FILTERS_WITHOUT_STATUS = `
   WHERE ($1::text IS NULL OR p.name ILIKE '%' || $1 || '%')
     AND ($2::bigint IS NULL OR p.category_id = $2)
-    AND ($4::int IS NULL OR p.stock <= $4)
+    AND ($3::int IS NULL OR p.stock <= $3)
 `;
 
 const SALES_QUANTITY_JOIN = `
@@ -229,7 +229,7 @@ export class AdminProductsRepository {
           ),
           executor.query<AdminProductStatusCountRow>(
             COUNT_ADMIN_PRODUCTS_BY_STATUS_QUERY,
-            values,
+            [query.search, query.categoryId, query.lowStockThreshold],
           ),
         ]);
 
