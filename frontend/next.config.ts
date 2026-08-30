@@ -27,6 +27,14 @@ const nextConfig: NextConfig = {
         destination: `${backendApiBaseUrl}/api/cart/:path*`,
       },
       {
+        source: "/api/wishlist",
+        destination: `${backendApiBaseUrl}/api/wishlist`,
+      },
+      {
+        source: "/api/wishlist/:path*",
+        destination: `${backendApiBaseUrl}/api/wishlist/:path*`,
+      },
+      {
         source: "/api/categories",
         destination: `${backendApiBaseUrl}/api/categories`,
       },
