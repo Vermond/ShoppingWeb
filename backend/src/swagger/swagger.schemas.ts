@@ -1357,3 +1357,177 @@ export class AdminProductDetailEnvelopeResponseDto {
   @ApiProperty({ type: AdminProductDetailDto })
   product!: AdminProductDetailDto;
 }
+
+export class AdminCustomerListItemDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  name!: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  email!: string;
+
+  @ApiProperty({ enum: ['active', 'withdrawn'] })
+  status!: 'active' | 'withdrawn';
+
+  @ApiProperty({ example: true })
+  email_verified!: boolean;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ example: 3 })
+  order_count!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '128000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_spent!: string;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  last_order_at!: string | null;
+}
+
+export class AdminCustomerStatusCountsDto {
+  @ApiProperty({ example: 120 })
+  active!: number;
+
+  @ApiProperty({ example: 4 })
+  withdrawn!: number;
+}
+
+export class AdminCustomerSummaryDto {
+  @ApiProperty({ example: 1248 })
+  total_customer_count!: number;
+
+  @ApiProperty({ example: 1200 })
+  active_customer_count!: number;
+
+  @ApiProperty({ example: 96 })
+  new_customer_count!: number;
+
+  @ApiProperty({ example: 28.6, nullable: true })
+  repurchase_rate_percent!: number | null;
+}
+
+export class AdminCustomerPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  page_size!: number;
+
+  @ApiProperty({ example: 1248 })
+  total_count!: number;
+
+  @ApiProperty({ example: 63 })
+  total_pages!: number;
+
+  @ApiProperty({ example: true })
+  has_next!: boolean;
+
+  @ApiProperty({ example: false })
+  has_previous!: boolean;
+}
+
+export class AdminCustomerListResponseDto {
+  @ApiProperty({ type: [AdminCustomerListItemDto] })
+  customers!: AdminCustomerListItemDto[];
+
+  @ApiProperty({ example: 1248 })
+  total_count!: number;
+
+  @ApiProperty({ type: AdminCustomerStatusCountsDto })
+  status_counts!: AdminCustomerStatusCountsDto;
+
+  @ApiProperty({ type: AdminCustomerSummaryDto })
+  summary!: AdminCustomerSummaryDto;
+
+  @ApiProperty({ type: AdminCustomerPaginationDto })
+  pagination!: AdminCustomerPaginationDto;
+}
+
+export class AdminCustomerOrderProductDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  product_name!: string;
+
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+}
+
+export class AdminCustomerOrderDto {
+  @ApiProperty({ format: 'uuid' })
+  order_id!: string;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES] })
+  status!: OrderStatus;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_amount!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ type: [AdminCustomerOrderProductDto] })
+  product_summary!: AdminCustomerOrderProductDto[];
+
+  @ApiProperty({ example: 3 })
+  product_count!: number;
+}
+
+export class AdminCustomerDetailDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  name!: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  email!: string;
+
+  @ApiProperty({ enum: ['active', 'withdrawn'] })
+  status!: 'active' | 'withdrawn';
+
+  @ApiProperty({ example: true })
+  email_verified!: boolean;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ example: 3 })
+  order_count!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '128000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_spent!: string;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  last_order_at!: string | null;
+
+  @ApiProperty({ type: [AdminCustomerOrderDto] })
+  orders!: AdminCustomerOrderDto[];
+}
+
+export class AdminCustomerDetailEnvelopeResponseDto {
+  @ApiProperty({ type: AdminCustomerDetailDto })
+  customer!: AdminCustomerDetailDto;
+}
