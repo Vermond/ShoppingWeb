@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import Decimal from 'decimal.js';
 import { DatabaseService } from '../database/database.service';
@@ -45,7 +46,7 @@ export class OrdersService {
           });
         }
 
-        const totalAmount = calculateOrderTotal(cart.items);
+        const subtotal = calculateOrderSubtotal(cart.items);
         const address = await this.ordersRepository.findAddressForOrder(
           userId,
           input.address_id,
@@ -59,6 +60,23 @@ export class OrdersService {
           });
         }
 
+        const shippingPolicy =
+          await this.ordersRepository.findActiveShippingPolicy(executor);
+
+        if (!shippingPolicy) {
+          throw new ServiceUnavailableException({
+            code: 'SHIPPING_POLICY_UNAVAILABLE',
+            message: '배송 정책을 확인할 수 없어 주문할 수 없습니다.',
+          });
+        }
+
+        const shippingFee = calculateShippingFee(
+          subtotal,
+          shippingPolicy.base_fee,
+          shippingPolicy.free_threshold,
+        );
+        const discountAmount = new Decimal(0);
+        const totalAmount = subtotal.add(shippingFee).sub(discountAmount);
         const payment = this.mockPaymentService.authorize(totalAmount);
 
         if (!payment.approved) {
@@ -71,7 +89,12 @@ export class OrdersService {
         const order = await this.ordersRepository.createOrder(
           userId,
           'paid',
-          totalAmount.toFixed(2),
+          {
+            subtotal: subtotal.toFixed(2),
+            shipping_fee: shippingFee.toFixed(2),
+            discount_amount: discountAmount.toFixed(2),
+            total_amount: totalAmount.toFixed(2),
+          },
           executor,
         );
 
@@ -248,12 +271,24 @@ export class OrdersService {
   }
 }
 
-function calculateOrderTotal(items: CheckoutCartItemRow[]): Decimal {
+function calculateOrderSubtotal(items: CheckoutCartItemRow[]): Decimal {
   return items.reduce((total, item) => {
     assertItemCanBeOrdered(item);
 
     return total.add(new Decimal(item.product_price).mul(item.quantity));
   }, new Decimal(0));
+}
+
+function calculateShippingFee(
+  subtotal: Decimal,
+  baseFee: string,
+  freeThreshold: string,
+): Decimal {
+  if (subtotal.gte(new Decimal(freeThreshold))) {
+    return new Decimal(0);
+  }
+
+  return new Decimal(baseFee);
 }
 
 function assertItemCanBeOrdered(item: CheckoutCartItemRow): void {

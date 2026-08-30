@@ -413,6 +413,30 @@ export class OrderItemSummaryResponseDto {
     type: String,
     example: '25800.00',
     pattern: '^\\d+\\.\\d{2}$',
+    description: '상품 금액 소계',
+  })
+  subtotal!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '배송비',
+  })
+  shipping_fee!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '할인 금액',
+  })
+  discount_amount!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
     description: '주문 총액',
   })
   total_amount!: string;

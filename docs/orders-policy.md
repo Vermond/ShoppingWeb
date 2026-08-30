@@ -30,11 +30,22 @@
 - 상품이 `active` 상태인지
 - 요청 수량이 `max_order_quantity` 이하인지
 - 요청 수량이 현재 재고 이하인지
-- 주문 당시 상품 가격과 수량으로 계산한 금액
+- 주문 당시 상품 가격과 수량으로 계산한 소계
 
 상품 행은 `FOR UPDATE`로 잠근 뒤 재고를 차감한다. 검증·주문 생성·주문 항목 저장·배송지 스냅샷 저장·재고 차감·장바구니 비우기는 하나의 트랜잭션으로 처리한다. 중간에 실패하면 전체 변경을 롤백한다.
 
 금액은 PostgreSQL `numeric(12,2)`의 정밀도를 유지하기 위해 `Decimal`로 계산하고 API에서는 소수 둘째 자리까지의 문자열로 반환한다.
+
+현재 금액 계산은 다음과 같다.
+
+```text
+subtotal = 주문 상품 단가 × 수량의 합
+shipping_fee = subtotal >= free_threshold ? 0.00 : base_fee
+discount_amount = 0.00
+total_amount = subtotal + shipping_fee - discount_amount
+```
+
+주문 생성 시 `sales.shipping_policy`에서 `is_active = true`인 정책을 조회한다. 현재 활성 배송 정책이 없으면 잘못된 금액으로 주문하지 않고 주문을 실패시킨다. 배송비와 할인 금액은 주문 요청 본문으로 받지 않으며, 서버가 장바구니 상품과 현재 배송 정책을 기준으로 계산한 값을 `sales.orders`에 명시적으로 저장한다.
 
 ## 목업 결제
 
@@ -52,12 +63,19 @@
 
 ## 응답 금액
 
-주문 상세의 `total_amount`, `unit_price`, `subtotal`은 다음과 같이 문자열로 반환한다.
+주문 응답의 `subtotal`, `shipping_fee`, `discount_amount`, `total_amount`, `unit_price`는 다음과 같이 문자열로 반환한다.
 
 ```json
 {
-  "total_amount": "25800.00",
-  "unit_price": "12900.00",
-  "subtotal": "25800.00"
+  "subtotal": "25800.00",
+  "shipping_fee": "3000.00",
+  "discount_amount": "0.00",
+  "total_amount": "28800.00",
+  "items": [
+    {
+      "unit_price": "12900.00",
+      "subtotal": "25800.00"
+    }
+  ]
 }
 ```

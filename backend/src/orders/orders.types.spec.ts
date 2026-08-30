@@ -11,7 +11,10 @@ const orderRow: OrderRow = {
   id: '11111111-1111-4111-8111-111111111111',
   user_id: '22222222-2222-4222-8222-222222222222',
   status: 'paid',
-  total_amount: '25800.00',
+  subtotal: '25800.00',
+  shipping_fee: '3000.00',
+  discount_amount: '0.00',
+  total_amount: '28800.00',
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),
   items: [
@@ -41,10 +44,16 @@ describe('order types', () => {
     const order = toOrderRecord(orderRow);
 
     expect(order.total_amount).toBeInstanceOf(Decimal);
+    expect(order.subtotal).toBeInstanceOf(Decimal);
+    expect(order.shipping_fee).toBeInstanceOf(Decimal);
+    expect(order.discount_amount).toBeInstanceOf(Decimal);
     expect(order.items[0]?.unit_price).toBeInstanceOf(Decimal);
     expect(order.items[0]?.subtotal.toFixed(2)).toBe('25800.00');
     expect(serializeOrder(order)).toMatchObject({
-      total_amount: '25800.00',
+      subtotal: '25800.00',
+      shipping_fee: '3000.00',
+      discount_amount: '0.00',
+      total_amount: '28800.00',
       items: [
         {
           unit_price: '12900.00',
@@ -64,7 +73,10 @@ describe('order types', () => {
       id: orderRow.id,
       user_id: orderRow.user_id,
       status: 'paid',
-      total_amount: '25800.00',
+      subtotal: '25800.00',
+      shipping_fee: '3000.00',
+      discount_amount: '0.00',
+      total_amount: '28800.00',
       created_at: '2026-01-01T00:00:00.000Z',
       updated_at: '2026-01-01T00:00:00.000Z',
     });

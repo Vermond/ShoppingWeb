@@ -58,6 +58,7 @@ Rate Limit 응답처럼 추가 정보가 필요한 경우에만 허용된 메타
 - `PAYMENT_FAILED`
 - `ORDER_NOT_FOUND`
 - `ORDER_CANNOT_BE_CANCELLED`
+- `SHIPPING_POLICY_UNAVAILABLE`
 
 ## 메시지 규칙
 

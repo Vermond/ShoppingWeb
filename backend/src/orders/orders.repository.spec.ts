@@ -2,6 +2,29 @@ import { OrdersRepository } from './orders.repository';
 import type { DatabaseService } from '../database/database.service';
 
 describe('OrdersRepository', () => {
+  it('loads the active shipping policy as decimal strings', async () => {
+    const query = jest.fn().mockResolvedValue({
+      rows: [
+        {
+          id: '1',
+          base_fee: '3000.00',
+          free_threshold: '50000.00',
+        },
+      ],
+    });
+    const repository = new OrdersRepository({} as DatabaseService);
+
+    await expect(
+      repository.findActiveShippingPolicy({ query }),
+    ).resolves.toEqual({
+      id: '1',
+      base_fee: '3000.00',
+      free_threshold: '50000.00',
+    });
+    expect(query.mock.calls[0]?.[0]).toContain('WHERE is_active = true');
+    expect(query.mock.calls[0]?.[0]).toContain('FOR SHARE');
+  });
+
   it('loads a checkout cart with explicit product columns', async () => {
     const query = jest
       .fn()
@@ -49,6 +72,9 @@ describe('OrdersRepository', () => {
             id: 'order-1',
             user_id: 'user-1',
             status: 'paid',
+            subtotal: '12900.00',
+            shipping_fee: '0.00',
+            discount_amount: '0.00',
             total_amount: '12900.00',
             created_at: new Date(),
             updated_at: new Date(),

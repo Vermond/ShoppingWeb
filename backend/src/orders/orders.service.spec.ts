@@ -10,7 +10,10 @@ const order: OrderRow = {
   id: '11111111-1111-4111-8111-111111111111',
   user_id: '22222222-2222-4222-8222-222222222222',
   status: 'paid',
-  total_amount: '25800.00',
+  subtotal: '25800.00',
+  shipping_fee: '3000.00',
+  discount_amount: '0.00',
+  total_amount: '28800.00',
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),
   items: [
@@ -41,6 +44,7 @@ function createService() {
   const repository = {
     findCheckoutCart: jest.fn(),
     findAddressForOrder: jest.fn(),
+    findActiveShippingPolicy: jest.fn(),
     createOrder: jest.fn(),
     insertOrderItem: jest.fn(),
     decrementStock: jest.fn(),
@@ -87,11 +91,19 @@ describe('OrdersService', () => {
       delivery_request: null,
       created_at: new Date(),
     });
+    repository.findActiveShippingPolicy.mockResolvedValue({
+      id: '1',
+      base_fee: '3000.00',
+      free_threshold: '50000.00',
+    });
     repository.createOrder.mockResolvedValue({
       id: order.id,
       user_id: order.user_id,
       status: 'paid',
-      total_amount: '25800.00',
+      subtotal: '25800.00',
+      shipping_fee: '3000.00',
+      discount_amount: '0.00',
+      total_amount: '28800.00',
       created_at: order.created_at,
       updated_at: order.updated_at,
     });
@@ -103,11 +115,16 @@ describe('OrdersService', () => {
       delivery_request: '문 앞에 놓아주세요',
     });
 
-    expect(result.total_amount).toEqual(new Decimal('25800.00'));
+    expect(result.total_amount).toEqual(new Decimal('28800.00'));
     expect(repository.createOrder).toHaveBeenCalledWith(
       order.user_id,
       'paid',
-      '25800.00',
+      {
+        subtotal: '25800.00',
+        shipping_fee: '3000.00',
+        discount_amount: '0.00',
+        total_amount: '28800.00',
+      },
       expect.anything(),
     );
     expect(repository.decrementStock).toHaveBeenCalledWith(
@@ -151,6 +168,9 @@ describe('OrdersService', () => {
       id: order.id,
       user_id: order.user_id,
       status: 'paid',
+      subtotal: order.subtotal,
+      shipping_fee: order.shipping_fee,
+      discount_amount: order.discount_amount,
       total_amount: order.total_amount,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -162,6 +182,9 @@ describe('OrdersService', () => {
       id: order.id,
       user_id: order.user_id,
       status: 'cancelled',
+      subtotal: order.subtotal,
+      shipping_fee: order.shipping_fee,
+      discount_amount: order.discount_amount,
       total_amount: order.total_amount,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -189,6 +212,9 @@ describe('OrdersService', () => {
       id: order.id,
       user_id: order.user_id,
       status: 'shipped',
+      subtotal: order.subtotal,
+      shipping_fee: order.shipping_fee,
+      discount_amount: order.discount_amount,
       total_amount: order.total_amount,
       created_at: order.created_at,
       updated_at: order.updated_at,
@@ -251,5 +277,45 @@ describe('OrdersService', () => {
       }),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(repository.findAddressForOrder).not.toHaveBeenCalled();
+  });
+
+  it('rejects order creation when no shipping policy is active', async () => {
+    const { service, repository } = createService();
+    repository.findCheckoutCart.mockResolvedValue({
+      cart_id: 'cart-1',
+      items: [
+        {
+          cart_id: 'cart-1',
+          product_id: 'product-1',
+          quantity: 1,
+          product_name: '상품 A',
+          product_price: '100.00',
+          product_stock: 1,
+          product_max_order_quantity: 1,
+          product_status: 'active',
+        },
+      ],
+    });
+    repository.findAddressForOrder.mockResolvedValue({
+      order_id: '',
+      recipient_name: '홍길동',
+      phone_number: '01012345678',
+      postal_code: '06236',
+      address_line1: '주소',
+      address_line2: null,
+      delivery_request: null,
+      created_at: new Date(),
+    });
+    repository.findActiveShippingPolicy.mockResolvedValue(null);
+
+    await expect(
+      service.create(order.user_id, {
+        address_id: 'address-1',
+        delivery_request: null,
+      }),
+    ).rejects.toMatchObject({
+      response: { code: 'SHIPPING_POLICY_UNAVAILABLE' },
+    });
+    expect(repository.createOrder).not.toHaveBeenCalled();
   });
 });

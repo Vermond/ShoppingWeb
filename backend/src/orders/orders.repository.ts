@@ -10,6 +10,7 @@ import type {
   OrderHeaderRow,
   OrderItemRow,
   OrderRow,
+  ShippingPolicyRow,
 } from './orders.types';
 import type { OrderStatus } from './orders.types';
 
@@ -45,10 +46,22 @@ const FIND_ADDRESS_FOR_ORDER_QUERY = `
   FOR UPDATE
 `;
 
+const FIND_ACTIVE_SHIPPING_POLICY_QUERY = `
+  SELECT id, base_fee, free_threshold
+  FROM sales.shipping_policy
+  WHERE is_active = true
+  ORDER BY id DESC
+  LIMIT 1
+  FOR SHARE
+`;
+
 const CREATE_ORDER_QUERY = `
-  INSERT INTO sales.orders (user_id, status, total_amount)
-  VALUES ($1, $2, $3)
-  RETURNING id, user_id, status, total_amount, created_at, updated_at
+  INSERT INTO sales.orders (
+    user_id, status, subtotal, shipping_fee, discount_amount, total_amount
+  )
+  VALUES ($1, $2, $3, $4, $5, $6)
+  RETURNING id, user_id, status, subtotal, shipping_fee, discount_amount,
+            total_amount, created_at, updated_at
 `;
 
 const INSERT_ORDER_ITEM_QUERY = `
@@ -86,14 +99,16 @@ const TOUCH_CART_QUERY = `
 `;
 
 const FIND_ORDER_HEADERS_QUERY = `
-  SELECT id, user_id, status, total_amount, created_at, updated_at
+  SELECT id, user_id, status, subtotal, shipping_fee, discount_amount,
+         total_amount, created_at, updated_at
   FROM sales.orders
   WHERE user_id = $1
   ORDER BY created_at DESC, id DESC
 `;
 
 const FIND_ORDER_HEADER_QUERY = `
-  SELECT id, user_id, status, total_amount, created_at, updated_at
+  SELECT id, user_id, status, subtotal, shipping_fee, discount_amount,
+         total_amount, created_at, updated_at
   FROM sales.orders
   WHERE user_id = $1 AND id = $2
 `;
@@ -113,7 +128,8 @@ const FIND_ORDER_ADDRESS_QUERY = `
 `;
 
 const FIND_ORDER_HEADER_FOR_UPDATE_QUERY = `
-  SELECT id, user_id, status, total_amount, created_at, updated_at
+  SELECT id, user_id, status, subtotal, shipping_fee, discount_amount,
+         total_amount, created_at, updated_at
   FROM sales.orders
   WHERE user_id = $1 AND id = $2
   FOR UPDATE
@@ -141,7 +157,8 @@ const CANCEL_ORDER_QUERY = `
   SET status = 'cancelled',
       updated_at = now()
   WHERE user_id = $1 AND id = $2 AND status = 'paid'
-  RETURNING id, user_id, status, total_amount, created_at, updated_at
+  RETURNING id, user_id, status, subtotal, shipping_fee, discount_amount,
+            total_amount, created_at, updated_at
 `;
 
 type CartIdRow = { id: string };
@@ -215,16 +232,34 @@ export class OrdersRepository {
     };
   }
 
+  async findActiveShippingPolicy(
+    executor: DatabaseQueryExecutor,
+  ): Promise<ShippingPolicyRow | null> {
+    const result = await executor.query<ShippingPolicyRow>(
+      FIND_ACTIVE_SHIPPING_POLICY_QUERY,
+    );
+
+    return result.rows[0] ?? null;
+  }
+
   async createOrder(
     userId: string,
     status: OrderStatus,
-    totalAmount: string,
+    amounts: {
+      subtotal: string;
+      shipping_fee: string;
+      discount_amount: string;
+      total_amount: string;
+    },
     executor: DatabaseQueryExecutor,
   ): Promise<OrderHeaderRow> {
     const result = await executor.query<OrderHeaderRow>(CREATE_ORDER_QUERY, [
       userId,
       status,
-      totalAmount,
+      amounts.subtotal,
+      amounts.shipping_fee,
+      amounts.discount_amount,
+      amounts.total_amount,
     ]);
     const order = result.rows[0];
 

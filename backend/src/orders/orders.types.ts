@@ -34,6 +34,9 @@ export type OrderHeaderRow = {
   id: string;
   user_id: string;
   status: string;
+  subtotal: string;
+  shipping_fee: string;
+  discount_amount: string;
   total_amount: string;
   created_at: Date;
   updated_at: Date;
@@ -60,11 +63,26 @@ export type CheckoutCartRow = {
   items: CheckoutCartItemRow[];
 };
 
+export type ShippingPolicyRow = {
+  id: string;
+  base_fee: string;
+  free_threshold: string;
+};
+
 export type OrderRecord = Omit<
   OrderHeaderRow,
-  'status' | 'total_amount' | 'created_at' | 'updated_at'
+  | 'status'
+  | 'subtotal'
+  | 'shipping_fee'
+  | 'discount_amount'
+  | 'total_amount'
+  | 'created_at'
+  | 'updated_at'
 > & {
   status: OrderStatus;
+  subtotal: Decimal;
+  shipping_fee: Decimal;
+  discount_amount: Decimal;
   total_amount: Decimal;
   created_at: Date;
   updated_at: Date;
@@ -79,9 +97,18 @@ export type OrderItemRecord = Omit<OrderItemRow, 'unit_price'> & {
 
 export type OrderSummaryRecord = Omit<
   OrderHeaderRow,
-  'status' | 'total_amount' | 'created_at' | 'updated_at'
+  | 'status'
+  | 'subtotal'
+  | 'shipping_fee'
+  | 'discount_amount'
+  | 'total_amount'
+  | 'created_at'
+  | 'updated_at'
 > & {
   status: OrderStatus;
+  subtotal: Decimal;
+  shipping_fee: Decimal;
+  discount_amount: Decimal;
   total_amount: Decimal;
   created_at: Date;
   updated_at: Date;
@@ -101,8 +128,18 @@ export type OrderAddressResponse = Omit<OrderAddressRow, 'created_at'> & {
 
 export type OrderResponse = Omit<
   OrderRecord,
-  'total_amount' | 'created_at' | 'updated_at' | 'items' | 'address'
+  | 'subtotal'
+  | 'shipping_fee'
+  | 'discount_amount'
+  | 'total_amount'
+  | 'created_at'
+  | 'updated_at'
+  | 'items'
+  | 'address'
 > & {
+  subtotal: string;
+  shipping_fee: string;
+  discount_amount: string;
   total_amount: string;
   created_at: string;
   updated_at: string;
@@ -112,8 +149,16 @@ export type OrderResponse = Omit<
 
 export type OrderSummaryResponse = Omit<
   OrderSummaryRecord,
-  'total_amount' | 'created_at' | 'updated_at'
+  | 'subtotal'
+  | 'shipping_fee'
+  | 'discount_amount'
+  | 'total_amount'
+  | 'created_at'
+  | 'updated_at'
 > & {
+  subtotal: string;
+  shipping_fee: string;
+  discount_amount: string;
   total_amount: string;
   created_at: string;
   updated_at: string;
@@ -128,6 +173,9 @@ export function toOrderRecord(row: OrderRow): OrderRecord {
     id: row.id,
     user_id: row.user_id,
     status: row.status,
+    subtotal: new Decimal(row.subtotal),
+    shipping_fee: new Decimal(row.shipping_fee),
+    discount_amount: new Decimal(row.discount_amount),
     total_amount: new Decimal(row.total_amount),
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -153,6 +201,9 @@ export function toOrderSummaryRecord(row: OrderHeaderRow): OrderSummaryRecord {
     id: row.id,
     user_id: row.user_id,
     status: row.status,
+    subtotal: new Decimal(row.subtotal),
+    shipping_fee: new Decimal(row.shipping_fee),
+    discount_amount: new Decimal(row.discount_amount),
     total_amount: new Decimal(row.total_amount),
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -164,6 +215,9 @@ export function serializeOrder(order: OrderRecord): OrderResponse {
     id: order.id,
     user_id: order.user_id,
     status: order.status,
+    subtotal: order.subtotal.toFixed(2),
+    shipping_fee: order.shipping_fee.toFixed(2),
+    discount_amount: order.discount_amount.toFixed(2),
     total_amount: order.total_amount.toFixed(2),
     created_at: order.created_at.toISOString(),
     updated_at: order.updated_at.toISOString(),
@@ -190,6 +244,9 @@ export function serializeOrderSummary(
     id: order.id,
     user_id: order.user_id,
     status: order.status,
+    subtotal: order.subtotal.toFixed(2),
+    shipping_fee: order.shipping_fee.toFixed(2),
+    discount_amount: order.discount_amount.toFixed(2),
     total_amount: order.total_amount.toFixed(2),
     created_at: order.created_at.toISOString(),
     updated_at: order.updated_at.toISOString(),
