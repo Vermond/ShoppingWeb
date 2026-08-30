@@ -16,22 +16,21 @@ import {
   IconButton,
 } from "@mui/material";
 import { useState } from "react";
+import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductArt } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
+import { useOrderPreview } from "../../hooks/use-order-preview";
 import { formatPrice } from "../../utils/format";
 import {
   getMaxPurchasableQuantity,
   isCartQuantityAvailable,
 } from "../../utils/cart";
-import {
-  calculateShipping,
-  FREE_SHIPPING_THRESHOLD,
-} from "../../utils/order";
 import styles from "./page.module.css";
 
 export default function CartPage() {
+  const { status: authStatus } = useAuth();
   const [query, setQuery] = useState("");
   const [isRemovalDialogOpen, setIsRemovalDialogOpen] = useState(false);
   const [pendingRemoval, setPendingRemoval] = useState<{
@@ -57,8 +56,44 @@ export default function CartPage() {
       !isCartQuantityAvailable(product, item.quantity)
     );
   });
-  const shipping = calculateShipping(subtotal);
-  const total = subtotal + shipping;
+  const orderPreview = useOrderPreview(
+    authStatus === "authenticated" &&
+      !isCartLoading &&
+      !cartError &&
+      items.length > 0 &&
+      !hasUnavailableItems,
+    `${authStatus}:${totalItems}:${subtotal}:${hasUnavailableItems}:${Boolean(
+      cartError,
+    )}`,
+  );
+  const previewAmounts = orderPreview.amounts;
+  const summarySubtotal = previewAmounts?.subtotal ?? subtotal;
+  const shipping = previewAmounts?.shippingFee ?? null;
+  const total = previewAmounts?.totalAmount ?? null;
+  const shippingLabel =
+    authStatus !== "authenticated"
+      ? "로그인 후 확인"
+      : orderPreview.isLoading
+        ? "계산 중..."
+        : shipping === null
+          ? "확인 필요"
+          : shipping === 0
+            ? "무료"
+            : formatPrice(shipping);
+  const totalLabel =
+    authStatus !== "authenticated"
+      ? "로그인 후 확인"
+      : orderPreview.isLoading
+        ? "계산 중..."
+        : total === null
+          ? "확인 필요"
+          : formatPrice(total);
+  const isCheckoutDisabled =
+    hasUnavailableItems ||
+    (authStatus === "authenticated" &&
+      (orderPreview.isLoading ||
+        orderPreview.errorMessage !== null ||
+        previewAmounts === null));
 
   const requestRemoval = (productId: string, productName: string) => {
     setPendingRemoval({ productId, productName });
@@ -257,16 +292,16 @@ export default function CartPage() {
               <dl>
                 <div>
                   <dt>상품 금액</dt>
-                  <dd>{formatPrice(subtotal)}</dd>
+                  <dd>{formatPrice(summarySubtotal)}</dd>
                 </div>
                 <div>
                   <dt>배송비</dt>
-                  <dd>{shipping === 0 ? "무료" : formatPrice(shipping)}</dd>
+                  <dd>{shippingLabel}</dd>
                 </div>
               </dl>
               <div className={styles.summaryTotal}>
                 <span>총 결제 금액</span>
-                <strong>{formatPrice(total)}</strong>
+                <strong>{totalLabel}</strong>
               </div>
               <Button
                 className={styles.checkoutButton}
@@ -275,9 +310,15 @@ export default function CartPage() {
                 variant="contained"
                 disableRipple
                 fullWidth
-                disabled={hasUnavailableItems}
+                disabled={isCheckoutDisabled}
               >
-                {hasUnavailableItems ? "재고를 확인해주세요" : "결제하기"}
+                {hasUnavailableItems
+                  ? "재고를 확인해주세요"
+                  : orderPreview.isLoading
+                    ? "금액 확인 중..."
+                    : orderPreview.errorMessage
+                      ? "배송비를 확인해주세요"
+                      : "결제하기"}
               </Button>
               {hasUnavailableItems && (
                 <p className={styles.outOfStockNote}>
@@ -287,10 +328,21 @@ export default function CartPage() {
               {cartError && (
                 <p className={styles.outOfStockNote}>{cartError}</p>
               )}
+              {orderPreview.errorMessage && (
+                <p className={styles.outOfStockNote} role="alert">
+                  {orderPreview.errorMessage}
+                </p>
+              )}
               <p className={styles.shippingNote}>
-                {subtotal >= FREE_SHIPPING_THRESHOLD
-                  ? "무료 배송이 적용되었어요."
-                  : `${formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)} 더 담으면 무료 배송`}
+                {authStatus !== "authenticated"
+                  ? "로그인 후 배송비를 확인할 수 있어요."
+                  : orderPreview.isLoading
+                    ? "배송비를 계산하고 있어요."
+                    : orderPreview.errorMessage
+                      ? "배송비를 확인할 수 없어요."
+                      : shipping === 0
+                        ? "무료 배송이 적용되었어요."
+                        : "배송비가 적용되었어요."}
               </p>
             </aside>
           </div>

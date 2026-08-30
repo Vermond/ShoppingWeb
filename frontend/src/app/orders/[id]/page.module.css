@@ -172,6 +172,33 @@
   border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
 }
 
+.amountList {
+  display: grid;
+  gap: 14px;
+  padding-top: 22px;
+}
+
+.amountList div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.amountList dt,
+.amountList dd {
+  margin: 0;
+  font-size: 11px;
+}
+
+.amountList dt {
+  color: var(--morrow-palette-text-secondary, #787a72);
+}
+
+.amountList dd {
+  font-weight: 500;
+}
+
 .totalRow {
   display: flex;
   align-items: center;

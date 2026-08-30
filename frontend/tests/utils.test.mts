@@ -3,11 +3,6 @@ import test from "node:test";
 import { filterAndSortProducts } from "../src/utils/catalog.ts";
 import { formatPrice } from "../src/utils/format.ts";
 import {
-  FREE_SHIPPING_THRESHOLD,
-  SHIPPING_FEE,
-  calculateShipping,
-} from "../src/utils/order.ts";
-import {
   getLoginPath,
   getSafeReturnTo,
 } from "../src/utils/auth-redirect.ts";
@@ -80,12 +75,6 @@ test("상품 정렬은 낮은 가격순과 높은 가격순을 지원한다", ()
     descending.map((product) => product.price),
     [49000, 32000, 18000],
   );
-});
-
-test("배송비는 무료 배송 기준에 따라 계산된다", () => {
-  assert.equal(calculateShipping(0), 0);
-  assert.equal(calculateShipping(FREE_SHIPPING_THRESHOLD - 1), SHIPPING_FEE);
-  assert.equal(calculateShipping(FREE_SHIPPING_THRESHOLD), 0);
 });
 
 test("가격은 한국 원화 표기로 표시된다", () => {

@@ -21,6 +21,7 @@ import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
+import { useOrderPreview } from "../../hooks/use-order-preview";
 import {
   createOrder,
   type CreateOrderRequest,
@@ -32,7 +33,6 @@ import {
 } from "../../repositories/user-details.repository";
 import { formatPrice } from "../../utils/format";
 import { isCartQuantityAvailable } from "../../utils/cart";
-import { calculateShipping } from "../../utils/order";
 import styles from "./page.module.css";
 
 type CheckoutCustomer = {
@@ -106,8 +106,37 @@ export default function CheckoutPage() {
       !isCartQuantityAvailable(product, item.quantity)
     );
   });
-  const shipping = calculateShipping(subtotal);
-  const total = subtotal + shipping;
+  const orderPreview = useOrderPreview(
+    authStatus === "authenticated" &&
+      !isCartLoading &&
+      !cartError &&
+      items.length > 0 &&
+      !hasUnavailableItems,
+    `${authStatus}:${totalItems}:${subtotal}:${hasUnavailableItems}:${Boolean(
+      cartError,
+    )}`,
+  );
+  const previewAmounts = orderPreview.amounts;
+  const summarySubtotal = previewAmounts?.subtotal ?? subtotal;
+  const shipping = previewAmounts?.shippingFee ?? null;
+  const total = previewAmounts?.totalAmount ?? null;
+  const shippingLabel =
+    orderPreview.isLoading
+      ? "계산 중..."
+      : shipping === null
+        ? "확인 필요"
+        : shipping === 0
+          ? "무료"
+          : formatPrice(shipping);
+  const totalLabel = orderPreview.isLoading
+    ? "계산 중..."
+    : total === null
+      ? "확인 필요"
+      : formatPrice(total);
+  const isOrderPreviewReady =
+    previewAmounts !== null &&
+    !orderPreview.isLoading &&
+    orderPreview.errorMessage === null;
 
   useEffect(() => {
     if (authStatus !== "authenticated") {
@@ -231,6 +260,14 @@ export default function CheckoutPage() {
     if (hasUnavailableItems || cartError) {
       setErrorMessage(
         cartError ?? "재고 또는 최대 구매 가능 수량을 먼저 확인해주세요.",
+      );
+      return;
+    }
+
+    if (!isOrderPreviewReady) {
+      setErrorMessage(
+        orderPreview.errorMessage ??
+          "주문 금액을 확인한 후 다시 시도해주세요.",
       );
       return;
     }
@@ -498,9 +535,9 @@ export default function CheckoutPage() {
               </p>
             </section>
 
-            {(errorMessage || cartError) && (
+            {(errorMessage || cartError || orderPreview.errorMessage) && (
               <p className={styles.errorMessage}>
-                {errorMessage || cartError}
+                {errorMessage || cartError || orderPreview.errorMessage}
               </p>
             )}
           </div>
@@ -524,16 +561,16 @@ export default function CheckoutPage() {
             <dl>
               <div>
                 <dt>상품 금액</dt>
-                <dd>{formatPrice(subtotal)}</dd>
+                <dd>{formatPrice(summarySubtotal)}</dd>
               </div>
               <div>
                 <dt>배송비</dt>
-                <dd>{shipping === 0 ? "무료" : formatPrice(shipping)}</dd>
+                <dd>{shippingLabel}</dd>
               </div>
             </dl>
             <div className={styles.totalRow}>
               <span>총 결제 금액</span>
-              <strong>{formatPrice(total)}</strong>
+              <strong>{totalLabel}</strong>
             </div>
             <Button
               className={styles.submitButton}
@@ -541,10 +578,16 @@ export default function CheckoutPage() {
               variant="contained"
               fullWidth
               disableRipple
-              disabled={isSubmitting || hasUnavailableItems}
+              disabled={
+                isSubmitting || hasUnavailableItems || !isOrderPreviewReady
+              }
               endIcon={!isSubmitting && <ArrowForward />}
             >
-              {isSubmitting ? "주문 처리 중..." : "주문하기"}
+              {isSubmitting
+                ? "주문 처리 중..."
+                : orderPreview.isLoading
+                  ? "금액 확인 중..."
+                  : "주문하기"}
             </Button>
             <p className={styles.mockNote}>
               결제 승인은 현재 서버의 목업 결제로 처리됩니다.

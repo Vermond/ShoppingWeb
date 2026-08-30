@@ -204,6 +204,26 @@ export default function OrderDetailPage() {
               <aside className={styles.summary} aria-labelledby="summary-title">
                 <p className={styles.eyebrow}>Payment summary</p>
                 <h2 id="summary-title">결제 금액</h2>
+                <dl className={styles.amountList}>
+                  <div>
+                    <dt>상품 금액</dt>
+                    <dd>{formatPrice(order.subtotal)}</dd>
+                  </div>
+                  <div>
+                    <dt>배송비</dt>
+                    <dd>
+                      {order.shippingFee === 0
+                        ? "무료"
+                        : formatPrice(order.shippingFee)}
+                    </dd>
+                  </div>
+                  {order.discountAmount > 0 && (
+                    <div>
+                      <dt>할인 금액</dt>
+                      <dd>-{formatPrice(order.discountAmount)}</dd>
+                    </div>
+                  )}
+                </dl>
                 <div className={styles.totalRow}>
                   <span>총 결제 금액</span>
                   <strong>{formatPrice(order.totalAmount)}</strong>

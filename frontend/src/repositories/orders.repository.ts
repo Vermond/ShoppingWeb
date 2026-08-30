@@ -1,6 +1,7 @@
 import type {
   CreateOrderRequest,
   Order,
+  OrderAmounts,
   OrderAddress,
   OrderItem,
   OrderListItem,
@@ -14,6 +15,7 @@ import {
 export type {
   CreateOrderRequest,
   Order,
+  OrderAmounts,
   OrderAddress,
   OrderItem,
   OrderListItem,
@@ -160,7 +162,7 @@ function parseOrderListItem(value: unknown): OrderListItem | null {
   const id = readString(value.id);
   const userId = readString(value.user_id);
   const status = readOrderStatus(value.status);
-  const totalAmount = readNumber(value.total_amount);
+  const amounts = parseOrderAmounts(value);
   const createdAt = readString(value.created_at);
   const updatedAt = readString(value.updated_at);
 
@@ -168,8 +170,7 @@ function parseOrderListItem(value: unknown): OrderListItem | null {
     !id ||
     !userId ||
     !status ||
-    totalAmount === null ||
-    totalAmount < 0 ||
+    !amounts ||
     !createdAt ||
     !updatedAt
   ) {
@@ -180,9 +181,40 @@ function parseOrderListItem(value: unknown): OrderListItem | null {
     id,
     userId,
     status,
-    totalAmount,
+    ...amounts,
     createdAt,
     updatedAt,
+  };
+}
+
+function parseOrderAmounts(value: unknown): OrderAmounts | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const subtotal = readNumber(value.subtotal);
+  const shippingFee = readNumber(value.shipping_fee);
+  const discountAmount = readNumber(value.discount_amount);
+  const totalAmount = readNumber(value.total_amount);
+
+  if (
+    subtotal === null ||
+    subtotal < 0 ||
+    shippingFee === null ||
+    shippingFee < 0 ||
+    discountAmount === null ||
+    discountAmount < 0 ||
+    totalAmount === null ||
+    totalAmount < 0
+  ) {
+    return null;
+  }
+
+  return {
+    subtotal,
+    shippingFee,
+    discountAmount,
+    totalAmount,
   };
 }
 
@@ -295,6 +327,18 @@ function parseOrder(value: unknown): Order {
   };
 }
 
+function parseOrderPreview(value: unknown): OrderAmounts {
+  const amounts = parseOrderAmounts(value);
+
+  if (!amounts) {
+    throw new AuthRequestError("주문 금액 미리보기 응답 형식이 올바르지 않아요.", {
+      status: 502,
+    });
+  }
+
+  return amounts;
+}
+
 export async function createOrder(
   payload: CreateOrderRequest,
 ): Promise<Order> {
@@ -310,6 +354,14 @@ export async function createOrder(
   });
 
   return parseOrder(result);
+}
+
+export async function fetchOrderPreview(): Promise<OrderAmounts> {
+  const result = await requestOrderApi("/api/orders/preview", {
+    method: "POST",
+  });
+
+  return parseOrderPreview(result);
 }
 
 export async function fetchOrders(): Promise<OrderListItem[]> {

@@ -50,8 +50,8 @@ export default function Home() {
     <div className={styles.page}>
       {showAnnouncement && (
         <div className={styles.announcement}>
-          <span>첫 구매 고객을 위한 무료 배송</span>
-          <span className={styles.announcementDetail}>3만원 이상 구매 시 자동 적용</span>
+          <span>첫 구매 고객을 위한 배송 혜택</span>
+          <span className={styles.announcementDetail}>주문 금액에 따라 자동 적용</span>
           <IconButton
             type="button"
             size="small"
@@ -143,7 +143,7 @@ export default function Home() {
           <div>
             <LocalShippingOutlined />
             <span>
-              <strong>무료 배송</strong> 3만원 이상 구매 시
+              <strong>배송비 안내</strong> 주문 전 정확히 안내
             </span>
           </div>
           <div>

@@ -191,7 +191,7 @@ export default function ProductDetailPage() {
             <dl className={styles.detailInfo}>
               <div>
                 <dt>배송</dt>
-                <dd>3만원 이상 무료 배송</dd>
+                <dd>주문 금액에 따라 배송비 적용</dd>
               </div>
               <div>
                 <dt>교환</dt>

@@ -40,14 +40,20 @@ export type CreateOrderRequest = {
   deliveryRequest?: string | null;
 };
 
+export type OrderAmounts = {
+  subtotal: number;
+  shippingFee: number;
+  discountAmount: number;
+  totalAmount: number;
+};
+
 export type OrderListItem = {
   id: string;
   userId: string;
   status: OrderStatus;
-  totalAmount: number;
   createdAt: string;
   updatedAt: string;
-};
+} & OrderAmounts;
 
 export type OrderItem = {
   id: string;
