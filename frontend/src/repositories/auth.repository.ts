@@ -64,6 +64,10 @@ export type EmailVerificationResponse = {
   message: string;
 };
 
+export type PasswordResetResponse = {
+  message: string;
+};
+
 export class AuthRequestError extends Error {
   readonly code?: string;
   readonly status: number;
@@ -419,8 +423,21 @@ export async function requestResendVerification(
   };
 }
 
-export async function requestPasswordReset(email: string) {
-  const response = await fetch("/api/mock/auth/forgot-password", {
+function readPasswordResetResponse(
+  result: unknown,
+  fallback: string,
+): PasswordResetResponse {
+  if (!isRecord(result) || typeof result.message !== "string") {
+    throw new AuthRequestError(fallback, { status: 502 });
+  }
+
+  return { message: result.message };
+}
+
+export async function requestPasswordReset(
+  email: string,
+): Promise<PasswordResetResponse> {
+  const response = await fetch("/api/auth/password-reset/request", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -435,7 +452,37 @@ export async function requestPasswordReset(email: string) {
     result,
   );
 
-  return isRecord(result) && typeof result.message === "string"
-    ? { message: result.message }
-    : { message: "재설정 요청을 확인해주세요." };
+  return readPasswordResetResponse(
+    result,
+    "재설정 요청 응답을 확인하지 못했어요.",
+  );
+}
+
+export async function requestPasswordResetConfirm(
+  token: string,
+  newPassword: string,
+): Promise<PasswordResetResponse> {
+  const response = await fetch("/api/auth/password-reset/confirm", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      token,
+      new_password: newPassword,
+    }),
+  });
+  const result = await readResponse(response);
+
+  await throwIfRequestFailed(
+    response,
+    "비밀번호를 변경하지 못했어요.",
+    result,
+  );
+
+  return readPasswordResetResponse(
+    result,
+    "비밀번호 변경 응답을 확인하지 못했어요.",
+  );
 }

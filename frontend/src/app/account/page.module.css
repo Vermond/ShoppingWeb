@@ -109,6 +109,33 @@
   font-size: 12px;
 }
 
+.passwordButton {
+  display: flex;
+  min-width: auto;
+  margin-top: 28px;
+  margin-bottom: 22px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: #4c4e48;
+  color: color-mix(in srgb, var(--muted) 50%, var(--ink) 50%);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.passwordButton:hover {
+  background-color: transparent;
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.passwordEditForm {
+  display: grid;
+  gap: 22px;
+  margin-top: 28px;
+  margin-bottom: 28px;
+}
+
 .profileContact {
   display: grid;
   gap: 8px;

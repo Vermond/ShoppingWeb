@@ -115,6 +115,15 @@ export default function LoginPage() {
             다음 쇼핑을 더 편안하게 이어가세요.
           </p>
 
+          {feedback && (
+            <p
+              className={`${styles.feedback} ${styles[feedback.tone]}`}
+              role="status"
+            >
+              {feedback.message}
+            </p>
+          )}
+
           <form className={styles.loginForm} onSubmit={handleEmailLogin}>
             <TextField
               fullWidth
@@ -202,15 +211,6 @@ export default function LoginPage() {
               </Button>
             ))}
           </div>
-
-          {feedback && (
-            <p
-              className={`${styles.feedback} ${styles[feedback.tone]}`}
-              role="status"
-            >
-              {feedback.message}
-            </p>
-          )}
 
           <p className={styles.mockNotice}>
             소셜 로그인은 연결 준비 중입니다.

@@ -91,13 +91,13 @@ export default function ForgotPasswordPage() {
             </Button>
           </form>
           {feedback && (
-            <p className={`${styles.feedback} ${styles[feedback.tone]}`} role="status">
+            <p
+              className={`${styles.feedback} ${styles[feedback.tone]}`}
+              role={feedback.tone === "error" ? "alert" : "status"}
+            >
               {feedback.message}
             </p>
           )}
-          <p className={styles.mockNotice}>
-            이메일 발송은 서버 연결 전 목업으로 동작합니다.
-          </p>
         </section>
         <aside className={styles.loginVisual} aria-hidden="true" />
       </main>

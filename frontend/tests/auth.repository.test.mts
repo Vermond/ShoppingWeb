@@ -4,6 +4,8 @@ import {
   AuthRequestError,
   requestAuthenticatedUser,
   requestLogin,
+  requestPasswordReset,
+  requestPasswordResetConfirm,
   requestUpdateProfile,
 } from "../src/repositories/auth.repository.ts";
 
@@ -109,6 +111,30 @@ test("프로필 수정은 401 응답 이후 refresh를 거쳐 한 번 재시도�
   }
 });
 
+test("로그인 상태의 비밀번호 변경은 사용자 수정 API에 password를 전송한다", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestPath = "";
+  let requestInit: RequestInit | undefined;
+
+  globalThis.fetch = async (input, init) => {
+    requestPath = String(input);
+    requestInit = init;
+    return jsonResponse({ user: { ...user, password: undefined } });
+  };
+
+  try {
+    await requestUpdateProfile("user-1", { password: "new-password123" });
+
+    assert.equal(requestPath, "/api/users/user-1");
+    assert.equal(requestInit?.method, "PATCH");
+    assert.deepEqual(JSON.parse(String(requestInit?.body)), {
+      password: "new-password123",
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("인증 API 오류는 서버 code와 status를 보존한다", async () => {
   const originalFetch = globalThis.fetch;
 
@@ -126,6 +152,97 @@ test("인증 API 오류는 서버 code와 status를 보존한다", async () => {
         assert.ok(error instanceof AuthRequestError);
         assert.equal(error.code, "EMAIL_NOT_VERIFIED");
         assert.equal(error.status, 403);
+        return true;
+      },
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("비밀번호 재설정 요청은 실제 API와 이메일 body를 사용한다", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestPath = "";
+  let requestInit: RequestInit | undefined;
+
+  globalThis.fetch = async (input, init) => {
+    requestPath = String(input);
+    requestInit = init;
+    return jsonResponse({
+      message: "입력한 이메일로 비밀번호 재설정 안내를 전송했습니다.",
+    });
+  };
+
+  try {
+    const result = await requestPasswordReset("user@example.com");
+
+    assert.equal(requestPath, "/api/auth/password-reset/request");
+    assert.equal(requestInit?.credentials, "include");
+    assert.deepEqual(JSON.parse(String(requestInit?.body)), {
+      email: "user@example.com",
+    });
+    assert.equal(
+      result.message,
+      "입력한 이메일로 비밀번호 재설정 안내를 전송했습니다.",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("비밀번호 재설정 확정은 token과 new_password를 전송한다", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestPath = "";
+  let requestInit: RequestInit | undefined;
+
+  globalThis.fetch = async (input, init) => {
+    requestPath = String(input);
+    requestInit = init;
+    return jsonResponse({
+      message: "비밀번호가 변경되었습니다. 다시 로그인해주세요.",
+    });
+  };
+
+  try {
+    const result = await requestPasswordResetConfirm(
+      "raw-reset-token",
+      "new-password123",
+    );
+
+    assert.equal(requestPath, "/api/auth/password-reset/confirm");
+    assert.equal(requestInit?.credentials, "include");
+    assert.deepEqual(JSON.parse(String(requestInit?.body)), {
+      token: "raw-reset-token",
+      new_password: "new-password123",
+    });
+    assert.equal(
+      result.message,
+      "비밀번호가 변경되었습니다. 다시 로그인해주세요.",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("비밀번호 재설정 확정 오류는 토큰 code와 status를 보존한다", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () =>
+    jsonResponse(
+      {
+        code: "PASSWORD_RESET_TOKEN_EXPIRED",
+        message: "비밀번호 재설정 토큰이 만료되었습니다.",
+      },
+      410,
+    );
+
+  try {
+    await assert.rejects(
+      requestPasswordResetConfirm("expired-token", "new-password123"),
+      (error: unknown) => {
+        assert.ok(error instanceof AuthRequestError);
+        assert.equal(error.code, "PASSWORD_RESET_TOKEN_EXPIRED");
+        assert.equal(error.status, 410);
         return true;
       },
     );

@@ -23,6 +23,7 @@ type AuthContextValue = {
   status: AuthStatus;
   signIn: (user: AuthUser) => void;
   updateUser: (user: AuthUser) => void;
+  clearSession: () => void;
   signOut: () => Promise<void>;
 };
 
@@ -66,6 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authenticated");
   }, []);
 
+  const clearSession = useCallback(() => {
+    authActionStarted.current = true;
+    setUser(null);
+    setStatus("unauthenticated");
+  }, []);
+
   const signOut = useCallback(async () => {
     authActionStarted.current = true;
     await requestLogout();
@@ -74,8 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, signIn, updateUser, signOut }),
-    [signIn, signOut, status, updateUser, user],
+    () => ({ user, status, signIn, updateUser, clearSession, signOut }),
+    [clearSession, signIn, signOut, status, updateUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
