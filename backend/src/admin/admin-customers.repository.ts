@@ -21,7 +21,7 @@ import type {
 const PURCHASED_ORDER_STATUSES = "'paid', 'shipped', 'completed'";
 
 const CUSTOMER_FILTERS = `
-  WHERE u.role = 'customer'
+  WHERE u.role = 'user'
     AND ($1::text IS NULL OR u.name ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR u.id::text ILIKE '%' || $1 || '%')
     AND ($2::text IS NULL OR u.status = $2)
     AND ($3::boolean IS NULL OR u.email_verified = $3)
@@ -30,7 +30,7 @@ const CUSTOMER_FILTERS = `
 `;
 
 const CUSTOMER_FILTERS_WITHOUT_STATUS = `
-  WHERE u.role = 'customer'
+  WHERE u.role = 'user'
     AND ($1::text IS NULL OR u.name ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR u.id::text ILIKE '%' || $1 || '%')
     AND ($2::boolean IS NULL OR u.email_verified = $2)
     AND ($3::timestamptz IS NULL OR u.created_at >= $3)
@@ -108,7 +108,7 @@ const FIND_CUSTOMER_SUMMARY_QUERY = `
   FROM auth.users AS u
   LEFT JOIN purchased_customer_stats AS pcs
     ON pcs.user_id = u.id
-  WHERE u.role = 'customer'
+  WHERE u.role = 'user'
 `;
 
 const FIND_CUSTOMER_QUERY = `
@@ -126,7 +126,7 @@ const FIND_CUSTOMER_QUERY = `
   FROM auth.users AS u
 ${CUSTOMER_ORDER_STATS_JOIN}
   WHERE u.id = $1
-    AND u.role = 'customer'
+    AND u.role = 'user'
 `;
 
 const FIND_CUSTOMER_ORDERS_QUERY = `

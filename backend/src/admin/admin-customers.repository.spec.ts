@@ -64,7 +64,7 @@ describe('AdminCustomersRepository', () => {
     const listSql = query.mock.calls[0]?.[0] as string;
     const statusCountSql = query.mock.calls[2]?.[0] as string;
     const summarySql = query.mock.calls[3]?.[0] as string;
-    expect(listSql).toContain("u.role = 'customer'");
+    expect(listSql).toContain("u.role = 'user'");
     expect(listSql).toContain('u.id::text ILIKE');
     expect(listSql).toContain("o.status IN ('paid', 'shipped', 'completed')");
     expect(listSql).toContain(

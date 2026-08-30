@@ -26,7 +26,7 @@ describe('AdminGuard', () => {
     const guard = new AdminGuard();
 
     expect(() =>
-      guard.canActivate(createContext({ ...admin, role: 'customer' })),
+      guard.canActivate(createContext({ ...admin, role: 'user' })),
     ).toThrow(ForbiddenException);
   });
 });

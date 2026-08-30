@@ -15,7 +15,7 @@
 
 - 비로그인 요청: `401 Unauthorized`
 - 로그인했지만 관리자 역할이 아닌 요청: `403 Forbidden`
-- 고객은 `auth.users.role = 'customer'`인 사용자만 포함한다.
+- 고객은 `auth.users.role = 'user'`인 사용자만 포함한다.
 - 회원 상태는 DB 값을 그대로 반환하며 `active`, `withdrawn`만 허용한다. `휴면` 같은 프론트 전용 상태는 사용하지 않는다.
 - 비밀번호, 비밀번호 해시, 인증 토큰은 조회·응답에서 제외한다.
 - 초기 범위에서는 전화번호와 배송지를 목록·상세 응답에 포함하지 않는다.
@@ -44,7 +44,7 @@ GET /api/admin/customers?search=홍길동&status=active&email_verified=true&from
 
 `summary` 필드는 서버에서 다음과 같이 계산한다.
 
-- `total_customer_count`: `role = 'customer'`인 전체 고객 수
+- `total_customer_count`: `role = 'user'`인 전체 고객 수
 - `active_customer_count`: 그중 `status = 'active'`인 고객 수
 - `new_customer_count`: 가입일이 조회 기간 안에 있는 고객 수
 - `repurchase_rate_percent`: 구매 이력이 있는 고객 중 결제 완료·배송 관련 주문이 2건 이상인 고객의 비율

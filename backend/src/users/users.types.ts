@@ -1,8 +1,10 @@
+export type UserRole = 'user' | 'admin';
+
 export type UserRecord = {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
   status: string;
   email_verified: boolean;
   created_at: Date;

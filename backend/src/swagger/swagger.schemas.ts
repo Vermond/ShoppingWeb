@@ -242,8 +242,12 @@ export class UserResponseDto {
   @ApiProperty({ description: '사용자명' })
   name!: string;
 
-  @ApiProperty({ description: '사용자 역할' })
-  role!: string;
+  @ApiProperty({
+    description: '사용자 역할',
+    enum: ['user', 'admin'],
+    example: 'user',
+  })
+  role!: 'user' | 'admin';
 
   @ApiProperty({ description: '계정 상태' })
   status!: string;
