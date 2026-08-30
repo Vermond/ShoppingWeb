@@ -154,6 +154,10 @@ describe('AdminOrdersRepository', () => {
     expect(query.mock.calls[0]?.[0]).toContain('sales.order_addresses');
     expect(query.mock.calls[1]?.[0]).toContain('NULL::text AS options');
     expect(query.mock.calls[2]?.[0]).toContain('sales.order_status_history');
+    expect(query.mock.calls[2]?.[0]).toContain(
+      'previous_status AS from_status',
+    );
+    expect(query.mock.calls[2]?.[0]).toContain('new_status AS to_status');
   });
 
   it('updates status and records the administrator in the same executor', async () => {
@@ -198,6 +202,9 @@ describe('AdminOrdersRepository', () => {
     ]);
     expect(query.mock.calls[2]?.[0]).toContain(
       'INSERT INTO sales.order_status_history',
+    );
+    expect(query.mock.calls[2]?.[0]).toContain(
+      'order_id, previous_status, new_status, changed_by',
     );
   });
 });

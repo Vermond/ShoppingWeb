@@ -11,6 +11,12 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   InputAdornment,
   InputLabel,
@@ -34,6 +40,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import {
   adminOrderStatusLabels,
+  adminOrderStatusTransitions,
   adminPaymentStatusLabels,
   adminShippingStatusLabels,
   type AdminOrderListItem,
@@ -68,6 +75,19 @@ const orderStatuses: Array<{ value: AdminOrderStatus | ""; label: string }> = [
   { value: "completed", label: "배송 완료" },
   { value: "cancelled", label: "취소" },
 ];
+
+const orderActionLabels: Record<AdminOrderStatus, string> = {
+  pending: "결제 대기",
+  paid: "결제 확인",
+  shipped: "배송 시작",
+  completed: "배송 완료",
+  cancelled: "취소",
+};
+
+type OrderActionRequest = {
+  orderId: string;
+  nextStatus: AdminOrderStatus;
+};
 
 type AdminOrdersPageProps = {
   initialData: AdminOrdersData;
@@ -159,13 +179,55 @@ function ShippingInfo({ order }: { order: AdminOrderListItem }) {
   );
 }
 
+function getOrderActions(status: AdminOrderStatus) {
+  return adminOrderStatusTransitions[status].map((nextStatus) => ({
+    nextStatus,
+    label: orderActionLabels[nextStatus],
+  }));
+}
+
+function getStatusUpdateErrorMessage(result: unknown): string {
+  if (typeof result !== "object" || result === null) {
+    return "주문 상태를 변경하지 못했습니다.";
+  }
+
+  const response = result as { message?: unknown; error?: unknown };
+
+  if (typeof response.message === "string") {
+    return response.message;
+  }
+
+  if (Array.isArray(response.message)) {
+    const messages = response.message.filter(
+      (message): message is string => typeof message === "string",
+    );
+
+    if (messages.length > 0) {
+      return messages.join("\n");
+    }
+  }
+
+  if (typeof response.error === "string") {
+    return response.error;
+  }
+
+  return "주문 상태를 변경하지 못했습니다.";
+}
+
 export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialData.search);
   const [status, setStatus] = useState<AdminOrderStatus | "">(
     initialData.status ?? "",
   );
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{
+    message: string;
+    severity: "info" | "success" | "error";
+  } | null>(null);
+  const [actionRequest, setActionRequest] = useState<OrderActionRequest | null>(
+    null,
+  );
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const navigateToOrders = (
@@ -192,6 +254,68 @@ export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
     navigateToOrders(query, status, page);
   };
 
+  const handleOrderActionRequest = (
+    orderId: string,
+    nextStatus: AdminOrderStatus,
+  ) => {
+    setActionRequest({ orderId, nextStatus });
+  };
+
+  const handleOrderActionCancel = () => {
+    if (updatingOrderId) {
+      return;
+    }
+
+    setActionRequest(null);
+  };
+
+  const handleOrderActionConfirm = async () => {
+    if (!actionRequest || updatingOrderId) {
+      return;
+    }
+
+    const request = actionRequest;
+    setActionRequest(null);
+    setUpdatingOrderId(request.orderId);
+
+    try {
+      const response = await fetch(
+        `/api/admin/orders/${encodeURIComponent(request.orderId)}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: request.nextStatus }),
+        },
+      );
+      const result: unknown = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(getStatusUpdateErrorMessage(result));
+      }
+
+      const nextStatusLabel = adminOrderStatusLabels[request.nextStatus];
+      setNotice({
+        message: `주문을 ${nextStatusLabel} 상태로 변경했습니다.`,
+        severity: "success",
+      });
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      setNotice({
+        message:
+          error instanceof Error
+            ? error.message
+            : "주문 상태를 변경하지 못했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const isUpdating = updatingOrderId !== null;
+
   return (
     <AdminShell activePath="/admin/orders" pageLabel="주문 관리">
       <AdminSectionHeader
@@ -202,7 +326,12 @@ export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
           <Button
             variant="contained"
             startIcon={<DownloadOutlined sx={{ fontSize: 17 }} />}
-            onClick={() => setNotice("주문 내보내기는 아직 준비 중입니다.")}
+            onClick={() =>
+              setNotice({
+                message: "주문 내보내기는 아직 준비 중입니다.",
+                severity: "info",
+              })
+            }
             sx={{
               bgcolor: "primary.main",
               fontSize: adminTextSizes.control,
@@ -245,7 +374,7 @@ export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
           minWidth: 0,
           borderRadius: 0,
           borderColor: "divider",
-          opacity: isPending ? 0.65 : 1,
+          opacity: isPending || isUpdating ? 0.65 : 1,
           transition: "opacity .2s ease",
         }}
       >
@@ -311,7 +440,7 @@ export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
           <Table sx={{ minWidth: 980 }} size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: "#f8f8f4" }}>
-                {["주문번호", "고객", "상품", "결제 금액", "결제 정보", "배송", "상태", "주문일"].map(
+                {["주문번호", "고객", "상품", "결제 금액", "결제 정보", "배송", "상태", "주문일", "작업"].map(
                   (heading) => (
                     <TableCell
                       key={heading}
@@ -395,11 +524,60 @@ export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
                     >
                       {order.orderedAt}
                     </TableCell>
+                    <TableCell sx={{ borderColor: "divider", minWidth: 160 }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.75}
+                        useFlexGap
+                        sx={{ flexWrap: "wrap" }}
+                      >
+                        {getOrderActions(order.status).length > 0 ? (
+                          getOrderActions(order.status).map((action) => (
+                            <Button
+                              key={action.nextStatus}
+                              size="small"
+                              variant={
+                                action.nextStatus === "cancelled"
+                                  ? "outlined"
+                                  : "contained"
+                              }
+                              color={
+                                action.nextStatus === "cancelled"
+                                  ? "error"
+                                  : "primary"
+                              }
+                              disabled={isUpdating}
+                              onClick={() =>
+                                handleOrderActionRequest(
+                                  order.id,
+                                  action.nextStatus,
+                                )
+                              }
+                              sx={{
+                                minWidth: 76,
+                                borderRadius: 0,
+                                fontSize: adminTextSizes.meta,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {action.label}
+                            </Button>
+                          ))
+                        ) : (
+                          <Typography
+                            color="text.secondary"
+                            sx={{ fontSize: adminTextSizes.meta }}
+                          >
+                            —
+                          </Typography>
+                        )}
+                      </Stack>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} sx={{ py: 6, borderColor: "divider", textAlign: "center" }}>
+                  <TableCell colSpan={9} sx={{ py: 6, borderColor: "divider", textAlign: "center" }}>
                     <Typography color="text.secondary" sx={{ fontSize: adminTextSizes.body }}>
                       조건에 맞는 주문이 없습니다.
                     </Typography>
@@ -433,9 +611,45 @@ export function AdminOrdersPage({ initialData }: AdminOrdersPageProps) {
         대시보드로 돌아가기
       </Button>
 
+      <Dialog
+        open={Boolean(actionRequest)}
+        onClose={handleOrderActionCancel}
+        disableScrollLock
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontSize: adminTextSizes.cardHeading }}>
+          주문 상태를 변경하시겠습니까?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: adminTextSizes.body }}>
+            주문 {actionRequest?.orderId}을(를) {actionRequest ? adminOrderStatusLabels[actionRequest.nextStatus] : ""} 상태로 변경합니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={handleOrderActionCancel}
+            disabled={isUpdating}
+            sx={{ fontSize: adminTextSizes.control }}
+          >
+            닫기
+          </Button>
+          <Button
+            variant="contained"
+            color={actionRequest?.nextStatus === "cancelled" ? "error" : "primary"}
+            onClick={handleOrderActionConfirm}
+            disabled={isUpdating}
+            startIcon={isUpdating ? <CircularProgress size={15} color="inherit" /> : null}
+            sx={{ fontSize: adminTextSizes.control }}
+          >
+            {isUpdating ? "처리 중" : "변경하기"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice(null)}>
-        <Alert onClose={() => setNotice(null)} severity="info" variant="filled" sx={{ fontSize: adminTextSizes.control }}>
-          {notice}
+        <Alert onClose={() => setNotice(null)} severity={notice?.severity ?? "info"} variant="filled" sx={{ fontSize: adminTextSizes.control }}>
+          {notice?.message}
         </Alert>
       </Snackbar>
     </AdminShell>

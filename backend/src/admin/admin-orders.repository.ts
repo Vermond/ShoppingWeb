@@ -147,7 +147,13 @@ const FIND_ADMIN_ORDER_ITEMS_QUERY = `
 `;
 
 const FIND_ADMIN_ORDER_STATUS_HISTORY_QUERY = `
-  SELECT id, order_id, from_status, to_status, changed_by, created_at
+  SELECT
+    id,
+    order_id,
+    previous_status AS from_status,
+    new_status AS to_status,
+    changed_by,
+    created_at
   FROM sales.order_status_history
   WHERE order_id = $1
   ORDER BY created_at ASC, id ASC
@@ -189,7 +195,7 @@ const RESTORE_ADMIN_ORDER_STOCK_QUERY = `
 
 const INSERT_ADMIN_ORDER_STATUS_HISTORY_QUERY = `
   INSERT INTO sales.order_status_history (
-    order_id, from_status, to_status, changed_by
+    order_id, previous_status, new_status, changed_by
   )
   VALUES ($1, $2, $3, $4)
 `;
