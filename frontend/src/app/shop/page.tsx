@@ -27,7 +27,7 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const { totalItems, addItem } = useCart();
   const { products, categories, isLoading, errorMessage } = useCatalog();
-  const { isFavorite, toggleFavorite } = useWishlist();
+  const { isFavorite, isUpdating, toggleFavorite } = useWishlist();
   const requestedCategoryId = searchParams.get("categoryId");
   const requestedCategory = categories.find(
     ({ id }) => id === requestedCategoryId,
@@ -120,6 +120,7 @@ function ShopContent() {
                   product={product}
                   isFavorite={isFavorite(product.id)}
                   isAdded={false}
+                  isFavoriteUpdating={isUpdating(product.id)}
                   onToggleFavorite={toggleFavorite}
                   onAddToCart={addItem}
                 />

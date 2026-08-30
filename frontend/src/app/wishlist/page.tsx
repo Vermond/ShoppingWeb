@@ -3,22 +3,106 @@
 import { ArrowForward } from "@mui/icons-material";
 import { Button } from "@mui/material";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { useCatalog } from "../../components/shop/CatalogProvider";
 import { ProductCard } from "../../components/shop/ProductCard";
 import { SiteHeader } from "../../components/shop/SiteHeader";
 import { useWishlist } from "../../components/shop/WishlistProvider";
+import type { Product } from "../../types/catalog";
+import type { WishlistItem } from "../../types/wishlist";
 import styles from "../shop/page.module.css";
+
+const fallbackArts: Product["art"][] = [
+  "ceramic",
+  "linen",
+  "bag",
+  "glow",
+  "wood",
+  "glass",
+];
+const fallbackColors = [
+  "#d9cbb7",
+  "#aebcae",
+  "#d58f70",
+  "#ded9d2",
+  "#be8d61",
+  "#b8ced0",
+];
+
+type DisplayFavoriteProduct = {
+  product: Product;
+  isUnavailable: boolean;
+};
+
+function toDisplayProduct(
+  item: WishlistItem,
+  index: number,
+  categories: ReadonlyArray<{ id: string; name: string }>,
+  catalogProducts: Product[],
+): DisplayFavoriteProduct {
+  const wishlistProduct = item.product;
+  const catalogProduct = catalogProducts.find(
+    (product) => product.id === wishlistProduct.id,
+  );
+  const category =
+    categories.find(({ id }) => id === wishlistProduct.categoryId)?.name ??
+    catalogProduct?.category ??
+    wishlistProduct.categoryId;
+
+  return {
+    product: {
+      id: wishlistProduct.id,
+      name: wishlistProduct.name,
+      category,
+      price: wishlistProduct.price,
+      stock: wishlistProduct.stock,
+      maxOrderQuantity: wishlistProduct.maxOrderQuantity,
+      tag: catalogProduct?.tag,
+      description: wishlistProduct.description ?? "",
+      color:
+        catalogProduct?.color ?? fallbackColors[index % fallbackColors.length],
+      art: catalogProduct?.art ?? fallbackArts[index % fallbackArts.length],
+    },
+    isUnavailable: wishlistProduct.status !== "active",
+  };
+}
 
 export default function WishlistPage() {
   const [query, setQuery] = useState("");
+  const { status: authStatus } = useAuth();
   const { totalItems, addItem } = useCart();
-  const { products } = useCatalog();
-  const { favoriteIds, isFavorite, toggleFavorite } = useWishlist();
-  const favoriteProducts = products.filter((product) =>
-    favoriteIds.includes(product.id),
+  const {
+    products,
+    categories,
+    isLoading: isCatalogLoading,
+    errorMessage: catalogError,
+  } = useCatalog();
+  const {
+    favoriteIds,
+    wishlistItems,
+    isFavorite,
+    isLoading: isWishlistLoading,
+    errorMessage: wishlistError,
+    isUpdating,
+    toggleFavorite,
+  } = useWishlist();
+  const isAuthenticated = authStatus === "authenticated";
+  const favoriteProducts = useMemo<DisplayFavoriteProduct[]>(
+    () =>
+      isAuthenticated
+        ? wishlistItems.map((item, index) =>
+            toDisplayProduct(item, index, categories, products),
+          )
+        : products
+            .filter((product) => favoriteIds.includes(product.id))
+            .map((product) => ({ product, isUnavailable: false })),
+    [categories, favoriteIds, isAuthenticated, products, wishlistItems],
   );
+  const isLoading =
+    isWishlistLoading || (!isAuthenticated && isCatalogLoading);
+  const errorMessage = isAuthenticated ? wishlistError : catalogError;
 
   return (
     <div className={styles.shopPage}>
@@ -42,16 +126,28 @@ export default function WishlistPage() {
           </p>
         </section>
 
-        {favoriteProducts.length > 0 ? (
+        {isLoading ? (
+          <section className={styles.emptyShop} aria-live="polite">
+            찜 목록을 불러오는 중이에요.
+          </section>
+        ) : errorMessage ? (
+          <section className={styles.emptyShop} role="alert">
+            {errorMessage}
+          </section>
+        ) : favoriteProducts.length > 0 ? (
           <section className={styles.catalog} aria-label="찜한 상품 목록">
-            <p className={styles.resultCount}>{favoriteProducts.length} saved objects</p>
+            <p className={styles.resultCount}>
+              {favoriteProducts.length} saved objects
+            </p>
             <div className={styles.shopGrid}>
-              {favoriteProducts.map((product) => (
+              {favoriteProducts.map(({ product, isUnavailable }) => (
                 <ProductCard
                   key={product.id}
                   product={product}
                   isFavorite={isFavorite(product.id)}
                   isAdded={false}
+                  isFavoriteUpdating={isUpdating(product.id)}
+                  isUnavailable={isUnavailable}
                   onToggleFavorite={toggleFavorite}
                   onAddToCart={addItem}
                 />
@@ -59,7 +155,10 @@ export default function WishlistPage() {
             </div>
           </section>
         ) : (
-          <section className={styles.emptyShop} aria-labelledby="empty-wishlist-title">
+          <section
+            className={styles.emptyShop}
+            aria-labelledby="empty-wishlist-title"
+          >
             <h2 id="empty-wishlist-title">아직 마음에 둔 물건이 없어요.</h2>
             <p>좋아하는 상품의 하트 버튼을 눌러 저장해보세요.</p>
             <Button

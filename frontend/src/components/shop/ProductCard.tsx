@@ -20,6 +20,8 @@ type ProductCardProps = {
   product: Product;
   isFavorite: boolean;
   isAdded: boolean;
+  isFavoriteUpdating?: boolean;
+  isUnavailable?: boolean;
   onToggleFavorite: (productId: string) => void;
   onAddToCart: (productId: string) => void;
 };
@@ -50,10 +52,13 @@ export function ProductCard({
   product,
   isFavorite,
   isAdded,
+  isFavoriteUpdating = false,
+  isUnavailable = false,
   onToggleFavorite,
   onAddToCart,
 }: ProductCardProps) {
   const isOutOfStock = product.stock <= 0;
+  const isUnavailableProduct = isUnavailable || isOutOfStock;
 
   return (
     <article className={styles.productCard}>
@@ -91,6 +96,7 @@ export function ProductCard({
           type="button"
           size="small"
           disableRipple
+          disabled={isFavoriteUpdating}
           onClick={() => onToggleFavorite(product.id)}
           aria-label={`${product.name} ${isFavorite ? "찜 취소" : "찜하기"}`}
           aria-pressed={isFavorite}
@@ -109,18 +115,18 @@ export function ProductCard({
       </div>
 
       <Button
-        className={`${styles.addButton} ${isAdded ? styles.addedButton : ""} ${isOutOfStock ? styles.outOfStockButton : ""}`}
+        className={`${styles.addButton} ${isAdded ? styles.addedButton : ""} ${isUnavailableProduct ? styles.outOfStockButton : ""}`}
         type="button"
         variant="outlined"
         disableRipple
-        disabled={isOutOfStock}
+        disabled={isUnavailableProduct}
         onClick={() => onAddToCart(product.id)}
         sx={{
           fontSize: "10px",
         }}
       >
-        {isOutOfStock ? (
-          "재고 없음"
+        {isUnavailableProduct ? (
+          isOutOfStock ? "재고 없음" : "판매 종료"
         ) : isAdded ? (
           <>
             <Check />

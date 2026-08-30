@@ -29,7 +29,7 @@ export default function ProductDetailPage() {
   const [productError, setProductError] = useState<string | null>(null);
   const { totalItems, addItem } = useCart();
   const { categories } = useCatalog();
-  const { isFavorite, toggleFavorite } = useWishlist();
+  const { isFavorite, isUpdating, toggleFavorite } = useWishlist();
   const productId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   useEffect(() => {
@@ -173,6 +173,7 @@ export default function ProductDetailPage() {
                 type="button"
                 size="small"
                 disableRipple
+                disabled={isUpdating(product.id)}
                 onClick={() => toggleFavorite(product.id)}
                 aria-label={
                   isFavorite(product.id) ? "찜 취소" : "상품 찜하기"

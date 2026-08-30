@@ -31,7 +31,7 @@ export function ProductSection({
   const [addedProduct, setAddedProduct] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("recommended");
   const { products, categories, isLoading, errorMessage } = useCatalog();
-  const { isFavorite, toggleFavorite } = useWishlist();
+  const { isFavorite, isUpdating, toggleFavorite } = useWishlist();
   const filters = useMemo<ProductFilter[]>(
     () => ["전체", ...categories.map((category) => category.name)],
     [categories],
@@ -111,6 +111,7 @@ export function ProductSection({
               product={product}
               isFavorite={isFavorite(product.id)}
               isAdded={addedProduct === product.id}
+              isFavoriteUpdating={isUpdating(product.id)}
               onToggleFavorite={toggleFavorite}
               onAddToCart={addToCart}
             />
