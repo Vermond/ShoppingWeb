@@ -14,7 +14,6 @@ import {
 } from "@mui/icons-material";
 import {
   Avatar,
-  Badge,
   Box,
   Button,
   Divider,
@@ -57,14 +56,12 @@ const navItems: Array<{
   label: string;
   href: AdminPath;
   icon: ReactNode;
-  count?: string;
 }> = [
   { label: "대시보드", href: "/admin", icon: <DashboardOutlined /> },
   {
     label: "주문 관리",
     href: "/admin/orders",
     icon: <ShoppingBagOutlined />,
-    count: "12",
   },
   { label: "상품 관리", href: "/admin/products", icon: <Inventory2Outlined /> },
   { label: "고객 관리", href: "/admin/customers", icon: <PeopleAltOutlined /> },
@@ -154,22 +151,6 @@ function Sidebar({ activePath, onNavigate }: SidebarProps) {
               primary={item.label}
               slotProps={{ primary: { sx: { fontSize: adminTextSizes.label } } }}
             />
-            {item.count && (
-              <Typography
-                sx={{
-                  minWidth: 22,
-                  px: 0.75,
-                  py: 0.25,
-                  borderRadius: 3,
-                  bgcolor: "secondary.main",
-                  color: "secondary.contrastText",
-                  fontSize: adminTextSizes.meta,
-                  textAlign: "center",
-                }}
-              >
-                {item.count}
-              </Typography>
-            )}
           </ListItemButton>
         ))}
       </List>
@@ -312,9 +293,7 @@ export function AdminShell({ activePath, pageLabel, children }: AdminShellProps)
             >
               <Tooltip title="알림">
                 <IconButton aria-label="알림" sx={{ width: 40, height: 40 }}>
-                  <Badge badgeContent={3} color="secondary" overlap="circular">
-                    <NotificationsNoneOutlined />
-                  </Badge>
+                  <NotificationsNoneOutlined />
                 </IconButton>
               </Tooltip>
               <Avatar

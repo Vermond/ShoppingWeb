@@ -1,7 +1,6 @@
 import type { ProductCategory } from "../types/catalog";
 
 export type AdminProductStatus = "판매중" | "재고 부족" | "판매 예정";
-export type AdminCustomerStatus = "활성" | "휴면";
 
 export type AdminOrderRecord = {
   id: string;
@@ -24,17 +23,6 @@ export type AdminProductRecord = {
   status: AdminProductStatus;
   updatedAt: string;
   color: string;
-};
-
-export type AdminCustomerRecord = {
-  id: string;
-  name: string;
-  email: string;
-  orders: number;
-  totalSpent: number;
-  lastOrderAt: string;
-  status: AdminCustomerStatus;
-  joinedAt: string;
 };
 
 export type AdminReportData = {
@@ -126,14 +114,6 @@ const products: AdminProductRecord[] = [
   { id: "clear-vase", name: "클리어 버블 베이스", category: "리빙", price: 36000, stock: 19, sales: 38, status: "판매중", updatedAt: "2025.08.20", color: "#b8ced0" },
 ];
 
-const customers: AdminCustomerRecord[] = [
-  { id: "CUS-00124", name: "김서윤", email: "seoyoon.kim@example.com", orders: 8, totalSpent: 624000, lastOrderAt: "오늘 14:32", status: "활성", joinedAt: "2025.03.12" },
-  { id: "CUS-00123", name: "이도현", email: "dohyun.lee@example.com", orders: 4, totalSpent: 318000, lastOrderAt: "오늘 13:18", status: "활성", joinedAt: "2025.05.08" },
-  { id: "CUS-00122", name: "박하린", email: "harin.park@example.com", orders: 6, totalSpent: 511000, lastOrderAt: "오늘 11:46", status: "활성", joinedAt: "2025.01.27" },
-  { id: "CUS-00121", name: "최민준", email: "minjun.choi@example.com", orders: 2, totalSpent: 134000, lastOrderAt: "어제 17:03", status: "활성", joinedAt: "2025.07.19" },
-  { id: "CUS-00120", name: "정유진", email: "yujin.jung@example.com", orders: 1, totalSpent: 42000, lastOrderAt: "어제 15:27", status: "휴면", joinedAt: "2024.12.04" },
-];
-
 const report: AdminReportData = {
   summary: [
     { label: "총 매출", value: "₩12,480,000", change: "+18.4%" },
@@ -181,10 +161,6 @@ export async function getAdminOrdersData() {
 
 export async function getAdminProductsData() {
   return { products };
-}
-
-export async function getAdminCustomersData() {
-  return { customers };
 }
 
 export async function getAdminReportData() {
