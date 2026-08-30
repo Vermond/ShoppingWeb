@@ -12,7 +12,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../../components/auth/AuthProvider";
 import { useCart } from "../../components/shop/CartProvider";
 import { SiteHeader } from "../../components/shop/SiteHeader";
-import { requestUpdateProfile } from "../../repositories/auth.repository";
+import {
+  AuthRequestError,
+  requestUpdateProfile,
+} from "../../repositories/auth.repository";
 import {
   getCurrentReturnTo,
   getLoginPath,
@@ -201,12 +204,17 @@ export default function AccountPage() {
         );
       }
     } catch (error) {
+      const message =
+        error instanceof AuthRequestError &&
+        error.code === "PASSWORD_REUSE_NOT_ALLOWED"
+          ? "기존 비밀번호와 다른 비밀번호를 사용해주세요."
+          : error instanceof Error
+            ? error.message
+            : "비밀번호를 변경하지 못했어요.";
+
       setPasswordFeedback({
         tone: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "비밀번호를 변경하지 못했어요.",
+        message,
       });
     } finally {
       setIsSavingPassword(false);

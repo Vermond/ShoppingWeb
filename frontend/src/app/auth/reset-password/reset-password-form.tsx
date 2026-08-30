@@ -41,6 +41,11 @@ function getResetError(error: unknown): ResetError {
           message: "비밀번호 재설정 링크가 만료됐어요.",
           tokenUnavailable: true,
         };
+      case "PASSWORD_REUSE_NOT_ALLOWED":
+        return {
+          message: "기존 비밀번호와 다른 비밀번호를 사용해주세요.",
+          tokenUnavailable: false,
+        };
       default:
         break;
     }
