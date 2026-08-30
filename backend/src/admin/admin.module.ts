@@ -10,10 +10,17 @@ import { AdminDashboardService } from './admin-dashboard.service';
 import { AdminOrdersController } from './admin-orders.controller';
 import { AdminOrdersRepository } from './admin-orders.repository';
 import { AdminOrdersService } from './admin-orders.service';
+import { AdminProductsController } from './admin-products.controller';
+import { AdminProductsRepository } from './admin-products.repository';
+import { AdminProductsService } from './admin-products.service';
 
 @Module({
   imports: [DatabaseModule, JwtModule.register({}), UsersModule],
-  controllers: [AdminDashboardController, AdminOrdersController],
+  controllers: [
+    AdminDashboardController,
+    AdminOrdersController,
+    AdminProductsController,
+  ],
   providers: [
     AccessTokenGuard,
     AdminGuard,
@@ -21,6 +28,8 @@ import { AdminOrdersService } from './admin-orders.service';
     AdminDashboardService,
     AdminOrdersRepository,
     AdminOrdersService,
+    AdminProductsRepository,
+    AdminProductsService,
   ],
 })
 export class AdminModule {}

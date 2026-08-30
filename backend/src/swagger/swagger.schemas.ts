@@ -1121,3 +1121,239 @@ export class AdminOrderStatusUpdateBodyDto {
   @ApiProperty({ enum: [...ORDER_STATUSES], example: 'shipped' })
   status!: OrderStatus;
 }
+
+export class AdminProductImageInputDto {
+  @ApiProperty({
+    format: 'uri',
+    example: 'https://example.com/product-a.png',
+  })
+  image_url!: string;
+
+  @ApiProperty({ example: 0, minimum: 0 })
+  sort_order!: number;
+}
+
+export class AdminProductCreateBodyDto {
+  @ApiProperty({ example: '세라믹 머그' })
+  name!: string;
+
+  @ApiProperty({ example: '1', description: '카테고리 ID' })
+  category_id!: string;
+
+  @ApiPropertyOptional({ nullable: true, example: '손잡이가 있는 머그컵' })
+  description?: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '소수점 둘째 자리까지의 금액 문자열',
+  })
+  price!: string;
+
+  @ApiProperty({ example: 10, minimum: 0 })
+  stock!: number;
+
+  @ApiProperty({ example: 5, minimum: 1 })
+  max_order_quantity!: number;
+
+  @ApiPropertyOptional({
+    enum: ['active', 'inactive', 'draft', 'archived'],
+    example: 'draft',
+    description: '생략 시 draft',
+  })
+  status?: ProductStatus;
+
+  @ApiPropertyOptional({ type: [AdminProductImageInputDto], default: [] })
+  images?: AdminProductImageInputDto[];
+}
+
+export class AdminProductUpdateBodyDto {
+  @ApiPropertyOptional({ example: '세라믹 머그' })
+  name?: string;
+
+  @ApiPropertyOptional({ example: '1', description: '카테고리 ID' })
+  category_id?: string;
+
+  @ApiPropertyOptional({ nullable: true, example: '손잡이가 있는 머그컵' })
+  description?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  price?: string;
+
+  @ApiPropertyOptional({ example: 10, minimum: 0 })
+  stock?: number;
+
+  @ApiPropertyOptional({ example: 5, minimum: 1 })
+  max_order_quantity?: number;
+
+  @ApiPropertyOptional({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status?: ProductStatus;
+
+  @ApiPropertyOptional({
+    type: [AdminProductImageInputDto],
+    description: '입력하면 기존 이미지 목록을 전체 교체',
+  })
+  images?: AdminProductImageInputDto[];
+}
+
+export class AdminProductStatusBodyDto {
+  @ApiProperty({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status!: ProductStatus;
+}
+
+export class AdminProductStockBodyDto {
+  @ApiProperty({ example: 10, minimum: 0 })
+  stock!: number;
+}
+
+export class AdminProductListItemDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, format: 'uri' })
+  representative_image_url!: string | null;
+
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  price!: string;
+
+  @ApiProperty({ example: 8 })
+  stock!: number;
+
+  @ApiProperty({ example: 5 })
+  max_order_quantity!: number;
+
+  @ApiProperty({ example: 128 })
+  sales_quantity!: number;
+
+  @ApiProperty({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status!: ProductStatus;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+}
+
+export class AdminProductPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  page_size!: number;
+
+  @ApiProperty({ example: 24 })
+  total_count!: number;
+
+  @ApiProperty({ example: 2 })
+  total_pages!: number;
+
+  @ApiProperty({ example: true })
+  has_next!: boolean;
+
+  @ApiProperty({ example: false })
+  has_previous!: boolean;
+}
+
+export class AdminProductListResponseDto {
+  @ApiProperty({ type: [AdminProductListItemDto] })
+  products!: AdminProductListItemDto[];
+
+  @ApiProperty({ example: 24 })
+  total_count!: number;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'integer' },
+    example: { active: 20, inactive: 2, draft: 1, archived: 1 },
+  })
+  status_counts!: Record<ProductStatus, number>;
+
+  @ApiProperty({ type: AdminProductPaginationDto })
+  pagination!: AdminProductPaginationDto;
+}
+
+export class AdminProductImageDto {
+  @ApiProperty({ format: 'int64' })
+  id!: string;
+
+  @ApiProperty({ format: 'uri' })
+  image_url!: string;
+
+  @ApiProperty({ example: 0 })
+  sort_order!: number;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+}
+
+export class AdminProductDetailDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, example: '손잡이가 있는 머그컵' })
+  description!: string | null;
+
+  @ApiProperty({ nullable: true, format: 'uri' })
+  representative_image_url!: string | null;
+
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  price!: string;
+
+  @ApiProperty({ example: 8 })
+  stock!: number;
+
+  @ApiProperty({ example: 5 })
+  max_order_quantity!: number;
+
+  @ApiProperty({ example: 128 })
+  sales_quantity!: number;
+
+  @ApiProperty({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status!: ProductStatus;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ type: [AdminProductImageDto] })
+  images!: AdminProductImageDto[];
+}
+
+export class AdminProductDetailEnvelopeResponseDto {
+  @ApiProperty({ type: AdminProductDetailDto })
+  product!: AdminProductDetailDto;
+}
