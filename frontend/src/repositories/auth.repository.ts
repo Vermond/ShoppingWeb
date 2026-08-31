@@ -1,22 +1,8 @@
-export const socialProviders = [
-  { id: "google", label: "Google" },
-  { id: "apple", label: "Apple" },
-  { id: "naver", label: "네이버" },
-  { id: "kakao", label: "카카오" },
-] as const;
-
-export type SocialProvider = (typeof socialProviders)[number]["id"];
-
-export type LoginRequest =
-  | {
-      method: "email";
-      email: string;
-      password: string;
-    }
-  | {
-      method: "social";
-      provider: SocialProvider;
-    };
+export type LoginRequest = {
+  method: "email";
+  email: string;
+  password: string;
+};
 
 export type AuthUser = {
   id: string;
@@ -173,11 +159,7 @@ async function requestWithAuthRetry(
 export async function requestLogin(
   payload: LoginRequest,
 ): Promise<LoginResponse> {
-  const endpoint =
-    payload.method === "social"
-      ? "/api/mock/auth/login"
-      : "/api/auth/login";
-  const response = await fetch(endpoint, {
+  const response = await fetch("/api/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -205,9 +187,7 @@ export async function requestLogin(
     provider:
       typeof resultRecord.provider === "string"
         ? resultRecord.provider
-        : payload.method === "email"
-          ? "이메일"
-          : payload.provider,
+        : "이메일",
     message:
       typeof resultRecord.message === "string"
         ? resultRecord.message

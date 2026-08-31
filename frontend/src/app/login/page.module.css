@@ -114,98 +114,11 @@
   font-size: 10px;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 34px 0 23px;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.divider::before,
-.divider::after {
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-  content: "";
-}
-
-.socialList {
-  display: grid;
-  gap: 9px;
-}
-
-.socialButton {
-  justify-content: flex-start;
-  min-height: 46px;
-  border-color: var(--line);
-  border-radius: 0;
-  color: var(--ink);
-  font-size: 11px;
-}
-
-.socialButton:hover {
-  border-color: var(--ink);
-  background: transparent;
-}
-
-.socialButton .socialMark {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
-  place-items: center;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.socialButton :global(.MuiButton-startIcon) {
-  margin-right: 12px;
-  margin-left: 0;
-}
-
-.google .socialMark {
-  background: #f1f1ed;
-  color: #4285f4;
-}
-
-.apple .socialMark {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.naver .socialMark {
-  background: #03c75a;
-  color: white;
-}
-
-.kakao .socialMark {
-  background: #fee500;
-  color: #3c1e1e;
-}
-
 .feedback {
   margin-top: 20px;
+  color: #b2513d;
   font-size: 12px;
   line-height: 1.5;
-}
-
-.success {
-  color: #557252;
-}
-
-.error {
-  color: #b2513d;
-}
-
-.mockNotice {
-  margin-top: 28px;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.5;
-  text-align: center;
 }
 
 .loginVisual {

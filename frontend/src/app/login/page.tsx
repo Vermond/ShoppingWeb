@@ -9,14 +9,11 @@ import { useAuth } from "../../components/auth/AuthProvider";
 import {
   AuthRequestError,
   requestLogin,
-  socialProviders,
-  type SocialProvider,
 } from "../../repositories/auth.repository";
 import { getLoginReturnTo } from "../../utils/auth-redirect";
 import styles from "./page.module.css";
 
 type Feedback = {
-  tone: "success" | "error";
   message: string;
 } | null;
 
@@ -35,19 +32,12 @@ export default function LoginPage() {
 
     try {
       const result = await requestLogin(payload);
-
-      if (payload.method === "email") {
-        signIn(result.user);
-        router.replace(returnTo);
-        return;
-      }
-
-      setFeedback({ tone: "success", message: result.message });
+      signIn(result.user);
+      router.replace(returnTo);
     } catch (error) {
       if (
         error instanceof AuthRequestError &&
-        error.code === "EMAIL_NOT_VERIFIED" &&
-        payload.method === "email"
+        error.code === "EMAIL_NOT_VERIFIED"
       ) {
         const verificationParams = new URLSearchParams({
           email: payload.email,
@@ -64,7 +54,6 @@ export default function LoginPage() {
       }
 
       setFeedback({
-        tone: "error",
         message:
           error instanceof Error
             ? error.message
@@ -78,10 +67,6 @@ export default function LoginPage() {
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await submitLogin({ method: "email", email, password });
-  };
-
-  const handleSocialLogin = async (provider: SocialProvider) => {
-    await submitLogin({ method: "social", provider });
   };
 
   return (
@@ -117,7 +102,7 @@ export default function LoginPage() {
 
           {feedback && (
             <p
-              className={`${styles.feedback} ${styles[feedback.tone]}`}
+              className={styles.feedback}
               role="status"
             >
               {feedback.message}
@@ -190,31 +175,6 @@ export default function LoginPage() {
             <Link href="/signup">회원가입</Link>
             <Link href="/forgot-password">비밀번호 찾기</Link>
           </div>
-
-          <div className={styles.divider}>
-            <span>또는</span>
-          </div>
-
-          <div className={styles.socialList}>
-            {socialProviders.map(({ id, label }) => (
-              <Button
-                className={`${styles.socialButton} ${styles[id]}`}
-                key={id}
-                type="button"
-                variant="outlined"
-                disableRipple
-                disabled={isSubmitting}
-                onClick={() => handleSocialLogin(id)}
-                startIcon={<span className={styles.socialMark}>{id[0].toUpperCase()}</span>}
-              >
-                {label}로 계속하기
-              </Button>
-            ))}
-          </div>
-
-          <p className={styles.mockNotice}>
-            소셜 로그인은 연결 준비 중입니다.
-          </p>
         </section>
 
         <aside className={styles.loginVisual} aria-label="Morrow의 오브젝트">
