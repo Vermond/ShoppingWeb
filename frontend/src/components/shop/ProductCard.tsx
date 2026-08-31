@@ -24,8 +24,8 @@ type ProductCardProps = {
   isAdded: boolean;
   isFavoriteUpdating?: boolean;
   isUnavailable?: boolean;
-  onToggleFavorite: (productId: string) => void;
-  onAddToCart: (productId: string) => void;
+  onToggleFavorite: (productId: string, product?: Product) => void;
+  onAddToCart: (productId: string, product?: Product) => void;
 };
 
 export function ProductArt({
@@ -124,7 +124,7 @@ export function ProductCard({
           size="small"
           disableRipple
           disabled={isFavoriteUpdating}
-          onClick={() => onToggleFavorite(product.id)}
+          onClick={() => onToggleFavorite(product.id, product)}
           aria-label={`${product.name} ${isFavorite ? "찜 취소" : "찜하기"}`}
           aria-pressed={isFavorite}
         >
@@ -147,7 +147,7 @@ export function ProductCard({
         variant="outlined"
         disableRipple
         disabled={isUnavailableProduct}
-        onClick={() => onAddToCart(product.id)}
+        onClick={() => onAddToCart(product.id, product)}
         sx={{
           fontSize: "10px",
         }}

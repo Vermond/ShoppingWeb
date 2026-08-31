@@ -10,12 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "../auth/AuthProvider";
+import { fetchProductById } from "../../repositories/catalog.repository";
 import {
   requestAddWishlistItem,
   requestRemoveWishlistItem,
   requestWishlistItems,
 } from "../../repositories/wishlist.repository";
+import type { Product } from "../../types/catalog";
 import type { WishlistItem } from "../../types/wishlist";
+import { isProduct } from "../../utils/catalog";
 import { useCatalog } from "./CatalogProvider";
 
 type WishlistContextValue = {
@@ -25,27 +28,70 @@ type WishlistContextValue = {
   errorMessage: string | null;
   isUpdating: (productId: string) => boolean;
   isFavorite: (productId: string) => boolean;
-  toggleFavorite: (productId: string) => void;
+  localProducts: Product[];
+  toggleFavorite: (productId: string, product?: Product) => void;
   clearWishlist: () => Promise<boolean>;
 };
 
 const wishlistStorageKey = "morrow-wishlist";
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
-function normalizeWishlist(value: unknown, productIds?: ReadonlySet<string>) {
+function normalizeWishlist(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
-  return value.filter(
-    (productId): productId is string =>
-      typeof productId === "string" &&
-      (!productIds || productIds.has(productId)),
-  );
+  return value.reduce<string[]>((productIds, item) => {
+    const productId =
+      typeof item === "string"
+        ? item
+        : typeof item === "object" &&
+            item !== null &&
+            "productId" in item &&
+            typeof item.productId === "string"
+          ? item.productId
+          : null;
+
+    if (productId && !productIds.includes(productId)) {
+      productIds.push(productId);
+    }
+
+    return productIds;
+  }, []);
+}
+
+function readStoredWishlist(value: unknown) {
+  const productIds = normalizeWishlist(value);
+  const products: Record<string, Product> = {};
+
+  if (!Array.isArray(value)) {
+    return { productIds, products };
+  }
+
+  value.forEach((item) => {
+    if (
+      typeof item !== "object" ||
+      item === null ||
+      !("productId" in item) ||
+      typeof item.productId !== "string" ||
+      !("product" in item) ||
+      !isProduct(item.product) ||
+      item.product.id !== item.productId
+    ) {
+      return;
+    }
+
+    products[item.productId] = item.product;
+  });
+
+  return { productIds, products };
 }
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [localFavoriteIds, setLocalFavoriteIds] = useState<string[]>([]);
+  const [localFavoriteProducts, setLocalFavoriteProducts] = useState<
+    Record<string, Product>
+  >({});
   const [serverFavoriteIds, setServerFavoriteIds] = useState<string[]>([]);
   const [serverItems, setServerItems] = useState<WishlistItem[]>([]);
   const [isServerWishlistLoading, setIsServerWishlistLoading] = useState(false);
@@ -58,13 +104,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const serverLoadStarted = useRef(false);
   const updatingProductIdsRef = useRef(new Set<string>());
   const { status: authStatus } = useAuth();
-  const {
-    products,
-    isLoading: isCatalogLoading,
-    errorMessage: catalogError,
-  } = useCatalog();
-  const productIds = useMemo(
-    () => new Set(products.map((product) => product.id)),
+  const { products } = useCatalog();
+  const catalogProductsById = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
 
@@ -72,11 +114,14 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     const loadWishlist = () => {
       try {
         const storedWishlist = window.localStorage.getItem(wishlistStorageKey);
-        setLocalFavoriteIds(
-          normalizeWishlist(storedWishlist ? JSON.parse(storedWishlist) : []),
+        const stored = readStoredWishlist(
+          storedWishlist ? JSON.parse(storedWishlist) : [],
         );
+        setLocalFavoriteIds(stored.productIds);
+        setLocalFavoriteProducts(stored.products);
       } catch {
         setLocalFavoriteIds([]);
+        setLocalFavoriteProducts({});
       } finally {
         setIsHydrated(true);
       }
@@ -145,39 +190,100 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     };
   }, [authStatus, isHydrated]);
 
-  const availableLocalFavoriteIds = useMemo(
-    () =>
-      normalizeWishlist(
-        localFavoriteIds,
-        !isCatalogLoading && !catalogError ? productIds : undefined,
-      ),
-    [catalogError, isCatalogLoading, localFavoriteIds, productIds],
+  useEffect(() => {
+    if (!isHydrated || authStatus !== "unauthenticated") {
+      return;
+    }
+
+    const unresolvedProductIds = localFavoriteIds.filter(
+      (productId) =>
+        !catalogProductsById.has(productId) &&
+        !localFavoriteProducts[productId],
+    );
+
+    if (unresolvedProductIds.length === 0) {
+      return;
+    }
+
+    let active = true;
+
+    const loadProducts = async () => {
+      const results = await Promise.all(
+        unresolvedProductIds.map(async (productId) => {
+          try {
+            return await fetchProductById(productId);
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      if (!active) {
+        return;
+      }
+
+      const resolvedProducts = results.filter(
+        (product): product is NonNullable<typeof product> => product !== null,
+      );
+
+      if (resolvedProducts.length === 0) {
+        return;
+      }
+
+      setLocalFavoriteProducts((currentProducts) => {
+        const nextProducts = { ...currentProducts };
+
+        resolvedProducts.forEach((product) => {
+          nextProducts[product.id] = product;
+        });
+
+        return nextProducts;
+      });
+    };
+
+    void loadProducts();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    authStatus,
+    catalogProductsById,
+    isHydrated,
+    localFavoriteIds,
+    localFavoriteProducts,
+  ]);
+
+  const localProducts = useMemo(
+    () => Object.values(localFavoriteProducts),
+    [localFavoriteProducts],
   );
 
   useEffect(() => {
-    if (
-      !isHydrated ||
-      authStatus !== "unauthenticated" ||
-      isCatalogLoading ||
-      catalogError
-    ) {
+    if (!isHydrated || authStatus !== "unauthenticated") {
       return;
     }
 
     try {
+      const storedWishlist = localFavoriteIds.map((productId) => ({
+        productId,
+        ...(localFavoriteProducts[productId]
+          ? { product: localFavoriteProducts[productId] }
+          : {}),
+      }));
+
       window.localStorage.setItem(
         wishlistStorageKey,
-        JSON.stringify(availableLocalFavoriteIds),
+        JSON.stringify(storedWishlist),
       );
     } catch {
       // 저장소를 사용할 수 없는 환경에서도 찜 상태는 유지합니다.
     }
   }, [
     authStatus,
-    availableLocalFavoriteIds,
-    catalogError,
-    isCatalogLoading,
     isHydrated,
+    localFavoriteIds,
+    localFavoriteProducts,
   ]);
 
   const favoriteIds = useMemo(() => {
@@ -186,14 +292,14 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
 
     if (authStatus === "unauthenticated") {
-      return availableLocalFavoriteIds;
+      return localFavoriteIds;
     }
 
     return [];
   }, [
     authStatus,
-    availableLocalFavoriteIds,
     isServerWishlistLoaded,
+    localFavoriteIds,
     serverFavoriteIds,
   ]);
 
@@ -219,6 +325,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const value = useMemo<WishlistContextValue>(
     () => ({
       favoriteIds,
+      localProducts,
       wishlistItems:
         authStatus === "authenticated" && isServerWishlistLoaded
           ? serverItems
@@ -228,7 +335,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         authStatus === "authenticated" ? serverWishlistError : null,
       isUpdating: (productId) => updatingProductIds.includes(productId),
       isFavorite: (productId) => favoriteIds.includes(productId),
-      toggleFavorite: async (productId) => {
+      toggleFavorite: async (productId, productSnapshot) => {
         if (updatingProductIdsRef.current.has(productId)) {
           return false;
         }
@@ -238,17 +345,31 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         }
 
         if (authStatus === "unauthenticated") {
-          if (!productIds.has(productId)) {
-            return false;
-          }
+          const wasFavorite = localFavoriteIds.includes(productId);
 
           setLocalFavoriteIds((currentIds) => {
-            const normalizedIds = normalizeWishlist(currentIds, productIds);
-
-            return normalizedIds.includes(productId)
-              ? normalizedIds.filter((id) => id !== productId)
-              : [...normalizedIds, productId];
+            return currentIds.includes(productId)
+              ? currentIds.filter((id) => id !== productId)
+              : [...currentIds, productId];
           });
+
+          setLocalFavoriteProducts((currentProducts) => {
+            if (wasFavorite) {
+              const nextProducts = { ...currentProducts };
+              delete nextProducts[productId];
+              return nextProducts;
+            }
+
+            if (productSnapshot?.id !== productId) {
+              return currentProducts;
+            }
+
+            return {
+              ...currentProducts,
+              [productId]: productSnapshot,
+            };
+          });
+
           return true;
         }
 
@@ -257,10 +378,6 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         }
 
         const wasFavorite = serverFavoriteIds.includes(productId);
-
-        if (!productIds.has(productId) && !wasFavorite) {
-          return false;
-        }
 
         const previousFavoriteIds = serverFavoriteIds;
         const previousItems = serverItems;
@@ -312,6 +429,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       clearWishlist: async () => {
         if (authStatus === "unauthenticated") {
           setLocalFavoriteIds([]);
+          setLocalFavoriteProducts({});
           return true;
         }
 
@@ -360,7 +478,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       favoriteIds,
       isLoading,
       isServerWishlistLoaded,
-      productIds,
+      localFavoriteIds,
+      localProducts,
       serverFavoriteIds,
       serverItems,
       serverWishlistError,

@@ -3,7 +3,7 @@
 import { ArrowForward, KeyboardArrowDown } from "@mui/icons-material";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { ProductFilter } from "../../types/catalog";
+import type { Product, ProductFilter } from "../../types/catalog";
 import { useWishlist } from "./WishlistProvider";
 import styles from "../../app/page.module.css";
 import { useCatalog } from "./CatalogProvider";
@@ -19,7 +19,10 @@ type ProductSectionProps = {
   activeFilter: ProductFilter;
   query: string;
   onFilterChange: (filter: ProductFilter) => void;
-  onAddToCart: (productId: string) => boolean | Promise<boolean>;
+  onAddToCart: (
+    productId: string,
+    product?: Product,
+  ) => boolean | Promise<boolean>;
 };
 
 export function ProductSection({
@@ -67,8 +70,8 @@ export function ProductSection({
     ? visibleProducts.slice(0, 7)
     : visibleProducts;
 
-  const addToCart = async (productId: string) => {
-    const didAdd = await onAddToCart(productId);
+  const addToCart = async (productId: string, product?: Product) => {
+    const didAdd = await onAddToCart(productId, product);
 
     if (!didAdd) {
       return;

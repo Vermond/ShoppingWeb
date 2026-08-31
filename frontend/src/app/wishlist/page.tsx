@@ -82,6 +82,7 @@ export default function WishlistPage() {
   } = useCatalog();
   const {
     favoriteIds,
+    localProducts,
     wishlistItems,
     isFavorite,
     isLoading: isWishlistLoading,
@@ -90,16 +91,45 @@ export default function WishlistPage() {
     toggleFavorite,
   } = useWishlist();
   const isAuthenticated = authStatus === "authenticated";
+  const localProductsById = useMemo(
+    () => new Map(localProducts.map((product) => [product.id, product])),
+    [localProducts],
+  );
   const favoriteProducts = useMemo<DisplayFavoriteProduct[]>(
     () =>
       isAuthenticated
         ? wishlistItems.map((item, index) =>
             toDisplayProduct(item, index, categories, products),
           )
-        : products
-            .filter((product) => favoriteIds.includes(product.id))
-            .map((product) => ({ product, isUnavailable: false })),
-    [categories, favoriteIds, isAuthenticated, products, wishlistItems],
+        : favoriteIds.map((productId, index) => {
+            const product =
+              products.find(({ id }) => id === productId) ??
+              localProductsById.get(productId) ?? {
+                id: productId,
+                name: "상품 정보를 확인할 수 없는 물건",
+                category: "상품",
+                price: 0,
+                stock: 0,
+                maxOrderQuantity: 0,
+                description: "상품 정보를 다시 확인해주세요.",
+                imageUrl: null,
+                color: fallbackColors[index % fallbackColors.length],
+                art: fallbackArts[index % fallbackArts.length],
+              };
+
+            return {
+              product,
+              isUnavailable: product.stock <= 0,
+            };
+          }),
+    [
+      categories,
+      favoriteIds,
+      isAuthenticated,
+      localProductsById,
+      products,
+      wishlistItems,
+    ],
   );
   const isLoading =
     isWishlistLoading || (!isAuthenticated && isCatalogLoading);

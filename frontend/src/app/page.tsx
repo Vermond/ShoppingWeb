@@ -248,11 +248,6 @@ export default function Home() {
             <a href="/shipping-returns">배송 & 교환</a>
             <a href="/faq">자주 묻는 질문</a>
           </div>
-          <div>
-            <strong>Follow</strong>
-            <a href="#top">Instagram</a>
-            <a href="#top">Pinterest</a>
-          </div>
         </div>
 
         <div className={styles.footerBottom}>

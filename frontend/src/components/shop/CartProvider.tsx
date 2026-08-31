@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "../auth/AuthProvider";
+import { fetchProductById } from "../../repositories/catalog.repository";
 import {
   requestAddCartItem,
   requestCart,
@@ -22,6 +23,7 @@ import {
 } from "../../repositories/cart.repository";
 import type { Product } from "../../types/catalog";
 import { getMaxPurchasableQuantity } from "../../utils/cart";
+import { isProduct } from "../../utils/catalog";
 import { useCatalog } from "./CatalogProvider";
 
 export type CartItem = {
@@ -38,7 +40,7 @@ type CartContextValue = {
   subtotal: number;
   isLoading: boolean;
   errorMessage: string | null;
-  addItem: (productId: string) => Promise<boolean>;
+  addItem: (productId: string, product?: Product) => Promise<boolean>;
   updateQuantity: (productId: string, quantity: number) => Promise<boolean>;
   removeItem: (productId: string) => Promise<boolean>;
   clearCart: () => Promise<boolean>;
@@ -68,11 +70,13 @@ function normalizeCart(
       Number.isInteger(item.quantity) &&
       item.quantity > 0
     ) {
-      const product = products?.get(item.productId);
-
-      if (products && !product) {
-        return cart;
-      }
+      const storedProduct =
+        "product" in item &&
+        isProduct(item.product) &&
+        item.product.id === item.productId
+          ? item.product
+          : undefined;
+      const product = products?.get(item.productId) ?? storedProduct;
 
       const quantity =
         product && product.stock > 0
@@ -80,7 +84,11 @@ function normalizeCart(
           : item.quantity;
 
       if (quantity > 0) {
-        cart.push({ productId: item.productId, quantity });
+        cart.push({
+          productId: item.productId,
+          quantity,
+          ...(product ? { product } : {}),
+        });
       }
     }
 
@@ -241,6 +249,81 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [authStatus, isHydrated, items]);
 
+  useEffect(() => {
+    if (
+      authStatus !== "unauthenticated" ||
+      !isHydrated ||
+      isCatalogLoading ||
+      catalogError
+    ) {
+      return;
+    }
+
+    const unresolvedProductIds = items
+      .filter(
+        (item) =>
+          !item.product && !productsById.has(item.productId),
+      )
+      .map((item) => item.productId);
+    const uniqueProductIds = [...new Set(unresolvedProductIds)];
+
+    if (uniqueProductIds.length === 0) {
+      return;
+    }
+
+    let active = true;
+
+    const loadProducts = async () => {
+      const results = await Promise.all(
+        uniqueProductIds.map(async (productId) => {
+          try {
+            return await fetchProductById(productId);
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      if (!active) {
+        return;
+      }
+
+      const resolvedProducts = new Map(
+        results
+          .filter(
+            (product): product is NonNullable<typeof product> =>
+              product !== null,
+          )
+          .map((product) => [product.id, product]),
+      );
+
+      if (resolvedProducts.size === 0) {
+        return;
+      }
+
+      setItems((currentItems) =>
+        currentItems.map((item) => {
+          const product = resolvedProducts.get(item.productId);
+
+          return product ? { ...item, product } : item;
+        }),
+      );
+    };
+
+    void loadProducts();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    authStatus,
+    catalogError,
+    isCatalogLoading,
+    isHydrated,
+    items,
+    productsById,
+  ]);
+
   const availableItems = useMemo(
     () =>
       normalizeCart(
@@ -289,7 +372,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       0,
     );
     const localSubtotal = availableItems.reduce((total, item) => {
-      const product = productsById.get(item.productId);
+      const product = item.product ?? productsById.get(item.productId);
       return total + (product?.price ?? 0) * item.quantity;
     }, 0);
     const isLoading =
@@ -335,7 +418,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       isLoading,
       errorMessage: isAuthenticated ? serverCartError : null,
-      addItem: async (productId) => {
+      addItem: async (productId, productSnapshot) => {
         if (authStatus === "loading") {
           return false;
         }
@@ -356,8 +439,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
 
         const product = isCatalogReady
-          ? productsById.get(productId)
-          : undefined;
+          ? productsById.get(productId) ?? productSnapshot
+          : productSnapshot;
         const maximumQuantity = product
           ? getMaxPurchasableQuantity(product)
           : 0;
@@ -378,7 +461,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
             currentItems,
             isCatalogReady ? productsById : undefined,
           );
-          const currentProduct = productsById.get(productId);
+          const currentExistingItem = normalizedItems.find(
+            (item) => item.productId === productId,
+          );
+          const currentProduct =
+            productsById.get(productId) ??
+            productSnapshot ??
+            currentExistingItem?.product;
 
           if (!currentProduct) {
             return normalizedItems;
@@ -390,10 +479,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (currentMaximumQuantity <= 0) {
             return normalizedItems;
           }
-
-          const currentExistingItem = normalizedItems.find(
-            (item) => item.productId === productId,
-          );
 
           if (currentExistingItem) {
             if (currentExistingItem.quantity >= currentMaximumQuantity) {
@@ -413,7 +498,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             );
           }
 
-          return [...normalizedItems, { productId, quantity: 1 }];
+          return [
+            ...normalizedItems,
+            { productId, quantity: 1, product: currentProduct },
+          ];
         });
 
         return true;
@@ -453,7 +541,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
             );
           }
 
-          const product = productsById.get(productId);
+          const currentItem = normalizedItems.find(
+            (item) => item.productId === productId,
+          );
+          const product =
+            productsById.get(productId) ?? currentItem?.product;
 
           if (!product || product.stock <= 0) {
             return normalizedItems;

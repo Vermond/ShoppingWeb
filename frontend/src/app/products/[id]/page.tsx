@@ -117,7 +117,7 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const didAdd = await addItem(product.id);
+    const didAdd = await addItem(product.id, product);
 
     if (!didAdd) {
       return;
@@ -174,7 +174,7 @@ export default function ProductDetailPage() {
                 size="small"
                 disableRipple
                 disabled={isUpdating(product.id)}
-                onClick={() => toggleFavorite(product.id)}
+                onClick={() => toggleFavorite(product.id, product)}
                 aria-label={
                   isFavorite(product.id) ? "찜 취소" : "상품 찜하기"
                 }

@@ -1,5 +1,42 @@
 import type { Product, ProductFilter } from "../types/catalog";
 
+const productArts = new Set<Product["art"]>([
+  "ceramic",
+  "linen",
+  "bag",
+  "glow",
+  "wood",
+  "glass",
+]);
+
+export function isProduct(value: unknown): value is Product {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const product = value as Record<string, unknown>;
+
+  return (
+    typeof product.id === "string" &&
+    typeof product.name === "string" &&
+    typeof product.category === "string" &&
+    typeof product.price === "number" &&
+    Number.isFinite(product.price) &&
+    typeof product.stock === "number" &&
+    Number.isInteger(product.stock) &&
+    product.stock >= 0 &&
+    typeof product.maxOrderQuantity === "number" &&
+    Number.isInteger(product.maxOrderQuantity) &&
+    product.maxOrderQuantity >= 0 &&
+    (typeof product.tag === "string" || product.tag === undefined) &&
+    typeof product.description === "string" &&
+    (typeof product.imageUrl === "string" || product.imageUrl === null) &&
+    typeof product.color === "string" &&
+    typeof product.art === "string" &&
+    productArts.has(product.art as Product["art"])
+  );
+}
+
 export type SortOrder = "recommended" | "priceAsc" | "priceDesc";
 
 export const sortLabels: Record<SortOrder, string> = {
