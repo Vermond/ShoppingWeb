@@ -19,6 +19,9 @@ import { AdminCustomersService } from './admin-customers.service';
 import { AdminReportsController } from './admin-reports.controller';
 import { AdminReportsRepository } from './admin-reports.repository';
 import { AdminReportsService } from './admin-reports.service';
+import { AdminSettingsController } from './admin-settings.controller';
+import { AdminSettingsRepository } from './admin-settings.repository';
+import { AdminSettingsService } from './admin-settings.service';
 
 @Module({
   imports: [DatabaseModule, JwtModule.register({}), UsersModule],
@@ -28,6 +31,7 @@ import { AdminReportsService } from './admin-reports.service';
     AdminProductsController,
     AdminCustomersController,
     AdminReportsController,
+    AdminSettingsController,
   ],
   providers: [
     AccessTokenGuard,
@@ -42,6 +46,8 @@ import { AdminReportsService } from './admin-reports.service';
     AdminCustomersService,
     AdminReportsRepository,
     AdminReportsService,
+    AdminSettingsRepository,
+    AdminSettingsService,
   ],
 })
 export class AdminModule {}

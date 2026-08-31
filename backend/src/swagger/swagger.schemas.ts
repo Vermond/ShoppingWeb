@@ -1671,3 +1671,59 @@ export class AdminReportResponseDto {
   @ApiProperty({ type: [AdminReportTopProductDto] })
   top_products!: AdminReportTopProductDto[];
 }
+
+export class AdminSettingsShippingPolicyDto {
+  @ApiProperty({ format: 'int64', description: '배송 정책 ID' })
+  id!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '3000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '기본 배송비',
+  })
+  base_fee!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '50000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '무료 배송 기준 금액',
+  })
+  free_threshold!: string;
+
+  @ApiProperty({
+    example: true,
+    description: '현재 주문에 적용되는 정책인지 여부',
+  })
+  is_active!: boolean;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+}
+
+export class AdminSettingsResponseDto {
+  @ApiProperty({ type: AdminSettingsShippingPolicyDto })
+  shipping_policy!: AdminSettingsShippingPolicyDto;
+}
+
+export class AdminSettingsUpdateBodyDto {
+  @ApiPropertyOptional({
+    type: String,
+    example: '3000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '기본 배송비. 소수점 둘째 자리까지의 금액 문자열',
+  })
+  base_fee?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: '50000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '무료 배송 기준 금액. 소수점 둘째 자리까지의 금액 문자열',
+  })
+  free_threshold?: string;
+}
