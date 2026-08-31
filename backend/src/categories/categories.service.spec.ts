@@ -9,6 +9,7 @@ describe('CategoriesService', () => {
       {
         id: '1',
         name: 'Category',
+        product_count: 3,
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         updated_at: new Date('2026-01-01T00:00:00.000Z'),
       },

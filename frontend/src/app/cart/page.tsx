@@ -197,6 +197,7 @@ export default function CartPage() {
                     stock: 0,
                     maxOrderQuantity: 0,
                     description: "",
+                    imageUrl: null,
                     color: "#ded9d2",
                     art: "ceramic" as const,
                   };

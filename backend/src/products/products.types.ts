@@ -35,6 +35,14 @@ export type ProductRecord = Omit<ProductRow, 'price' | 'status'> & {
   status: ProductStatus;
 };
 
+export type ProductListRow = ProductRow & {
+  representative_image_url: string | null;
+};
+
+export type ProductListRecord = ProductRecord & {
+  representative_image_url: string | null;
+};
+
 export type ProductImageRecord = ProductImageRow;
 
 export type ProductDetailRow = ProductRow & {
@@ -54,6 +62,10 @@ export type ProductResponse = Omit<
   updated_at: string;
 };
 
+export type ProductListResponse = ProductResponse & {
+  representative_image_url: string | null;
+};
+
 export type ProductImageResponse = Omit<
   ProductImageRecord,
   'product_id' | 'created_at'
@@ -66,7 +78,7 @@ export type ProductDetailResponse = ProductResponse & {
 };
 
 export type ProductPageRow = {
-  rows: ProductRow[];
+  rows: ProductListRow[];
   totalItems: number;
 };
 
@@ -80,12 +92,12 @@ export type ProductPagination = {
 };
 
 export type ProductPage = {
-  products: ProductRecord[];
+  products: ProductListRecord[];
   pagination: ProductPagination;
 };
 
 export type ProductPageResponse = {
-  products: ProductResponse[];
+  products: ProductListResponse[];
   pagination: ProductPagination;
 };
 
@@ -102,6 +114,15 @@ export function toProductRecord(row: ProductRow): ProductRecord {
     ...row,
     status: row.status,
     price: new Decimal(row.price),
+  };
+}
+
+export function toProductListRecord(
+  row: ProductListRow,
+): ProductListRecord {
+  return {
+    ...toProductRecord(row),
+    representative_image_url: row.representative_image_url,
   };
 }
 
@@ -124,6 +145,15 @@ export function serializeProduct(product: ProductRecord): ProductResponse {
     price: product.price.toFixed(2),
     created_at: product.created_at.toISOString(),
     updated_at: product.updated_at.toISOString(),
+  };
+}
+
+export function serializeProductList(
+  product: ProductListRecord,
+): ProductListResponse {
+  return {
+    ...serializeProduct(product),
+    representative_image_url: product.representative_image_url,
   };
 }
 

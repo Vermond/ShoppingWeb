@@ -17,8 +17,8 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
       return new Response(
         JSON.stringify({
           categories: [
-            { id: "cat-electronics", name: "전자제품" },
-            { id: "cat-living", name: "리빙" },
+            { id: "cat-electronics", name: "전자제품", product_count: 1 },
+            { id: "cat-living", name: "리빙", product_count: 1 },
           ],
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
@@ -37,6 +37,7 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
             description: null,
             category_id: "cat-electronics",
             art: "glass",
+            representative_image_url: "https://example.com/speaker.png",
           },
           {
             id: "product-2",
@@ -54,6 +55,14 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
             price: "not-a-number",
           },
         ],
+        pagination: {
+          page: 1,
+          limit: 20,
+          totalItems: 2,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
@@ -67,6 +76,10 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
     assert.equal(catalog.products[0].category, "전자제품");
     assert.equal(catalog.products[0].description, "");
     assert.equal(catalog.products[0].stock, 0);
+    assert.equal(
+      catalog.products[0].imageUrl,
+      "https://example.com/speaker.png",
+    );
     assert.equal(catalog.products[1].maxOrderQuantity, 2);
     assert.deepEqual(
       catalog.categories.map(({ id, name, count }) => ({ id, name, count })),
@@ -75,6 +88,14 @@ test("카탈로그는 서버 카테고리 ID를 기준으로 상품 카테고리
         { id: "cat-living", name: "리빙", count: 1 },
       ],
     );
+    assert.deepEqual(catalog.pagination, {
+      page: 1,
+      limit: 20,
+      totalItems: 2,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    });
   } finally {
     globalThis.fetch = originalFetch;
   }

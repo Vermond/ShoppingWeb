@@ -1,26 +1,45 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import type { ProductsQuery } from './products.input';
 import type {
   ProductDetailRow,
   ProductImageRow,
+  ProductListRow,
   ProductPageRow,
   ProductRow,
 } from './products.types';
 
 const COUNT_PRODUCTS_QUERY = `
   SELECT COUNT(*)::int AS total_items
-  FROM catalog.products
-  WHERE status = 'active'
+  FROM catalog.products AS p
+  WHERE p.status = 'active'
+    AND ($1::bigint IS NULL OR p.category_id = $1)
+    AND (
+      $2::text IS NULL
+      OR p.name ILIKE '%' || $2 || '%'
+      OR COALESCE(p.description, '') ILIKE '%' || $2 || '%'
+    )
 `;
 
-const FIND_PRODUCTS_PAGE_QUERY = `
-  SELECT id, category_id, name, description, price, stock, max_order_quantity,
-         status,
-         created_at, updated_at
-  FROM catalog.products
-  WHERE status = 'active'
-  ORDER BY created_at DESC, id DESC
-  LIMIT $1 OFFSET $2
+const FIND_PRODUCTS_PAGE_QUERY_BASE = `
+  SELECT p.id, p.category_id, p.name, p.description, p.price, p.stock,
+         p.max_order_quantity, p.status, p.created_at, p.updated_at,
+         representative.image_url AS representative_image_url
+  FROM catalog.products AS p
+  LEFT JOIN LATERAL (
+    SELECT pi.image_url
+    FROM catalog.product_images AS pi
+    WHERE pi.product_id = p.id
+    ORDER BY pi.sort_order ASC, pi.id ASC
+    LIMIT 1
+  ) AS representative ON TRUE
+  WHERE p.status = 'active'
+    AND ($1::bigint IS NULL OR p.category_id = $1)
+    AND (
+      $2::text IS NULL
+      OR p.name ILIKE '%' || $2 || '%'
+      OR COALESCE(p.description, '') ILIKE '%' || $2 || '%'
+    )
 `;
 
 const FIND_PRODUCT_QUERY = `
@@ -59,13 +78,22 @@ type ProductImageQueryRow = ProductDetailQueryRow & {
 export class ProductsRepository {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async findPage(limit: number, offset: number): Promise<ProductPageRow> {
+  async findPage(query: ProductsQuery): Promise<ProductPageRow> {
+    const offset = (query.page - 1) * query.limit;
+    const productsQuery = `${FIND_PRODUCTS_PAGE_QUERY_BASE}
+  ORDER BY ${getSortSql(query.sort)}
+  LIMIT $3 OFFSET $4
+`;
+
     return this.databaseService.transaction(async (executor) => {
       const countResult =
-        await executor.query<ProductCountRow>(COUNT_PRODUCTS_QUERY);
-      const productsResult = await executor.query<ProductRow>(
-        FIND_PRODUCTS_PAGE_QUERY,
-        [limit, offset],
+        await executor.query<ProductCountRow>(COUNT_PRODUCTS_QUERY, [
+          query.categoryId,
+          query.search,
+        ]);
+      const productsResult = await executor.query<ProductListRow>(
+        productsQuery,
+        [query.categoryId, query.search, query.limit, offset],
       );
 
       return {
@@ -110,6 +138,17 @@ export class ProductsRepository {
       }));
 
     return { ...product, images };
+  }
+}
+
+function getSortSql(sort: ProductsQuery['sort']): string {
+  switch (sort) {
+    case 'price_asc':
+      return 'p.price ASC, p.created_at DESC, p.id DESC';
+    case 'price_desc':
+      return 'p.price DESC, p.created_at DESC, p.id DESC';
+    default:
+      return 'p.created_at DESC, p.id DESC';
   }
 }
 

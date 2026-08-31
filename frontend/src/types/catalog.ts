@@ -10,6 +10,7 @@ export type Product = {
   maxOrderQuantity: number;
   tag?: string;
   description: string;
+  imageUrl: string | null;
   color: string;
   art: "ceramic" | "linen" | "bag" | "glow" | "wood" | "glass";
 };

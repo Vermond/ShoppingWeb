@@ -12,6 +12,8 @@ import {
   IconButton,
 } from "@mui/material";
 import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
 import type { Product } from "../../types/catalog";
 import { formatPrice } from "../../utils/format";
 import styles from "./ProductCard.module.css";
@@ -48,6 +50,31 @@ export function ProductArt({
   );
 }
 
+function ProductVisual({ product }: { product: Product }) {
+  const [hasImageError, setHasImageError] = useState(false);
+
+  if (!product.imageUrl || hasImageError) {
+    return <ProductArt product={product} />;
+  }
+
+  return (
+    <div
+      className={`${styles.productArt} ${styles.productImageArt}`}
+      style={{ backgroundColor: product.color }}
+    >
+      <Image
+        className={styles.productImage}
+        src={product.imageUrl}
+        alt={product.name}
+        fill
+        unoptimized
+        sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
+        onError={() => setHasImageError(true)}
+      />
+    </div>
+  );
+}
+
 export function ProductCard({
   product,
   isFavorite,
@@ -68,7 +95,7 @@ export function ProductCard({
           href={`/products/${product.id}`}
           aria-label={`${product.name} 상세 보기`}
         >
-          <ProductArt product={product} />
+          <ProductVisual product={product} />
         </Link>
 
         {product.tag && (

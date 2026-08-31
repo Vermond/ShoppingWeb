@@ -73,6 +73,15 @@ export class CartProductResponseDto extends ProductResponseDto {
   image_url!: string | null;
 }
 
+export class ProductListResponseDto extends ProductResponseDto {
+  @ApiPropertyOptional({
+    format: 'uri',
+    nullable: true,
+    description: '대표 이미지 URL',
+  })
+  representative_image_url!: string | null;
+}
+
 export class CartItemResponseDto {
   @ApiProperty({ description: '장바구니 항목 ID' })
   id!: string;
@@ -225,6 +234,9 @@ export class CategoryResponseDto {
   @ApiProperty({ description: '카테고리명' })
   name!: string;
 
+  @ApiProperty({ description: '판매 중인 상품 수' })
+  product_count!: number;
+
   @ApiProperty({ format: 'date-time', description: '생성 시각' })
   created_at!: string;
 
@@ -283,8 +295,8 @@ export class ProductPaginationDto {
 }
 
 export class ProductsResponseDto {
-  @ApiProperty({ type: [ProductResponseDto] })
-  products!: ProductResponseDto[];
+  @ApiProperty({ type: [ProductListResponseDto] })
+  products!: ProductListResponseDto[];
 
   @ApiProperty({ type: ProductPaginationDto })
   pagination!: ProductPaginationDto;

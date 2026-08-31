@@ -5,11 +5,11 @@ import {
 import type { ProductsRepository } from './products.repository';
 import { ProductsService } from './products.service';
 import Decimal from 'decimal.js';
-import type { ProductRow } from './products.types';
+import type { ProductListRow } from './products.types';
 
 describe('ProductsService', () => {
   it('converts database price strings to Decimal values', async () => {
-    const product: ProductRow = {
+    const product: ProductListRow = {
       id: 'product-1',
       category_id: '1',
       name: 'Product',
@@ -20,6 +20,7 @@ describe('ProductsService', () => {
       status: 'active',
       created_at: new Date('2026-01-01T00:00:00.000Z'),
       updated_at: new Date('2026-01-01T00:00:00.000Z'),
+      representative_image_url: 'https://example.com/product.png',
     };
     const repository = {
       findPage: jest.fn().mockResolvedValue({
@@ -29,7 +30,13 @@ describe('ProductsService', () => {
     } as unknown as ProductsRepository;
     const service = new ProductsService(repository);
 
-    const result = await service.findPage({ page: 2, limit: 20 });
+    const result = await service.findPage({
+      page: 2,
+      limit: 20,
+      categoryId: null,
+      search: null,
+      sort: 'created_at_desc',
+    });
 
     expect(result.products).toHaveLength(1);
     expect(result.products[0]).toMatchObject({
@@ -45,7 +52,13 @@ describe('ProductsService', () => {
       hasNextPage: true,
       hasPreviousPage: true,
     });
-    expect(repository.findPage).toHaveBeenCalledWith(20, 20);
+    expect(repository.findPage).toHaveBeenCalledWith({
+      page: 2,
+      limit: 20,
+      categoryId: null,
+      search: null,
+      sort: 'created_at_desc',
+    });
   });
 
   it('maps repository failures to an internal server error', async () => {
@@ -55,7 +68,13 @@ describe('ProductsService', () => {
     const service = new ProductsService(repository);
 
     await expect(
-      service.findPage({ page: 1, limit: 20 }),
+      service.findPage({
+        page: 1,
+        limit: 20,
+        categoryId: null,
+        search: null,
+        sort: 'created_at_desc',
+      }),
     ).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 

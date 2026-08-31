@@ -10,8 +10,8 @@ import {
 import { ProductsService } from './products.service';
 import { parseProductsQuery } from './products.input';
 import {
-  serializeProduct,
   serializeProductDetail,
+  serializeProductList,
   type ProductDetailResponse,
   type ProductPageResponse,
 } from './products.types';
@@ -42,6 +42,27 @@ export class ProductsController {
     example: 20,
     description: '페이지당 상품 수 (최대 100, offset과 함께 범위 제한)',
   })
+  @ApiQuery({
+    name: 'category_id',
+    required: false,
+    type: String,
+    example: '1',
+    description: '카테고리 ID',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    example: '머그',
+    description: '상품명 또는 설명 검색어',
+  })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    enum: ['created_at_desc', 'price_asc', 'price_desc'],
+    example: 'created_at_desc',
+    description: '정렬 기준',
+  })
   @ApiOkResponse({ type: ProductsResponseDto })
   @ApiResponse({ status: 500, type: ApiErrorResponseDto })
   async findAll(@Query() query: unknown): Promise<ProductPageResponse> {
@@ -50,7 +71,7 @@ export class ProductsController {
     );
 
     return {
-      products: result.products.map(serializeProduct),
+      products: result.products.map(serializeProductList),
       pagination: result.pagination,
     };
   }

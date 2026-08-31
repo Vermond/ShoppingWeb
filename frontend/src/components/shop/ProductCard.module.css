@@ -21,6 +21,15 @@
   padding: 15px;
 }
 
+.productImageArt {
+  align-items: stretch;
+  padding: 0;
+}
+
+.productImage {
+  object-fit: cover;
+}
+
 .artLabel {
   position: relative;
   z-index: 2;

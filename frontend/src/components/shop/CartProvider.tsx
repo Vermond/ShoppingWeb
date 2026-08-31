@@ -100,6 +100,7 @@ function toDisplayProduct(
     stock: product.stock,
     maxOrderQuantity: product.maxOrderQuantity,
     description: product.description ?? "",
+    imageUrl: product.imageUrl,
     color: fallbackCartColor,
     art: "ceramic",
   };

@@ -1,6 +1,7 @@
 export type CategoryRow = {
   id: string;
   name: string;
+  product_count: number;
   created_at: Date;
   updated_at: Date;
 };

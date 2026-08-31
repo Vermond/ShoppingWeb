@@ -61,6 +61,7 @@ function toDisplayProduct(
       maxOrderQuantity: wishlistProduct.maxOrderQuantity,
       tag: catalogProduct?.tag,
       description: wishlistProduct.description ?? "",
+      imageUrl: wishlistProduct.imageUrl ?? catalogProduct?.imageUrl ?? null,
       color:
         catalogProduct?.color ?? fallbackColors[index % fallbackColors.length],
       art: catalogProduct?.art ?? fallbackArts[index % fallbackArts.length],

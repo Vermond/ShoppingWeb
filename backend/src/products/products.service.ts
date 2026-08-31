@@ -9,7 +9,7 @@ import { calculateProductPagination } from './products.pagination';
 import type { ProductsQuery } from './products.input';
 import {
   toProductDetailRecord,
-  toProductRecord,
+  toProductListRecord,
   type ProductDetailRecord,
   type ProductPage,
 } from './products.types';
@@ -22,14 +22,10 @@ export class ProductsService {
 
   async findPage(query: ProductsQuery): Promise<ProductPage> {
     try {
-      const offset = (query.page - 1) * query.limit;
-      const result = await this.productsRepository.findPage(
-        query.limit,
-        offset,
-      );
+      const result = await this.productsRepository.findPage(query);
 
       return {
-        products: result.rows.map(toProductRecord),
+        products: result.rows.map(toProductListRecord),
         pagination: calculateProductPagination(query, result.totalItems),
       };
     } catch (error) {

@@ -22,6 +22,14 @@ const CatalogContext = createContext<CatalogContextValue | null>(null);
 const emptyCatalog: CatalogData = {
   products: [],
   categories: [],
+  pagination: {
+    page: 1,
+    limit: 20,
+    totalItems: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  },
 };
 
 export function CatalogProvider({ children }: { children: ReactNode }) {

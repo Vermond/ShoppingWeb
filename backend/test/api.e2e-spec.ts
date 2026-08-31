@@ -61,6 +61,11 @@ const serializedProduct = {
   updated_at: product.updated_at.toISOString(),
 };
 
+const serializedProductList = {
+  ...serializedProduct,
+  representative_image_url: 'https://example.com/product.png',
+};
+
 const wishlistItem: WishlistItemRecord = {
   user_id: user.id,
   product_id: product.id,
@@ -106,6 +111,7 @@ const serializedProductDetail = {
 const category: CategoryRow = {
   id: '1',
   name: 'Category',
+  product_count: 1,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z'),
 };
@@ -245,7 +251,12 @@ describe('API contracts (e2e)', () => {
   });
 
   it('returns product and category envelopes', async () => {
-    const products = [product];
+    const products = [
+      {
+        ...product,
+        representative_image_url: 'https://example.com/product.png',
+      },
+    ];
     const categories = [category];
     productsService.findPage.mockResolvedValue({
       products,
@@ -264,7 +275,7 @@ describe('API contracts (e2e)', () => {
       .get('/api/products')
       .expect(200)
       .expect({
-        products: [serializedProduct],
+        products: [serializedProductList],
         pagination: {
           page: 1,
           limit: 20,
@@ -277,6 +288,9 @@ describe('API contracts (e2e)', () => {
     expect(productsService.findPage).toHaveBeenCalledWith({
       page: 1,
       limit: 20,
+      categoryId: null,
+      search: null,
+      sort: 'created_at_desc',
     });
     await client
       .get('/api/categories')
@@ -314,6 +328,9 @@ describe('API contracts (e2e)', () => {
     expect(productsService.findPage).toHaveBeenCalledWith({
       page: 3,
       limit: 5,
+      categoryId: null,
+      search: null,
+      sort: 'created_at_desc',
     });
   });
 
