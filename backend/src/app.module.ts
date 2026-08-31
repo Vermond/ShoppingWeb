@@ -1,10 +1,75 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_FILTER } from '@nestjs/core';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { resolve } from 'node:path';
+import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
+import { CartModule } from './cart/cart.module';
+import { CategoriesModule } from './categories/categories.module';
+import { DatabaseModule } from './database/database.module';
+import { OrdersModule } from './orders/orders.module';
+import { ProductsModule } from './products/products.module';
+import {
+  createRateLimitConfig,
+  setRateLimitConfig,
+} from './rate-limit/rate-limit.config';
+import { RateLimitGuard } from './rate-limit/rate-limit.guard';
+import { UsersModule } from './users/users.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+import {
+  validateEnvironment,
+  type EnvironmentVariables,
+} from './config/environment.validation';
+import { HealthController } from './health/health.controller';
+import { ApiExceptionFilter } from './http/api-exception.filter';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      envFilePath: [
+        resolve(__dirname, '..', '.env.local'),
+        resolve(__dirname, '..', '.env'),
+      ],
+      validate: validateEnvironment,
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<EnvironmentVariables>) => {
+        const config = createRateLimitConfig(configService);
+        setRateLimitConfig(config);
+
+        return {
+          throttlers: [
+            {
+              name: 'default',
+              limit: config.login.limit,
+              ttl: config.login.ttlMilliseconds,
+            },
+          ],
+        };
+      },
+    }),
+    DatabaseModule,
+    AdminModule,
+    ProductsModule,
+    CategoriesModule,
+    CartModule,
+    OrdersModule,
+    UsersModule,
+    AuthModule,
+    WishlistModule,
+  ],
+  controllers: [HealthController],
+  providers: [
+    RateLimitGuard,
+    {
+      provide: APP_FILTER,
+      useClass: ApiExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

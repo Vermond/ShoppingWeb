@@ -1,0 +1,1741 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  CART_ITEM_UNAVAILABLE_REASONS,
+  type CartItemUnavailableReason,
+} from '../cart/cart.types';
+import { MAX_CART_MERGE_ITEMS } from '../cart/cart.input';
+import {
+  PRODUCT_STATUSES,
+  type ProductStatus,
+} from '../products/products.types';
+import { ORDER_STATUSES, type OrderStatus } from '../orders/orders.types';
+
+export class ApiErrorResponseDto {
+  @ApiProperty({ example: 'VALIDATION_ERROR' })
+  code!: string;
+
+  @ApiProperty({ example: '요청값이 올바르지 않습니다.' })
+  message!: string;
+
+  @ApiPropertyOptional({
+    example: 60,
+    description: '다음 요청까지 대기해야 하는 시간(초)',
+  })
+  retryAfterSeconds?: number;
+}
+
+export class ProductResponseDto {
+  @ApiProperty({ description: '상품 ID' })
+  id!: string;
+
+  @ApiProperty({ description: '카테고리 ID' })
+  category_id!: string;
+
+  @ApiProperty({ description: '상품명' })
+  name!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상품 설명' })
+  description!: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '12900.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description:
+      '상품 가격. 정확한 금액 보존을 위해 decimal 문자열로 반환합니다.',
+  })
+  price!: string;
+
+  @ApiProperty({ description: '재고 수량' })
+  stock!: number;
+
+  @ApiProperty({
+    description: '한 번의 주문에서 구매 가능한 최대 수량',
+  })
+  max_order_quantity!: number;
+
+  @ApiProperty({ enum: [...PRODUCT_STATUSES], description: '상품 상태' })
+  status!: ProductStatus;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class CartProductResponseDto extends ProductResponseDto {
+  @ApiPropertyOptional({
+    format: 'uri',
+    nullable: true,
+    description: '대표 이미지 URL',
+  })
+  image_url!: string | null;
+}
+
+export class ProductListResponseDto extends ProductResponseDto {
+  @ApiPropertyOptional({
+    format: 'uri',
+    nullable: true,
+    description: '대표 이미지 URL',
+  })
+  representative_image_url!: string | null;
+}
+
+export class CartItemResponseDto {
+  @ApiProperty({ description: '장바구니 항목 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ description: '장바구니 수량' })
+  quantity!: number;
+
+  @ApiProperty({ type: CartProductResponseDto, nullable: true })
+  product!: CartProductResponseDto | null;
+
+  @ApiProperty({ description: '현재 구매 가능 여부' })
+  available!: boolean;
+
+  @ApiProperty({
+    enum: [...CART_ITEM_UNAVAILABLE_REASONS],
+    nullable: true,
+    description: '구매 불가 사유',
+  })
+  unavailable_reason!: CartItemUnavailableReason | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '상품 소계',
+  })
+  subtotal!: string | null;
+}
+
+export class CartResponseDto {
+  @ApiProperty({ format: 'uuid', description: '장바구니 ID' })
+  id!: string;
+
+  @ApiProperty({ type: [CartItemResponseDto] })
+  items!: CartItemResponseDto[];
+
+  @ApiProperty({ description: '전체 상품 수량' })
+  total_quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '장바구니 전체 금액',
+  })
+  total_price!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class CartEnvelopeResponseDto {
+  @ApiProperty({ type: CartResponseDto })
+  cart!: CartResponseDto;
+}
+
+export class AddCartItemBodyDto {
+  @ApiProperty({ format: 'uuid', description: '추가할 상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ minimum: 1, description: '추가할 수량' })
+  quantity!: number;
+}
+
+export class UpdateCartItemBodyDto {
+  @ApiProperty({ minimum: 1, description: '변경할 수량' })
+  quantity!: number;
+}
+
+export class MergeCartBodyDto {
+  @ApiProperty({
+    type: [AddCartItemBodyDto],
+    maxItems: MAX_CART_MERGE_ITEMS,
+    description: '로그인 전 장바구니 상품 목록',
+  })
+  items!: AddCartItemBodyDto[];
+}
+
+export class WishlistProductResponseDto extends ProductResponseDto {
+  @ApiPropertyOptional({
+    format: 'uri',
+    nullable: true,
+    description: '대표 이미지 URL',
+  })
+  image_url!: string | null;
+}
+
+export class WishlistItemResponseDto {
+  @ApiProperty({ format: 'uuid', description: '상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ format: 'date-time', description: '찜 추가 시각' })
+  created_at!: string;
+
+  @ApiProperty({ type: WishlistProductResponseDto })
+  product!: WishlistProductResponseDto;
+}
+
+export class WishlistItemsResponseDto {
+  @ApiProperty({ type: [WishlistItemResponseDto] })
+  items!: WishlistItemResponseDto[];
+}
+
+export class WishlistItemEnvelopeResponseDto {
+  @ApiProperty({ type: WishlistItemResponseDto })
+  item!: WishlistItemResponseDto;
+}
+
+export class AddWishlistItemBodyDto {
+  @ApiProperty({ format: 'uuid', description: '찜할 상품 ID' })
+  product_id!: string;
+}
+
+export class DeleteWishlistItemResponseDto {
+  @ApiProperty({ example: '찜 목록에서 삭제했습니다.' })
+  message!: string;
+}
+
+export class ProductImageResponseDto {
+  @ApiProperty({ description: '이미지 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uri', description: '이미지 URL' })
+  image_url!: string;
+
+  @ApiProperty({ description: '이미지 정렬 순서' })
+  sort_order!: number;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+}
+
+export class ProductDetailResponseDto extends ProductResponseDto {
+  @ApiProperty({ type: [ProductImageResponseDto] })
+  images!: ProductImageResponseDto[];
+}
+
+export class CategoryResponseDto {
+  @ApiProperty({
+    type: String,
+    example: '1',
+    description: '카테고리 ID',
+  })
+  id!: string;
+
+  @ApiProperty({ description: '카테고리명' })
+  name!: string;
+
+  @ApiProperty({ description: '판매 중인 상품 수' })
+  product_count!: number;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class UserResponseDto {
+  @ApiProperty({ format: 'uuid', description: '사용자 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'email', description: '이메일 주소' })
+  email!: string;
+
+  @ApiProperty({ description: '사용자명' })
+  name!: string;
+
+  @ApiProperty({
+    description: '사용자 역할',
+    enum: ['user', 'admin'],
+    example: 'user',
+  })
+  role!: 'user' | 'admin';
+
+  @ApiProperty({ description: '계정 상태' })
+  status!: string;
+
+  @ApiProperty({ description: '이메일 인증 여부' })
+  email_verified!: boolean;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class ProductPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  limit!: number;
+
+  @ApiProperty({ example: 125 })
+  totalItems!: number;
+
+  @ApiProperty({ example: 7 })
+  totalPages!: number;
+
+  @ApiProperty({ example: true })
+  hasNextPage!: boolean;
+
+  @ApiProperty({ example: false })
+  hasPreviousPage!: boolean;
+}
+
+export class ProductsResponseDto {
+  @ApiProperty({ type: [ProductListResponseDto] })
+  products!: ProductListResponseDto[];
+
+  @ApiProperty({ type: ProductPaginationDto })
+  pagination!: ProductPaginationDto;
+}
+
+export class ProductEnvelopeResponseDto {
+  @ApiProperty({ type: ProductDetailResponseDto })
+  product!: ProductDetailResponseDto;
+}
+
+export class CategoriesResponseDto {
+  @ApiProperty({ type: [CategoryResponseDto] })
+  categories!: CategoryResponseDto[];
+}
+
+export class UserAddressResponseDto {
+  @ApiProperty({ format: 'uuid', description: '배송지 ID' })
+  id!: string;
+
+  @ApiProperty({ description: '수령인 이름' })
+  recipient_name!: string;
+
+  @ApiProperty({ description: '배송 연락처' })
+  phone_number!: string;
+
+  @ApiProperty({ description: '우편번호' })
+  postal_code!: string;
+
+  @ApiProperty({ description: '기본 주소' })
+  address_line1!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상세 주소' })
+  address_line2!: string | null;
+
+  @ApiProperty({ description: '기본 배송지 여부' })
+  is_default!: boolean;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class UserAddressEnvelopeResponseDto {
+  @ApiProperty({ type: UserAddressResponseDto })
+  address!: UserAddressResponseDto;
+}
+
+export class UserAddressesResponseDto {
+  @ApiProperty({ type: [UserAddressResponseDto] })
+  addresses!: UserAddressResponseDto[];
+}
+
+export class CreateUserAddressBodyDto {
+  @ApiProperty({ description: '수령인 이름' })
+  recipient_name!: string;
+
+  @ApiProperty({ description: '배송 연락처' })
+  phone_number!: string;
+
+  @ApiProperty({ description: '우편번호' })
+  postal_code!: string;
+
+  @ApiProperty({ description: '기본 주소' })
+  address_line1!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상세 주소' })
+  address_line2?: string | null;
+
+  @ApiPropertyOptional({ default: false, description: '기본 배송지 여부' })
+  is_default?: boolean;
+}
+
+export class UpdateUserAddressBodyDto {
+  @ApiPropertyOptional({ description: '수령인 이름' })
+  recipient_name?: string;
+
+  @ApiPropertyOptional({ description: '배송 연락처' })
+  phone_number?: string;
+
+  @ApiPropertyOptional({ description: '우편번호' })
+  postal_code?: string;
+
+  @ApiPropertyOptional({ description: '기본 주소' })
+  address_line1?: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: '상세 주소. null이면 삭제',
+  })
+  address_line2?: string | null;
+
+  @ApiPropertyOptional({ description: '기본 배송지 여부' })
+  is_default?: boolean;
+}
+
+export class DeleteUserAddressResponseDto {
+  @ApiProperty({ example: '배송지를 삭제했습니다.' })
+  message!: string;
+}
+
+export class OrderItemResponseDto {
+  @ApiProperty({ description: '주문 항목 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '상품 ID' })
+  product_id!: string;
+
+  @ApiProperty({ description: '주문 당시 상품명' })
+  product_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '12900.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 당시 단가',
+  })
+  unit_price!: string;
+
+  @ApiProperty({ description: '주문 수량' })
+  quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 항목 소계',
+  })
+  subtotal!: string;
+}
+
+export class OrderAddressResponseDto {
+  @ApiProperty({ format: 'uuid', description: '주문 ID' })
+  order_id!: string;
+
+  @ApiProperty({ description: '수령인 이름' })
+  recipient_name!: string;
+
+  @ApiProperty({ description: '배송 연락처' })
+  phone_number!: string;
+
+  @ApiProperty({ description: '우편번호' })
+  postal_code!: string;
+
+  @ApiProperty({ description: '기본 주소' })
+  address_line1!: string;
+
+  @ApiPropertyOptional({ nullable: true, description: '상세 주소' })
+  address_line2!: string | null;
+
+  @ApiPropertyOptional({ nullable: true, description: '배송 요청사항' })
+  delivery_request!: string | null;
+
+  @ApiProperty({ format: 'date-time', description: '스냅샷 생성 시각' })
+  created_at!: string;
+}
+
+export class OrderItemSummaryResponseDto {
+  @ApiProperty({ format: 'uuid', description: '주문 ID' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '사용자 ID' })
+  user_id!: string;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES], description: '주문 상태' })
+  status!: OrderStatus;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '상품 금액 소계',
+  })
+  subtotal!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '배송비',
+  })
+  shipping_fee!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '할인 금액',
+  })
+  discount_amount!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 총액',
+  })
+  total_amount!: string;
+
+  @ApiProperty({ format: 'date-time', description: '생성 시각' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time', description: '수정 시각' })
+  updated_at!: string;
+}
+
+export class OrderResponseDto extends OrderItemSummaryResponseDto {
+  @ApiProperty({ type: [OrderItemResponseDto] })
+  items!: OrderItemResponseDto[];
+
+  @ApiProperty({ type: OrderAddressResponseDto })
+  address!: OrderAddressResponseDto;
+}
+
+export class OrderEnvelopeResponseDto {
+  @ApiProperty({ type: OrderResponseDto })
+  order!: OrderResponseDto;
+}
+
+export class OrdersResponseDto {
+  @ApiProperty({ type: [OrderItemSummaryResponseDto] })
+  orders!: OrderItemSummaryResponseDto[];
+}
+
+export class CreateOrderBodyDto {
+  @ApiProperty({ format: 'uuid', description: '사용할 배송지 ID' })
+  address_id!: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    maxLength: 500,
+    description: '배송 요청사항',
+  })
+  delivery_request?: string | null;
+}
+
+export class OrderPreviewResponseDto {
+  @ApiProperty({
+    type: String,
+    example: '25800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '상품 금액 소계',
+  })
+  subtotal!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '3000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '배송비',
+  })
+  shipping_fee!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '할인 금액',
+  })
+  discount_amount!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '28800.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '최종 결제 금액',
+  })
+  total_amount!: string;
+}
+
+export class UserEnvelopeResponseDto {
+  @ApiProperty({ type: UserResponseDto })
+  user!: UserResponseDto;
+}
+
+export class CreateUserBodyDto {
+  @ApiProperty({ format: 'email', description: '가입 이메일' })
+  email!: string;
+
+  @ApiProperty({
+    format: 'password',
+    minLength: 8,
+    description: '8자 이상의 비밀번호',
+  })
+  password!: string;
+
+  @ApiProperty({ description: '사용자명' })
+  name!: string;
+}
+
+export class UpdateUserBodyDto {
+  @ApiPropertyOptional({ format: 'email', description: '변경할 이메일' })
+  email?: string;
+
+  @ApiPropertyOptional({
+    format: 'password',
+    minLength: 8,
+    description: '변경할 비밀번호',
+  })
+  password?: string;
+
+  @ApiPropertyOptional({ description: '변경할 사용자명' })
+  name?: string;
+}
+
+export class LoginBodyDto {
+  @ApiProperty({ format: 'email', description: '로그인 이메일' })
+  email!: string;
+
+  @ApiProperty({ format: 'password', description: '비밀번호' })
+  password!: string;
+}
+
+export class PasswordResetRequestBodyDto {
+  @ApiProperty({ format: 'email', description: '비밀번호를 재설정할 이메일' })
+  email!: string;
+}
+
+export class PasswordResetConfirmBodyDto {
+  @ApiProperty({ description: '비밀번호 재설정 링크의 원본 토큰' })
+  token!: string;
+
+  @ApiProperty({ format: 'password', minLength: 8, description: '새 비밀번호' })
+  new_password!: string;
+}
+
+export class PasswordResetResponseDto {
+  @ApiProperty({ example: '비밀번호가 변경되었습니다. 다시 로그인해주세요.' })
+  message!: string;
+}
+
+export class EmailVerificationBodyDto {
+  @ApiProperty({ description: '이메일 인증 링크에 포함된 원본 토큰' })
+  token!: string;
+}
+
+export class EmailVerificationResendBodyDto {
+  @ApiProperty({ format: 'email', description: '인증 메일을 받을 이메일' })
+  email!: string;
+}
+
+export class EmailVerificationResponseDto {
+  @ApiProperty({
+    enum: [
+      'EMAIL_VERIFIED',
+      'EMAIL_ALREADY_VERIFIED',
+      'EMAIL_VERIFICATION_SENT',
+    ],
+  })
+  code!: string;
+
+  @ApiProperty()
+  message!: string;
+}
+
+export class LogoutResponseDto {
+  @ApiProperty({ example: '로그아웃되었습니다.' })
+  message!: string;
+}
+
+export class AdminDashboardPeriodDto {
+  @ApiProperty({ example: '2026-08-01', description: '기간 시작일' })
+  from!: string;
+
+  @ApiProperty({ example: '2026-08-30', description: '기간 종료일(포함)' })
+  to!: string;
+}
+
+export class AdminDashboardAmountMetricDto {
+  @ApiProperty({
+    type: String,
+    example: '1250000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '금액. 정확한 금액 보존을 위해 decimal 문자열로 반환합니다.',
+  })
+  value!: string;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 12.5,
+    description:
+      '직전 동일 기간 대비 증감률(%). 비교 기간 값이 0이고 현재 값이 0보다 크면 null입니다.',
+  })
+  change_rate_percent!: number | null;
+}
+
+export class AdminDashboardCountMetricDto {
+  @ApiProperty({ example: 42 })
+  value!: number;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: -8.33,
+    description:
+      '직전 동일 기간 대비 증감률(%). 비교 기간 값이 0이고 현재 값이 0보다 크면 null입니다.',
+  })
+  change_rate_percent!: number | null;
+}
+
+export class AdminDashboardSummaryDto {
+  @ApiProperty({ type: AdminDashboardAmountMetricDto })
+  revenue!: AdminDashboardAmountMetricDto;
+
+  @ApiProperty({ type: AdminDashboardCountMetricDto })
+  order_count!: AdminDashboardCountMetricDto;
+
+  @ApiProperty({ type: AdminDashboardCountMetricDto })
+  new_customer_count!: AdminDashboardCountMetricDto;
+}
+
+export class AdminDashboardDailySalesDto {
+  @ApiProperty({ example: '2026-08-01', description: '한국 시간 기준 날짜' })
+  date!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '125000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+}
+
+export class AdminDashboardCategorySalesDto {
+  @ApiProperty({ example: '1', description: '카테고리 ID' })
+  category_id!: string;
+
+  @ApiProperty({ example: '전자기기' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '640000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+
+  @ApiProperty({
+    example: 51.2,
+    description: '전체 카테고리 상품 매출 대비 비율(%)',
+  })
+  sales_ratio_percent!: number;
+}
+
+export class AdminDashboardRecentOrderProductDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '상품 A' })
+  product_name!: string;
+
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+}
+
+export class AdminDashboardRecentOrderDto {
+  @ApiProperty({ format: 'uuid' })
+  order_id!: string;
+
+  @ApiProperty({ format: 'uuid' })
+  customer_id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  customer_name!: string;
+
+  @ApiProperty({ type: [AdminDashboardRecentOrderProductDto] })
+  product_summary!: AdminDashboardRecentOrderProductDto[];
+
+  @ApiProperty({ example: 3, description: '주문 상품의 전체 수량' })
+  product_count!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '주문 총 결제 금액',
+  })
+  payment_amount!: string;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES] })
+  status!: OrderStatus;
+
+  @ApiProperty({ format: 'date-time' })
+  ordered_at!: string;
+}
+
+export class AdminDashboardInventoryDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '상품 A' })
+  product_name!: string;
+
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '전자기기' })
+  category_name!: string;
+
+  @ApiProperty({ example: 8 })
+  stock!: number;
+
+  @ApiProperty({ example: true, description: '현재 재고가 10개 이하인지 여부' })
+  low_stock!: boolean;
+
+  @ApiProperty({ example: 14, description: '조회 기간 내 판매 수량' })
+  period_sold_quantity!: number;
+}
+
+export class AdminDashboardResponseDto {
+  @ApiProperty({ type: AdminDashboardPeriodDto })
+  period!: AdminDashboardPeriodDto;
+
+  @ApiProperty({ type: AdminDashboardPeriodDto })
+  comparison_period!: AdminDashboardPeriodDto;
+
+  @ApiProperty({ type: AdminDashboardSummaryDto })
+  summary!: AdminDashboardSummaryDto;
+
+  @ApiProperty({ type: [AdminDashboardDailySalesDto] })
+  daily_sales!: AdminDashboardDailySalesDto[];
+
+  @ApiProperty({ type: [AdminDashboardCategorySalesDto] })
+  category_sales!: AdminDashboardCategorySalesDto[];
+
+  @ApiProperty({ type: [AdminDashboardRecentOrderDto] })
+  recent_orders!: AdminDashboardRecentOrderDto[];
+
+  @ApiProperty({ type: [AdminDashboardInventoryDto] })
+  inventory!: AdminDashboardInventoryDto[];
+}
+
+export class AdminOrderProductSummaryDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '상품 A' })
+  product_name!: string;
+
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+}
+
+export class AdminOrderListItemDto {
+  @ApiProperty({ format: 'uuid', description: '주문 ID' })
+  order_id!: string;
+
+  @ApiProperty({ format: 'uuid', description: '고객 ID' })
+  customer_id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  customer_name!: string;
+
+  @ApiProperty({ type: [AdminOrderProductSummaryDto] })
+  product_summary!: AdminOrderProductSummaryDto[];
+
+  @ApiProperty({ example: 3, description: '주문 상품의 전체 수량' })
+  product_count!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '최종 결제 금액',
+  })
+  payment_amount!: string;
+
+  @ApiProperty({ enum: ['pending', 'paid', 'cancelled'] })
+  payment_status!: 'pending' | 'paid' | 'cancelled';
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: '결제수단. 목업 단계에서는 null',
+  })
+  payment_method!: string | null;
+
+  @ApiProperty({
+    enum: ['not_started', 'preparing', 'shipping', 'delivered', 'cancelled'],
+  })
+  shipping_status!: string;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: '택배사. 아직 저장하지 않음',
+  })
+  carrier!: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: '운송장 번호. 아직 저장하지 않음',
+  })
+  tracking_number!: string | null;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES] })
+  status!: OrderStatus;
+
+  @ApiProperty({ format: 'date-time' })
+  ordered_at!: string;
+}
+
+export class AdminOrderPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  page_size!: number;
+
+  @ApiProperty({ example: 184 })
+  total_count!: number;
+
+  @ApiProperty({ example: 10 })
+  total_pages!: number;
+
+  @ApiProperty({ example: true })
+  has_next!: boolean;
+
+  @ApiProperty({ example: false })
+  has_previous!: boolean;
+}
+
+export class AdminOrderListResponseDto {
+  @ApiProperty({ type: [AdminOrderListItemDto] })
+  orders!: AdminOrderListItemDto[];
+
+  @ApiProperty({ example: 184 })
+  total_count!: number;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'integer' },
+    example: { pending: 3, paid: 12, shipped: 8, completed: 155, cancelled: 6 },
+  })
+  status_counts!: Record<OrderStatus, number>;
+
+  @ApiProperty({ type: AdminOrderPaginationDto })
+  pagination!: AdminOrderPaginationDto;
+}
+
+export class AdminOrderCustomerDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  name!: string;
+
+  @ApiProperty({ format: 'email', example: 'user@example.com' })
+  email!: string;
+
+  @ApiProperty({ nullable: true, example: '010-1234-5678' })
+  phone_number!: string | null;
+}
+
+export class AdminOrderItemDto {
+  @ApiProperty({ format: 'int64' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid' })
+  order_id!: string;
+
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '상품 A' })
+  product_name!: string;
+
+  @ApiProperty({
+    nullable: true,
+    description: '상품 옵션. 현재 스키마에는 옵션 컬럼이 없어 null',
+  })
+  options!: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '25000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  unit_price!: string;
+
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '50000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  subtotal!: string;
+}
+
+export class AdminOrderAddressDto {
+  @ApiProperty({ format: 'uuid' })
+  order_id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  recipient_name!: string;
+
+  @ApiProperty({ example: '010-1234-5678' })
+  phone_number!: string;
+
+  @ApiProperty({ example: '06236' })
+  postal_code!: string;
+
+  @ApiProperty({ example: '서울특별시 강남구 테헤란로 1' })
+  address_line1!: string;
+
+  @ApiProperty({ nullable: true, example: '101호' })
+  address_line2!: string | null;
+
+  @ApiProperty({ nullable: true, example: '문 앞에 놓아주세요' })
+  delivery_request!: string | null;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+}
+
+export class AdminOrderPaymentDto {
+  @ApiProperty({ example: 'mock' })
+  provider!: 'mock';
+
+  @ApiProperty({ enum: ['pending', 'paid', 'cancelled'] })
+  status!: 'pending' | 'paid' | 'cancelled';
+
+  @ApiProperty({
+    nullable: true,
+    description: '결제수단. 결제 테이블 도입 전에는 null',
+  })
+  method!: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    description: '결제사 승인 ID. 결제 테이블 도입 전에는 null',
+  })
+  transaction_id!: string | null;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  approved_at!: string | null;
+}
+
+export class AdminOrderShippingDto {
+  @ApiProperty({
+    enum: ['not_started', 'preparing', 'shipping', 'delivered', 'cancelled'],
+  })
+  status!: string;
+
+  @ApiProperty({
+    nullable: true,
+    description: '택배사. 배송 테이블 도입 전에는 null',
+  })
+  carrier!: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    description: '운송장 번호. 배송 테이블 도입 전에는 null',
+  })
+  tracking_number!: string | null;
+}
+
+export class AdminOrderStatusHistoryDto {
+  @ApiProperty({ format: 'int64' })
+  id!: string;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES], nullable: true })
+  from_status!: OrderStatus | null;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES] })
+  to_status!: OrderStatus;
+
+  @ApiProperty({ format: 'uuid', nullable: true })
+  changed_by!: string | null;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+}
+
+export class AdminOrderDetailDto {
+  @ApiProperty({ format: 'uuid' })
+  order_id!: string;
+
+  @ApiProperty({ type: AdminOrderCustomerDto })
+  customer!: AdminOrderCustomerDto;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES] })
+  status!: OrderStatus;
+
+  @ApiProperty({
+    type: String,
+    example: '50000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  subtotal!: string;
+
+  @ApiProperty({ type: String, example: '3000.00', pattern: '^\\d+\\.\\d{2}$' })
+  shipping_fee!: string;
+
+  @ApiProperty({ type: String, example: '0.00', pattern: '^\\d+\\.\\d{2}$' })
+  discount_amount!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_amount!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ type: [AdminOrderItemDto] })
+  items!: AdminOrderItemDto[];
+
+  @ApiProperty({ type: AdminOrderAddressDto, nullable: true })
+  address!: AdminOrderAddressDto | null;
+
+  @ApiProperty({ type: AdminOrderPaymentDto })
+  payment!: AdminOrderPaymentDto;
+
+  @ApiProperty({ type: AdminOrderShippingDto })
+  shipping!: AdminOrderShippingDto;
+
+  @ApiProperty({ type: [AdminOrderStatusHistoryDto] })
+  status_history!: AdminOrderStatusHistoryDto[];
+}
+
+export class AdminOrderDetailEnvelopeResponseDto {
+  @ApiProperty({ type: AdminOrderDetailDto })
+  order!: AdminOrderDetailDto;
+}
+
+export class AdminOrderStatusUpdateBodyDto {
+  @ApiProperty({ enum: [...ORDER_STATUSES], example: 'shipped' })
+  status!: OrderStatus;
+}
+
+export class AdminProductImageInputDto {
+  @ApiProperty({
+    format: 'uri',
+    example: 'https://example.com/product-a.png',
+  })
+  image_url!: string;
+
+  @ApiProperty({ example: 0, minimum: 0 })
+  sort_order!: number;
+}
+
+export class AdminProductCreateBodyDto {
+  @ApiProperty({ example: '세라믹 머그' })
+  name!: string;
+
+  @ApiProperty({ example: '1', description: '카테고리 ID' })
+  category_id!: string;
+
+  @ApiPropertyOptional({ nullable: true, example: '손잡이가 있는 머그컵' })
+  description?: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '소수점 둘째 자리까지의 금액 문자열',
+  })
+  price!: string;
+
+  @ApiProperty({ example: 10, minimum: 0 })
+  stock!: number;
+
+  @ApiProperty({ example: 5, minimum: 1 })
+  max_order_quantity!: number;
+
+  @ApiPropertyOptional({
+    enum: ['active', 'inactive', 'draft', 'archived'],
+    example: 'draft',
+    description: '생략 시 draft',
+  })
+  status?: ProductStatus;
+
+  @ApiPropertyOptional({ type: [AdminProductImageInputDto], default: [] })
+  images?: AdminProductImageInputDto[];
+}
+
+export class AdminProductUpdateBodyDto {
+  @ApiPropertyOptional({ example: '세라믹 머그' })
+  name?: string;
+
+  @ApiPropertyOptional({ example: '1', description: '카테고리 ID' })
+  category_id?: string;
+
+  @ApiPropertyOptional({ nullable: true, example: '손잡이가 있는 머그컵' })
+  description?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  price?: string;
+
+  @ApiPropertyOptional({ example: 10, minimum: 0 })
+  stock?: number;
+
+  @ApiPropertyOptional({ example: 5, minimum: 1 })
+  max_order_quantity?: number;
+
+  @ApiPropertyOptional({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status?: ProductStatus;
+
+  @ApiPropertyOptional({
+    type: [AdminProductImageInputDto],
+    description: '입력하면 기존 이미지 목록을 전체 교체',
+  })
+  images?: AdminProductImageInputDto[];
+}
+
+export class AdminProductStatusBodyDto {
+  @ApiProperty({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status!: ProductStatus;
+}
+
+export class AdminProductStockBodyDto {
+  @ApiProperty({ example: 10, minimum: 0 })
+  stock!: number;
+}
+
+export class AdminProductListItemDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, format: 'uri' })
+  representative_image_url!: string | null;
+
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  price!: string;
+
+  @ApiProperty({ example: 8 })
+  stock!: number;
+
+  @ApiProperty({ example: 5 })
+  max_order_quantity!: number;
+
+  @ApiProperty({ example: 128 })
+  sales_quantity!: number;
+
+  @ApiProperty({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status!: ProductStatus;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+}
+
+export class AdminProductPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  page_size!: number;
+
+  @ApiProperty({ example: 24 })
+  total_count!: number;
+
+  @ApiProperty({ example: 2 })
+  total_pages!: number;
+
+  @ApiProperty({ example: true })
+  has_next!: boolean;
+
+  @ApiProperty({ example: false })
+  has_previous!: boolean;
+}
+
+export class AdminProductListResponseDto {
+  @ApiProperty({ type: [AdminProductListItemDto] })
+  products!: AdminProductListItemDto[];
+
+  @ApiProperty({ example: 24 })
+  total_count!: number;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'integer' },
+    example: { active: 20, inactive: 2, draft: 1, archived: 1 },
+  })
+  status_counts!: Record<ProductStatus, number>;
+
+  @ApiProperty({ type: AdminProductPaginationDto })
+  pagination!: AdminProductPaginationDto;
+}
+
+export class AdminProductImageDto {
+  @ApiProperty({ format: 'int64' })
+  id!: string;
+
+  @ApiProperty({ format: 'uri' })
+  image_url!: string;
+
+  @ApiProperty({ example: 0 })
+  sort_order!: number;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+}
+
+export class AdminProductDetailDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, example: '손잡이가 있는 머그컵' })
+  description!: string | null;
+
+  @ApiProperty({ nullable: true, format: 'uri' })
+  representative_image_url!: string | null;
+
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '28000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  price!: string;
+
+  @ApiProperty({ example: 8 })
+  stock!: number;
+
+  @ApiProperty({ example: 5 })
+  max_order_quantity!: number;
+
+  @ApiProperty({ example: 128 })
+  sales_quantity!: number;
+
+  @ApiProperty({ enum: ['active', 'inactive', 'draft', 'archived'] })
+  status!: ProductStatus;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ type: [AdminProductImageDto] })
+  images!: AdminProductImageDto[];
+}
+
+export class AdminProductDetailEnvelopeResponseDto {
+  @ApiProperty({ type: AdminProductDetailDto })
+  product!: AdminProductDetailDto;
+}
+
+export class AdminCustomerListItemDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  name!: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  email!: string;
+
+  @ApiProperty({ enum: ['active', 'withdrawn'] })
+  status!: 'active' | 'withdrawn';
+
+  @ApiProperty({ example: true })
+  email_verified!: boolean;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ example: 3 })
+  order_count!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '128000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_spent!: string;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  last_order_at!: string | null;
+}
+
+export class AdminCustomerStatusCountsDto {
+  @ApiProperty({ example: 120 })
+  active!: number;
+
+  @ApiProperty({ example: 4 })
+  withdrawn!: number;
+}
+
+export class AdminCustomerSummaryDto {
+  @ApiProperty({ example: 1248 })
+  total_customer_count!: number;
+
+  @ApiProperty({ example: 1200 })
+  active_customer_count!: number;
+
+  @ApiProperty({ example: 96 })
+  new_customer_count!: number;
+
+  @ApiProperty({ example: 28.6, nullable: true })
+  repurchase_rate_percent!: number | null;
+}
+
+export class AdminCustomerPaginationDto {
+  @ApiProperty({ example: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 20 })
+  page_size!: number;
+
+  @ApiProperty({ example: 1248 })
+  total_count!: number;
+
+  @ApiProperty({ example: 63 })
+  total_pages!: number;
+
+  @ApiProperty({ example: true })
+  has_next!: boolean;
+
+  @ApiProperty({ example: false })
+  has_previous!: boolean;
+}
+
+export class AdminCustomerListResponseDto {
+  @ApiProperty({ type: [AdminCustomerListItemDto] })
+  customers!: AdminCustomerListItemDto[];
+
+  @ApiProperty({ example: 1248 })
+  total_count!: number;
+
+  @ApiProperty({ type: AdminCustomerStatusCountsDto })
+  status_counts!: AdminCustomerStatusCountsDto;
+
+  @ApiProperty({ type: AdminCustomerSummaryDto })
+  summary!: AdminCustomerSummaryDto;
+
+  @ApiProperty({ type: AdminCustomerPaginationDto })
+  pagination!: AdminCustomerPaginationDto;
+}
+
+export class AdminCustomerOrderProductDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  product_name!: string;
+
+  @ApiProperty({ example: 2 })
+  quantity!: number;
+}
+
+export class AdminCustomerOrderDto {
+  @ApiProperty({ format: 'uuid' })
+  order_id!: string;
+
+  @ApiProperty({ enum: [...ORDER_STATUSES] })
+  status!: OrderStatus;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_amount!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ type: [AdminCustomerOrderProductDto] })
+  product_summary!: AdminCustomerOrderProductDto[];
+
+  @ApiProperty({ example: 3 })
+  product_count!: number;
+}
+
+export class AdminCustomerDetailDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '홍길동' })
+  name!: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  email!: string;
+
+  @ApiProperty({ enum: ['active', 'withdrawn'] })
+  status!: 'active' | 'withdrawn';
+
+  @ApiProperty({ example: true })
+  email_verified!: boolean;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ example: 3 })
+  order_count!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '128000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  total_spent!: string;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  last_order_at!: string | null;
+
+  @ApiProperty({ type: [AdminCustomerOrderDto] })
+  orders!: AdminCustomerOrderDto[];
+}
+
+export class AdminCustomerDetailEnvelopeResponseDto {
+  @ApiProperty({ type: AdminCustomerDetailDto })
+  customer!: AdminCustomerDetailDto;
+}
+
+export class AdminReportPeriodDto {
+  @ApiProperty({ example: '2026-08-01', format: 'date' })
+  from!: string;
+
+  @ApiProperty({ example: '2026-08-30', format: 'date' })
+  to!: string;
+}
+
+export class AdminReportMoneyMetricDto {
+  @ApiProperty({
+    type: String,
+    example: '128000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  value!: string;
+
+  @ApiProperty({ type: Number, nullable: true, example: 12.5 })
+  change_rate_percent!: number | null;
+}
+
+export class AdminReportNumberMetricDto {
+  @ApiProperty({ example: 12 })
+  value!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: -4.17 })
+  change_rate_percent!: number | null;
+}
+
+export class AdminReportPercentMetricDto {
+  @ApiProperty({ example: 28.6, description: '퍼센트 값' })
+  value!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 5.2 })
+  change_rate_percent!: number | null;
+}
+
+export class AdminReportSummaryDto {
+  @ApiProperty({ type: AdminReportMoneyMetricDto, description: '총 매출' })
+  revenue!: AdminReportMoneyMetricDto;
+
+  @ApiProperty({ type: AdminReportNumberMetricDto, description: '총 주문 수' })
+  order_count!: AdminReportNumberMetricDto;
+
+  @ApiProperty({
+    type: AdminReportMoneyMetricDto,
+    description: '평균 주문 금액',
+  })
+  average_order_amount!: AdminReportMoneyMetricDto;
+
+  @ApiProperty({
+    type: AdminReportNumberMetricDto,
+    description: '신규 고객 수',
+  })
+  new_customer_count!: AdminReportNumberMetricDto;
+
+  @ApiProperty({ type: AdminReportPercentMetricDto, description: '재구매율' })
+  repurchase_rate_percent!: AdminReportPercentMetricDto;
+}
+
+export class AdminReportDailySalesDto {
+  @ApiProperty({ example: '2026-08-01', format: 'date' })
+  date!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '53000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+
+  @ApiProperty({ example: 2 })
+  order_count!: number;
+}
+
+export class AdminReportCategorySalesDto {
+  @ApiProperty({ example: '1' })
+  category_id!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '92000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+
+  @ApiProperty({ example: 8 })
+  sales_quantity!: number;
+
+  @ApiProperty({ example: 62.16 })
+  sales_ratio_percent!: number;
+}
+
+export class AdminReportTopProductDto {
+  @ApiProperty({ format: 'uuid' })
+  product_id!: string;
+
+  @ApiProperty({ example: '세라믹 머그' })
+  product_name!: string;
+
+  @ApiProperty({ example: '리빙' })
+  category_name!: string;
+
+  @ApiProperty({ example: 14 })
+  sales_quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '196000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+  })
+  revenue!: string;
+}
+
+export class AdminReportResponseDto {
+  @ApiProperty({ type: AdminReportPeriodDto })
+  period!: AdminReportPeriodDto;
+
+  @ApiProperty({ type: AdminReportPeriodDto })
+  comparison_period!: AdminReportPeriodDto;
+
+  @ApiProperty({ type: AdminReportSummaryDto })
+  summary!: AdminReportSummaryDto;
+
+  @ApiProperty({ type: [AdminReportDailySalesDto] })
+  daily_sales!: AdminReportDailySalesDto[];
+
+  @ApiProperty({ type: [AdminReportCategorySalesDto] })
+  category_sales!: AdminReportCategorySalesDto[];
+
+  @ApiProperty({ type: [AdminReportTopProductDto] })
+  top_products!: AdminReportTopProductDto[];
+}
+
+export class AdminSettingsShippingPolicyDto {
+  @ApiProperty({ format: 'int64', description: '배송 정책 ID' })
+  id!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '3000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '기본 배송비',
+  })
+  base_fee!: string;
+
+  @ApiProperty({
+    type: String,
+    example: '50000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '무료 배송 기준 금액',
+  })
+  free_threshold!: string;
+
+  @ApiProperty({
+    example: true,
+    description: '현재 주문에 적용되는 정책인지 여부',
+  })
+  is_active!: boolean;
+
+  @ApiProperty({ format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  updated_at!: string;
+}
+
+export class AdminSettingsResponseDto {
+  @ApiProperty({ type: AdminSettingsShippingPolicyDto })
+  shipping_policy!: AdminSettingsShippingPolicyDto;
+}
+
+export class AdminSettingsUpdateBodyDto {
+  @ApiPropertyOptional({
+    type: String,
+    example: '3000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '기본 배송비. 소수점 둘째 자리까지의 금액 문자열',
+  })
+  base_fee?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: '50000.00',
+    pattern: '^\\d+\\.\\d{2}$',
+    description: '무료 배송 기준 금액. 소수점 둘째 자리까지의 금액 문자열',
+  })
+  free_threshold?: string;
+}

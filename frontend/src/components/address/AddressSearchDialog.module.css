@@ -1,0 +1,93 @@
+.overlay {
+  position: fixed;
+  z-index: 1500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(31 33 30 / 45%);
+}
+
+.searchPanel {
+  display: flex;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--morrow-palette-background-default, #f7f7f3);
+  color: var(--morrow-palette-text-primary, #1f211e);
+  box-shadow: 0 12px 40px rgb(31 33 30 / 20%);
+}
+
+.searchHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  padding: 0 16px 0 24px;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.searchHeader h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.closeButton {
+  margin-left: auto;
+}
+
+.closeButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dialogContent {
+  min-height: 360px;
+  padding: 0;
+}
+
+.searchFrame {
+  width: 100%;
+  height: 500px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.searchActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  border-top: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.message {
+  display: grid;
+  min-height: 360px;
+  place-items: center;
+  margin: 0;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .overlay {
+    padding: 8px;
+  }
+
+  .searchPanel {
+    max-height: calc(100vh - 16px);
+  }
+
+  .searchFrame {
+    height: 360px;
+  }
+
+  .dialogContent,
+  .message {
+    min-height: 320px;
+  }
+}

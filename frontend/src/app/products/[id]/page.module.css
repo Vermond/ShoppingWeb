@@ -1,0 +1,209 @@
+.detailPage {
+  --ink: var(--morrow-palette-text-primary, #1f211e);
+  --muted: var(--morrow-palette-text-secondary, #787a72);
+  --line: var(--morrow-palette-divider, #dedfd9);
+  --paper: var(--morrow-palette-background-default, #f7f7f3);
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.detailMain {
+  width: min(1360px, 100%);
+  margin: 0 auto;
+  padding: 45px clamp(36px, 4vw, 64px) 120px;
+}
+
+.backButton {
+  min-width: auto;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.backButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.detailLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
+  gap: clamp(56px, 6vw, 88px);
+  align-items: center;
+  padding-top: 55px;
+}
+
+.detailVisual {
+  overflow: hidden;
+  background: var(--morrow-palette-background-paper, #f5f5ef);
+}
+
+.detailArt {
+  min-height: min(54vw, 600px);
+}
+
+.detailImageFrame {
+  position: relative;
+  min-height: min(54vw, 600px);
+}
+
+.detailImage {
+  object-fit: cover;
+}
+
+.detailCopy {
+  max-width: 500px;
+}
+
+.eyebrow {
+  margin-bottom: 17px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.titleRow h1 {
+  font-family: var(--font-display);
+  font-size: clamp(46px, 5vw, 78px);
+  font-weight: 400;
+  letter-spacing: -.08em;
+  line-height: .9;
+}
+
+.titleRow button {
+  flex: 0 0 auto;
+  padding: 3px;
+  color: var(--ink);
+}
+
+.titleRow button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.description {
+  max-width: 380px;
+  margin: 30px 0 25px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.outOfStockMessage {
+  margin-top: 12px;
+  color: #b2513d;
+  font-size: 12px;
+}
+
+.detailInfo {
+  display: grid;
+  gap: 13px;
+  margin: 42px 0 35px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.detailInfo div {
+  display: flex;
+  gap: 24px;
+}
+
+.detailInfo dt,
+.detailInfo dd {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.detailInfo dt {
+  width: 36px;
+  color: var(--ink);
+}
+
+.addButton {
+  min-height: 50px;
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 11px;
+}
+
+.addButton:hover {
+  background: var(--ink);
+}
+
+.outOfStockButton.Mui-disabled,
+.outOfStockButton.Mui-disabled:hover {
+  background: #e6e6df;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.detailNote {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.notFound {
+  display: grid;
+  min-height: calc(100vh - 84px);
+  place-content: center;
+  justify-items: center;
+  padding: 40px 18px;
+  text-align: center;
+}
+
+.notFound h1 {
+  margin-bottom: 25px;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5vw, 68px);
+  font-weight: 400;
+  letter-spacing: -.08em;
+}
+
+@media (max-width: 800px) {
+  .detailMain {
+    padding: 34px 18px 82px;
+  }
+
+  .detailLayout {
+    grid-template-columns: 1fr;
+    gap: 45px;
+    padding-top: 38px;
+  }
+
+  .detailArt {
+    min-height: 430px;
+  }
+
+  .detailImageFrame {
+    min-height: 430px;
+  }
+
+  .detailCopy {
+    max-width: none;
+  }
+
+  .titleRow h1 {
+    font-size: 58px;
+  }
+}

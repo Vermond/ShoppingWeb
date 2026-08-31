@@ -1,0 +1,259 @@
+.orderPage {
+  min-height: 100vh;
+  background: var(--morrow-palette-background-default, #f7f7f3);
+  color: var(--morrow-palette-text-primary, #1f211e);
+}
+
+.orderMain {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 42px 5.5vw 120px;
+}
+
+.backButton {
+  min-width: auto;
+  margin-bottom: 52px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--morrow-palette-text-primary, #1f211e);
+  border-radius: 0;
+  color: var(--morrow-palette-text-primary, #1f211e);
+  font-size: 11px;
+}
+
+.eyebrow {
+  margin-bottom: 16px;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.orderHero {
+  padding-bottom: 42px;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.orderHero h1 {
+  margin-bottom: 28px;
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 90px);
+  font-weight: 400;
+  letter-spacing: -.08em;
+  line-height: .88;
+}
+
+.orderMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 11px;
+}
+
+.orderMeta strong {
+  padding: 5px 8px;
+  font-weight: 400;
+}
+
+.pending,
+.paid,
+.completed {
+  background: #e8eee5;
+  color: #557252;
+}
+
+.shipped {
+  background: #e5ecef;
+  color: #4c6e78;
+}
+
+.cancelled {
+  background: #f1e2df;
+  color: #a5533c;
+}
+
+.orderLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+  gap: 58px 8vw;
+  padding: 58px 0 42px;
+}
+
+.detailSection {
+  min-width: 0;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--morrow-palette-text-primary, #1f211e);
+}
+
+.sectionHeading h2,
+.summary h2 {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.sectionHeading span {
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 10px;
+}
+
+.itemList {
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.itemRow:last-child {
+  border-bottom: 0;
+}
+
+.itemRow p,
+.itemRow span,
+.addressInfo p {
+  margin: 0;
+}
+
+.itemRow p {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.itemRow span,
+.itemRow strong,
+.addressInfo,
+.deliveryRequest {
+  font-size: 11px;
+}
+
+.itemRow span,
+.addressInfo,
+.deliveryRequest {
+  color: var(--morrow-palette-text-secondary, #787a72);
+}
+
+.itemRow strong {
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.addressInfo {
+  display: grid;
+  gap: 8px;
+  padding-top: 22px;
+  line-height: 1.6;
+}
+
+.deliveryRequest {
+  padding-top: 8px;
+}
+
+.summary {
+  align-self: start;
+  padding: 28px;
+  background: var(--morrow-palette-background-paper, #f5f5ef);
+}
+
+.summary h2 {
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--morrow-palette-divider, #dedfd9);
+}
+
+.amountList {
+  display: grid;
+  gap: 14px;
+  padding-top: 22px;
+}
+
+.amountList div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.amountList dt,
+.amountList dd {
+  margin: 0;
+  font-size: 11px;
+}
+
+.amountList dt {
+  color: var(--morrow-palette-text-secondary, #787a72);
+}
+
+.amountList dd {
+  font-weight: 500;
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 25px 0;
+  font-size: 12px;
+}
+
+.totalRow strong {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.cancelButton {
+  min-width: auto;
+  padding: 0 0 8px;
+  border-bottom: 1px solid #a5533c;
+  border-radius: 0;
+  color: #a5533c;
+  font-size: 11px;
+}
+
+.successMessage,
+.message {
+  color: var(--morrow-palette-text-secondary, #787a72);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.successMessage {
+  color: #557252;
+}
+
+.message {
+  padding: 80px 0;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .orderMain {
+    padding: 30px 18px 84px;
+  }
+
+  .backButton {
+    margin-bottom: 40px;
+  }
+
+  .orderLayout {
+    grid-template-columns: 1fr;
+    gap: 38px;
+    padding-top: 42px;
+  }
+
+  .summary {
+    padding: 22px;
+  }
+}
