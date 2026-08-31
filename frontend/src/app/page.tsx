@@ -9,42 +9,20 @@ import {
 } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useCart } from "../components/shop/CartProvider";
 import { useCatalog } from "../components/shop/CatalogProvider";
 import { ProductSection } from "../components/shop/ProductSection";
 import { SiteHeader } from "../components/shop/SiteHeader";
 import type { ProductFilter } from "../types/catalog";
-import { requestNewsletterSignup } from "../repositories/newsletter.repository";
 import styles from "./page.module.css";
 
 export default function Home() {
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const [activeFilter, setActiveFilter] = useState<ProductFilter>("전체");
   const [query, setQuery] = useState("");
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterFeedback, setNewsletterFeedback] = useState("");
-  const [isNewsletterSubmitting, setIsNewsletterSubmitting] = useState(false);
   const { totalItems, addItem } = useCart();
   const { categories } = useCatalog();
-
-  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsNewsletterSubmitting(true);
-    setNewsletterFeedback("");
-
-    try {
-      const result = await requestNewsletterSignup(newsletterEmail);
-      setNewsletterFeedback(result.message ?? "뉴스레터 신청이 완료되었어요.");
-      setNewsletterEmail("");
-    } catch (error) {
-      setNewsletterFeedback(
-        error instanceof Error ? error.message : "뉴스레터 신청에 실패했어요.",
-      );
-    } finally {
-      setIsNewsletterSubmitting(false);
-    }
-  };
 
   return (
     <div className={styles.page}>
@@ -230,46 +208,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className={styles.newsletter} id="newsletter">
-          <div>
-            <p className={styles.eyebrow}>A little note from us</p>
-            <h2>
-              새로운 물건과 이야기를
-              <br />
-              가장 먼저 만나보세요.
-            </h2>
-          </div>
-          <form className={styles.newsletterForm} onSubmit={handleNewsletterSubmit}>
-            <label htmlFor="email">이메일 주소</label>
-            <div>
-              <input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={newsletterEmail}
-                onChange={(event) => setNewsletterEmail(event.target.value)}
-                required
-                disabled={isNewsletterSubmitting}
-              />
-              <IconButton
-                type="submit"
-                size="small"
-                disableRipple
-                aria-label="뉴스레터 구독"
-                disabled={isNewsletterSubmitting}
-                sx={{ padding: 0, color: "#f3f1e8" }}
-              >
-                <ArrowForward />
-              </IconButton>
-            </div>
-            <span>월 2회, 부담 없이 보내드려요.</span>
-            {newsletterFeedback && (
-              <strong className={styles.newsletterFeedback} role="status">
-                {newsletterFeedback}
-              </strong>
-            )}
-          </form>
-        </section>
       </main>
 
       <footer className={styles.footer}>
@@ -291,13 +229,11 @@ export default function Home() {
             <strong>Help</strong>
             <a href="/shipping-returns">배송 & 교환</a>
             <a href="/faq">자주 묻는 질문</a>
-            <a href="/contact">문의하기</a>
           </div>
           <div>
             <strong>Follow</strong>
             <a href="#top">Instagram</a>
             <a href="#top">Pinterest</a>
-            <a href="#newsletter">Newsletter</a>
           </div>
         </div>
 

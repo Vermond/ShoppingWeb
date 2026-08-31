@@ -9,7 +9,7 @@ export default function FaqPage() {
         <>
           쇼핑하면서 궁금한 점을 모아두었어요.
           <br />
-          더 필요한 답이 있다면 문의해주세요.
+          필요한 내용을 천천히 확인해보세요.
         </>
       }
       collapsible
@@ -24,7 +24,7 @@ export default function FaqPage() {
           },
         {
           title: "상품을 교환하고 싶어요.",
-          body: "수령 후 14일 이내에 문의해주시면 교환 절차를 안내해드려요.",
+          body: "수령 후 14일 이내에 배송과 교환 안내를 확인해주세요.",
         },
         {
           title: "로그인 없이도 주문할 수 있나요?",

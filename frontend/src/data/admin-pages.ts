@@ -37,7 +37,6 @@ export type AdminSettingsData = {
   supportEmail: string;
   orderNotifications: boolean;
   lowStockNotifications: boolean;
-  newsletterNotifications: boolean;
   defaultShippingFee: number;
   freeShippingThreshold: number;
 };
@@ -149,7 +148,6 @@ const settings: AdminSettingsData = {
   supportEmail: "hello@morrow.studio",
   orderNotifications: true,
   lowStockNotifications: true,
-  newsletterNotifications: false,
   defaultShippingFee: 3000,
   freeShippingThreshold: 30000,
 };

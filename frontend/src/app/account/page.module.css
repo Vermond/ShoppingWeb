@@ -136,12 +136,6 @@
   margin-bottom: 28px;
 }
 
-.profileContact {
-  display: grid;
-  gap: 8px;
-  margin-top: 25px;
-}
-
 .profileFeedback {
   margin: 0;
   color: var(--muted);

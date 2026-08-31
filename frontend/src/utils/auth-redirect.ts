@@ -6,7 +6,6 @@ function isAllowedReturnPath(pathname: string) {
     pathname === "/shop" ||
     pathname === "/cart" ||
     pathname === "/wishlist" ||
-    pathname === "/contact" ||
     pathname === "/faq" ||
     pathname === "/shipping-returns" ||
     pathname === "/account" ||

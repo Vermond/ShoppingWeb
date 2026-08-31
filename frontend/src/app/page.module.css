@@ -207,7 +207,9 @@
   background: var(--accent);
 }
 
-.hero h1, .sectionHeading h2, .storyCopy h2, .newsletter h2 {
+.hero h1,
+.sectionHeading h2,
+.storyCopy h2 {
   font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: -.065em;
@@ -219,7 +221,9 @@
   line-height: .99;
 }
 
-.hero h1 em, .sectionHeading h2 em, .storyCopy h2 em, .newsletter h2 em {
+.hero h1 em,
+.sectionHeading h2 em,
+.storyCopy h2 em {
   color: var(--accent);
   font-style: italic;
 }
@@ -520,7 +524,8 @@
   margin-bottom: 13px;
 }
 
-.sectionHeading h2, .storyCopy h2, .newsletter h2 {
+.sectionHeading h2,
+.storyCopy h2 {
   font-size: clamp(38px, 4vw, 60px);
   line-height: .95;
 }
@@ -823,86 +828,6 @@
   line-height: 1.9;
 }
 
-.newsletter {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--space-10);
-  padding: 96px 10.5vw;
-  background: var(--ink);
-  color: #f3f1e8;
-}
-
-.newsletter .eyebrow {
-  color: #a6a99f;
-}
-
-.newsletter h2 {
-  font-size: clamp(36px, 4vw, 59px);
-}
-
-.newsletterForm {
-  width: 330px;
-}
-
-.newsletterForm label {
-  display: block;
-  margin-bottom: 13px;
-  color: #a6a99f;
-  font-size: 10px;
-}
-
-.newsletterForm > div {
-  display: flex;
-  border-bottom: 1px solid #73766c;
-}
-
-.newsletterForm input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  padding: 10px 0;
-  background: transparent;
-  color: #f3f1e8;
-  font: inherit;
-  font-size: 12px;
-}
-
-.newsletterForm input::placeholder {
-  color: #777970;
-}
-
-.newsletterForm button {
-  display: flex;
-  align-items: center;
-  border: 0;
-  padding: 0 0 0 10px;
-  background: transparent;
-  color: #f3f1e8;
-  cursor: pointer;
-}
-
-.newsletterForm button svg {
-  width: 17px;
-}
-
-.newsletterForm > span {
-  display: block;
-  margin-top: 11px;
-  color: #777970;
-  font-size: 9px;
-}
-
-.newsletterFeedback {
-  display: block;
-  margin-top: 13px;
-  color: #c4d4bd;
-  font-size: 10px;
-  font-weight: 400;
-  line-height: 1.5;
-}
-
 .footer {
   padding: 69px 5.5vw 26px;
   background: var(--paper);
@@ -1006,10 +931,6 @@
 
   .storySection {
     padding: 92px 11vw;
-  }
-
-  .newsletter {
-    padding: 76px 8vw;
   }
 
 }
@@ -1145,21 +1066,6 @@
 
   .storyCopy h2 {
     font-size: 59px;
-  }
-
-  .newsletter {
-    align-items: start;
-    flex-direction: column;
-    padding: 70px 18px;
-  }
-
-  .newsletter h2 {
-    font-size: 42px;
-  }
-
-  .newsletterForm {
-    width: 100%;
-    margin-top: 14px;
   }
 
   .footer {
