@@ -22,8 +22,8 @@ import { getCurrentReturnTo, getLoginPath } from "../../utils/auth-redirect";
 import styles from "../../app/page.module.css";
 
 const navSections = [
-  { id: "new-arrivals", label: "New in" },
   { id: "categories", label: "Shop" },
+  { id: "new-arrivals", label: "New in" },
   { id: "story", label: "Our story" },
 ] as const;
 
@@ -46,21 +46,41 @@ export function SiteHeader({
   const { status } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrollSection, setScrollSection] =
-    useState<SectionId>("new-arrivals");
+    useState<SectionId | null>("categories");
   const headerRef = useRef<HTMLElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const updateActiveSection = () => {
-      const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 68;
-      const threshold = headerHeight + 24;
-      let nextSection: SectionId = "new-arrivals";
+      const threshold = 1;
+      const isAtPageBottom =
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 1;
+      let nextSection: SectionId | null = "categories";
+      const sectionsInPageOrder = navSections
+        .map(({ id }) => ({
+          id,
+          element: document.getElementById(id),
+        }))
+        .filter(
+          (
+            section,
+          ): section is { id: SectionId; element: HTMLElement } =>
+            section.element !== null,
+        )
+        .sort(
+          (left, right) =>
+            left.element.getBoundingClientRect().top -
+            right.element.getBoundingClientRect().top,
+        );
 
-      for (const { id } of navSections) {
-        const section = document.getElementById(id);
-
-        if (section && section.getBoundingClientRect().top <= threshold) {
-          nextSection = id;
+      if (isAtPageBottom) {
+        nextSection = "story";
+      } else {
+        for (const { id, element } of sectionsInPageOrder) {
+          if (element.getBoundingClientRect().top <= threshold) {
+            nextSection = id;
+          }
         }
       }
 
@@ -69,13 +89,21 @@ export function SiteHeader({
       );
     };
 
+    const updateAfterHashChange = () => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(updateActiveSection);
+      });
+    };
+
     updateActiveSection();
     window.addEventListener("scroll", updateActiveSection, { passive: true });
     window.addEventListener("resize", updateActiveSection);
+    window.addEventListener("hashchange", updateAfterHashChange);
 
     return () => {
       window.removeEventListener("scroll", updateActiveSection);
       window.removeEventListener("resize", updateActiveSection);
+      window.removeEventListener("hashchange", updateAfterHashChange);
     };
   }, []);
 
@@ -129,6 +157,7 @@ export function SiteHeader({
               href={isHome ? `#${id}` : `/#${id}`}
               aria-current={selectedSection === id ? "location" : undefined}
               key={id}
+              onClick={() => setScrollSection(id)}
             >
               {label}
             </a>

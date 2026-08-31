@@ -9,7 +9,7 @@ import {
 } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../components/shop/CartProvider";
 import { useCatalog } from "../components/shop/CatalogProvider";
 import { ProductSection } from "../components/shop/ProductSection";
@@ -22,7 +22,25 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState<ProductFilter>("전체");
   const [query, setQuery] = useState("");
   const { totalItems, addItem } = useCart();
-  const { categories } = useCatalog();
+  const { categories, isLoading: isCatalogLoading } = useCatalog();
+
+  useEffect(() => {
+    if (isCatalogLoading || window.location.hash !== "#story") {
+      return;
+    }
+
+    const storySection = document.getElementById("story");
+
+    if (!storySection) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      storySection.scrollIntoView({ block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isCatalogLoading]);
 
   return (
     <div className={styles.page}>
