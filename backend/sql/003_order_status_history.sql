@@ -1,4 +1,4 @@
-CREATE TABLE sales.order_status_history (
+CREATE TABLE IF NOT EXISTS sales.order_status_history (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   order_id uuid NOT NULL,
   previous_status text NULL,
@@ -27,5 +27,5 @@ CREATE TABLE sales.order_status_history (
     FOREIGN KEY (changed_by) REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX order_status_history_order_id_created_at_idx
+CREATE INDEX IF NOT EXISTS order_status_history_order_id_created_at_idx
   ON sales.order_status_history (order_id, created_at ASC, id ASC);
