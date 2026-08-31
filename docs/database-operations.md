@@ -61,3 +61,29 @@ npm run db:reset -- --confirm
 
 현재 초기 스키마는 실제 데이터를 복구하기 위한 백업이 아니다. 운영 적용 전에는
 별도 백업·롤백 절차와 운영 시드 값을 준비해야 한다.
+
+## 실제 DB 통합 테스트
+
+mock 기반 테스트와 별도로 실제 PostgreSQL에 SQL을 실행하는 통합 테스트를 제공한다.
+통합 테스트는 개발 DB와 반드시 별도의 데이터베이스를 사용한다. 테스트 실행 중
+사용자·상품·주문 데이터를 생성하므로 `INTEGRATION_DB_ALLOW_WRITES=true`를 명시해야
+하며, 연결 대상 데이터베이스 이름에는 `test`, `integration`, `ci` 중 하나가 포함되어야
+한다. `DATABASE_URL`과 같은 데이터베이스를 지정하면 테스트가 시작되지 않는다.
+
+```text
+INTEGRATION_DATABASE_URL=postgresql://postgres:your_password@localhost:5432/shopping_test
+INTEGRATION_DB_ALLOW_WRITES=true
+```
+
+`shopping_test`는 개발 DB가 아닌 별도 테스트 DB여야 한다. 테스트 DB를 준비한 뒤
+다음 순서로 실행한다. 마이그레이션·시드는 지정한 통합 테스트 DB에만 적용된다.
+
+```bash
+npm run db:migrate:integration
+npm run db:seed:integration
+npm run test:integration
+```
+
+통합 테스트는 테스트용으로 생성한 행만 식별해 삭제하며 애플리케이션 스키마 전체를
+삭제하거나 `db:reset`을 호출하지 않는다. 테스트 DB를 새로 만들거나 제거하는 작업은
+별도의 PostgreSQL 관리 절차로 수행한다.

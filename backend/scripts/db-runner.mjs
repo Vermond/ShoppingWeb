@@ -5,14 +5,57 @@ import pg from 'pg';
 const { Client } = pg;
 const LOCK_KEY = 1_940_831_031;
 
-export function createDatabaseClient() {
-  const connectionString = process.env.DATABASE_URL;
-
+export function createDatabaseClient(
+  connectionString = process.env.DATABASE_URL,
+) {
   if (!connectionString) {
     throw new Error('DATABASE_URL 환경변수가 필요합니다.');
   }
 
   return new Client({ connectionString });
+}
+
+export function getIntegrationDatabaseUrl() {
+  const connectionString = process.env.INTEGRATION_DATABASE_URL?.trim();
+
+  if (!connectionString) {
+    throw new Error(
+      '실제 DB 통합 테스트에는 INTEGRATION_DATABASE_URL 환경변수가 필요합니다.',
+    );
+  }
+
+  if (process.env.INTEGRATION_DB_ALLOW_WRITES !== 'true') {
+    throw new Error(
+      '통합 테스트 DB에 쓰려면 INTEGRATION_DB_ALLOW_WRITES=true가 필요합니다.',
+    );
+  }
+
+  const integrationTarget = parseDatabaseTarget(connectionString);
+  const applicationUrl = process.env.DATABASE_URL?.trim();
+
+  if (applicationUrl) {
+    const applicationTarget = parseDatabaseTarget(applicationUrl);
+
+    if (
+      integrationTarget.host === applicationTarget.host &&
+      integrationTarget.port === applicationTarget.port &&
+      integrationTarget.database === applicationTarget.database
+    ) {
+      throw new Error(
+        'INTEGRATION_DATABASE_URL은 DATABASE_URL과 다른 데이터베이스여야 합니다.',
+      );
+    }
+  }
+
+  if (
+    !/(^|[-_])(test|integration|ci)([-_]|$)/i.test(integrationTarget.database)
+  ) {
+    throw new Error(
+      '통합 테스트 DB 이름에는 test, integration 또는 ci가 포함되어야 합니다.',
+    );
+  }
+
+  return connectionString;
 }
 
 export async function withDatabaseLock(client, callback) {
@@ -109,4 +152,24 @@ export async function resetManagedSchemas(client) {
       throw error;
     }
   });
+}
+
+function parseDatabaseTarget(connectionString) {
+  let url;
+
+  try {
+    url = new URL(connectionString);
+  } catch {
+    throw new Error('PostgreSQL 연결 URL 형식이 올바르지 않습니다.');
+  }
+
+  if (url.protocol !== 'postgresql:' && url.protocol !== 'postgres:') {
+    throw new Error('PostgreSQL 연결 URL이어야 합니다.');
+  }
+
+  return {
+    host: url.hostname,
+    port: url.port || '5432',
+    database: decodeURIComponent(url.pathname.replace(/^\/+/, '')),
+  };
 }
